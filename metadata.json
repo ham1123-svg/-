@@ -1,0 +1,5 @@
+{
+  "name": "행복바람심리상담연구소 (hbbr.kr)",
+  "description": "마음의 평온을 찾는 '행복바람심리상담연구소'입니다. (www.hbbr.kr) 아동, 청소년, 성인 맞춤형 심리상담 서비스를 제공합니다.",
+  "requestFramePermissions": ["geolocation"]
+}

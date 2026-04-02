@@ -1,0 +1,27 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Gowun+Batang:wght@400;700&display=swap');
+@import "tailwindcss";
+@plugin "@tailwindcss/typography";
+
+@theme {
+  --font-sans: "Noto Sans KR", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Gowun Batang", serif;
+  
+  --color-brand-beige: #FDFBF7;
+  --color-brand-green: #E8F3E8;
+  --color-brand-sage: #148C7D;
+  --color-brand-brown: #5D4037;
+  --color-brand-accent: #FF8A65;
+}
+
+@layer base {
+  body {
+    @apply bg-brand-beige text-brand-brown font-sans antialiased;
+  }
+  h1, h2, h3 {
+    @apply font-serif;
+  }
+}
+
+.glass-morphism {
+  @apply bg-white/70 backdrop-blur-md border border-white/20;
+}
