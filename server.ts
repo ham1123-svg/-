@@ -2,6 +2,10 @@ import express from "express";
 import { createServer as createViteServer } from "vite";
 import Database from "better-sqlite3";
 import path from "path";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const db = new Database("counseling.db");
 
@@ -52,12 +56,12 @@ db.exec("DELETE FROM counselors");
 const insertCounselor = db.prepare("INSERT INTO counselors (name, title, education, certifications, style, tags, image_url) VALUES (?, ?, ?, ?, ?, ?, ?)");
 insertCounselor.run(
   "박미경", 
-  "상담소장 / 교육학박사", 
-  "상담심리 및 교육심리 전공 교육학박사", 
-  "한국상담학회 슈퍼바이저, 한국상담학회 전문상담사 1급, 여성가족부 청소년상담사 1급, 한국상담심리학회 정회원, 한국부부가족상담학회 정회원", 
-  "개인상담/기업상담(EAP)/집단상담/심리검사/교육 전문", 
-  "#청소년 #성인 #부부 #심리검사 #기업상담", 
-  "https://picsum.photos/seed/parkmikyoung/400/500"
+  "상담 소장", 
+  "교육학 박사(상담 심리 및 교육 심리 전공)", 
+  "한국상담학회 슈퍼바이저\n한국상담학회 전문상담사 1급\n여성가족부 청소년상담사 1급\n한국상담심리학회 정회원\n한국부부가족상담학회 정회원", 
+  "개인 상담/기업 상담(EAP)/집단 상담/심리 검사/교육 전문", 
+  "#개인상담 #기업상담 #집단상담 #심리검사 #교육전문", 
+  "https://images.unsplash.com/photo-1559839734-2b71f1536783?q=80&w=600&auto=format&fit=crop"
 );
 
 // Seed data
@@ -96,6 +100,10 @@ async function startServer() {
     const { nickname, test_type, score, result } = req.body;
     const info = db.prepare("INSERT INTO self_diagnosis (nickname, test_type, score, result) VALUES (?, ?, ?, ?)").run(nickname, test_type, score, result);
     res.json({ id: info.lastInsertRowid, status: "success" });
+  });
+
+  app.get("/standalone", (req, res) => {
+    res.sendFile(path.join(__dirname, "standalone.html"));
   });
 
   // Vite middleware for development

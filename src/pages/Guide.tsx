@@ -7,24 +7,28 @@ import {
 
 const steps = [
   { 
+    step: "STEP 1",
     title: "상담 접수", 
-    desc: "홈페이지 또는 전화를 통해 상담을 신청합니다.", 
-    icon: <UserPlus className="w-8 h-8" /> 
+    desc: "홈페이지 또는 전화를 통해 편안하게 상담을 신청합니다.", 
+    icon: <UserPlus className="w-7 h-7" /> 
   },
   { 
+    step: "STEP 2",
     title: "초기 상담", 
-    desc: "현재의 어려움과 상담 목표를 설정하는 첫 만남입니다.", 
-    icon: <ClipboardCheck className="w-8 h-8" /> 
+    desc: "현재 겪고 있는 어려움을 나누고 앞으로의 상담 목표를 설정합니다.", 
+    icon: <ClipboardCheck className="w-7 h-7" /> 
   },
   { 
+    step: "STEP 3",
     title: "정기 상담", 
-    desc: "주 1회 정기적으로 만나 심층적인 상담을 진행합니다.", 
-    icon: <CalendarCheck className="w-8 h-8" /> 
+    desc: "주 1회 정기적인 만남을 통해 심층적이고 체계적인 상담을 진행합니다.", 
+    icon: <CalendarCheck className="w-7 h-7" /> 
   },
   { 
+    step: "STEP 4",
     title: "상담 종결", 
-    desc: "변화를 확인하고 스스로 일어설 수 있는 힘을 얻습니다.", 
-    icon: <CheckCircle className="w-8 h-8" /> 
+    desc: "긍정적인 마음의 변화를 확인하고 스스로 회복할 수 있는 힘을 다집니다.", 
+    icon: <CheckCircle className="w-7 h-7" /> 
   },
 ];
 
@@ -39,28 +43,41 @@ export default function Guide() {
 
         {/* Process Visualization */}
         <section className="mb-24">
-          <h2 className="text-2xl font-serif font-bold text-brand-brown mb-12 text-center">상담 진행 과정</h2>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 relative">
+          <div className="text-center mb-12">
+            <span className="text-xs font-bold tracking-widest text-brand-sage uppercase px-3.5 py-1.5 bg-brand-sage/10 rounded-full inline-block mb-3">
+              Counseling Process
+            </span>
+            <h2 className="text-2xl md:text-3xl font-serif font-bold text-brand-brown">상담 진행 과정</h2>
+          </div>
+          
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 relative">
             {steps.map((step, idx) => (
-              <div key={idx} className="relative flex flex-col items-center text-center">
-                <motion.div 
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  whileInView={{ opacity: 1, scale: 1 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: idx * 0.2 }}
-                  className="w-20 h-20 rounded-3xl bg-white shadow-lg flex items-center justify-center text-brand-sage mb-6 border border-brand-green/20"
-                >
+              <motion.div 
+                key={idx}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: idx * 0.15 }}
+                className="relative bg-white rounded-3xl p-8 shadow-sm hover:shadow-md transition-shadow border border-brand-green/30 flex flex-col items-center text-center"
+              >
+                {/* Step Badge */}
+                <div className="mb-4 inline-flex items-center px-3 py-1 rounded-full bg-brand-sage/10 text-brand-sage font-bold text-xs tracking-wider">
+                  {step.step}
+                </div>
+
+                <div className="w-16 h-16 rounded-2xl bg-brand-green/30 flex items-center justify-center text-brand-sage mb-5 border border-brand-sage/20">
                   {step.icon}
-                </motion.div>
-                <h3 className="text-xl font-bold text-brand-brown mb-2">{step.title}</h3>
-                <p className="text-sm text-brand-brown/60 max-w-[200px]">{step.desc}</p>
+                </div>
+                
+                <h3 className="text-lg font-bold text-brand-brown mb-2">{step.title}</h3>
+                <p className="text-sm text-brand-brown/70 leading-relaxed">{step.desc}</p>
                 
                 {idx < steps.length - 1 && (
-                  <div className="hidden md:block absolute top-10 -right-4 text-brand-green/50">
-                    <ArrowRight className="w-8 h-8" />
+                  <div className="hidden lg:flex absolute top-1/2 -right-4 -translate-y-1/2 z-10 w-8 h-8 rounded-full bg-brand-beige border border-brand-green/50 items-center justify-center text-brand-sage/60">
+                    <ArrowRight className="w-4 h-4" />
                   </div>
                 )}
-              </div>
+              </motion.div>
             ))}
           </div>
         </section>

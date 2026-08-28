@@ -25,42 +25,73 @@ export default function Home() {
   return (
     <div className="w-full">
       {/* Hero Section */}
-      <section className="relative h-[80vh] flex items-center overflow-hidden bg-brand-green/20">
+      <section className="relative min-h-[85vh] flex items-center overflow-hidden bg-brand-beige/40">
         <div className="absolute inset-0 z-0">
           <img 
-            src="https://picsum.photos/seed/therapy-room/1920/1080?blur=2" 
-            alt="Hero Background" 
-            className="w-full h-full object-cover opacity-30"
+            src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=1920&auto=format&fit=crop" 
+            alt="평온한 휴양지 해변과 부드러운 바람 배경" 
+            className="w-full h-full object-cover opacity-25"
             referrerPolicy="no-referrer"
           />
+          <div className="absolute inset-0 bg-gradient-to-r from-brand-beige via-brand-beige/90 to-brand-beige/40" />
         </div>
         
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 w-full">
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-            className="max-w-2xl"
-          >
-            <h2 className="text-brand-sage font-medium mb-4 tracking-widest uppercase text-sm">Mind Rest Area</h2>
-            <h1 className="text-4xl md:text-6xl font-serif font-bold text-brand-brown leading-tight mb-6">
-              지친 마음에 <br />
-              <span className="text-brand-sage">행복바람</span>이 불어옵니다.
-            </h1>
-            <p className="text-lg text-brand-brown/80 mb-8 font-serif leading-relaxed">
-              행복바람심리상담연구소는 당신의 마음이 쉬어갈 수 있는 아늑한 쉼터입니다. <br className="hidden md:block" />
-              전문가와 함께 내면의 평온을 찾아보세요.
-            </p>
-            
-            <div className="flex flex-wrap gap-4">
-              <Link to="/reservation" className="bg-brand-sage text-white px-8 py-4 rounded-full font-bold hover:bg-brand-sage/90 transition-all shadow-lg flex items-center gap-2">
-                상담 예약하기 <ChevronRight className="w-4 h-4" />
-              </Link>
-              <Link to="/about" className="bg-white text-brand-sage border border-brand-sage px-8 py-4 rounded-full font-bold hover:bg-brand-green/30 transition-all flex items-center gap-2">
-                상담소 둘러보기
-              </Link>
-            </div>
-          </motion.div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 w-full py-16">
+          <div className="grid lg:grid-cols-12 gap-12 items-center">
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8 }}
+              className="lg:col-span-7"
+            >
+              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-brand-sage/10 text-brand-sage text-xs font-semibold mb-6 tracking-wide">
+                <span>🍃 Mind Rest Area</span>
+                <span className="w-1 h-1 rounded-full bg-brand-sage"></span>
+                <span>마음의 평온을 찾는 쉼터</span>
+              </div>
+              <h1 className="text-4xl md:text-5xl lg:text-6xl font-serif font-bold text-brand-brown leading-tight mb-6">
+                지친 마음에 <br />
+                <span className="text-brand-sage">행복바람</span>이 불어옵니다.
+              </h1>
+              <p className="text-lg text-brand-brown/80 mb-8 font-serif leading-relaxed max-w-xl">
+                행복바람심리상담연구소는 당신의 마음이 온전히 쉬어갈 수 있는 아늑한 쉼터입니다. 
+                따뜻한 공감과 전문성으로 내면의 평온과 회복을 함께합니다.
+              </p>
+              
+              <div className="flex flex-wrap gap-4">
+                <Link to="/reservation" className="bg-brand-sage text-white px-8 py-4 rounded-full font-bold hover:bg-brand-sage/90 transition-all shadow-md hover:shadow-lg flex items-center gap-2">
+                  상담 예약하기 <ChevronRight className="w-4 h-4" />
+                </Link>
+                <Link to="/about" className="bg-white/80 backdrop-blur-sm text-brand-sage border border-brand-sage/30 px-8 py-4 rounded-full font-bold hover:bg-brand-green/30 transition-all flex items-center gap-2 shadow-sm">
+                  상담소 둘러보기
+                </Link>
+              </div>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.9, delay: 0.2 }}
+              className="lg:col-span-5 relative"
+            >
+              <div className="relative rounded-[32px] overflow-hidden shadow-xl border-4 border-white aspect-[4/3] sm:aspect-[16/11]">
+                <img 
+                  src="https://images.unsplash.com/photo-1499793983690-e29da59ef1c2?q=80&w=1000&auto=format&fit=crop" 
+                  alt="휴양지 느낌의 고요하고 평온한 바다 풍경" 
+                  className="w-full h-full object-cover"
+                  referrerPolicy="no-referrer"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent flex items-end p-6 sm:p-8">
+                  <div className="text-white">
+                    <p className="text-xs uppercase tracking-widest text-white/80 font-medium mb-1">Peace of Mind</p>
+                    <p className="text-base sm:text-lg font-serif italic text-white/95">
+                      "마음이 지칠 때, 잠시 쉬어가도 괜찮습니다."
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </div>
         </div>
       </section>
 

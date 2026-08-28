@@ -22,22 +22,25 @@ export default function Footer() {
           
           <div>
             <h4 className="font-bold mb-6 text-brand-sage uppercase tracking-wider text-sm">Contact Us</h4>
-            <ul className="space-y-4 text-sm text-brand-beige/60">
-              <li className="flex items-start gap-3">
-                <span className="font-bold text-brand-beige">주소:</span>
-                울산광역시 울주군 삼남읍 도호1길 23 상가 408호
+            <ul className="space-y-3.5 text-sm text-brand-beige/70">
+              <li className="flex items-start gap-2">
+                <span className="w-20 shrink-0 font-bold text-brand-beige">주소:</span>
+                <span>울산광역시 울주군 삼남읍 도호1길 23 상가 408호</span>
               </li>
-              <li className="flex items-start gap-3">
-                <span className="font-bold text-brand-beige">전화:</span>
-                052-254-0230
+              <li className="flex items-start gap-2">
+                <span className="w-20 shrink-0 font-bold text-brand-beige">전화:</span>
+                <span>052-254-0230</span>
               </li>
-              <li className="flex items-start gap-3">
-                <span className="font-bold text-brand-beige">이메일:</span>
-                mikypa@naver.com
+              <li className="flex items-start gap-2">
+                <span className="w-20 shrink-0 font-bold text-brand-beige">이메일:</span>
+                <span>mikypa@naver.com</span>
               </li>
-              <li className="flex items-start gap-3">
-                <span className="font-bold text-brand-beige">운영시간:</span>
-                평일 10:00 - 20:00 / 토요일 10:00 - 17:00 (일요일 휴무)
+              <li className="flex items-start gap-2">
+                <span className="w-20 shrink-0 font-bold text-brand-beige">운영시간:</span>
+                <div className="space-y-1">
+                  <div>평일 10:00 - 20:00 / 토요일 10:00 - 17:00</div>
+                  <div className="text-brand-beige/50">일요일, 공휴일 휴무</div>
+                </div>
               </li>
             </ul>
           </div>

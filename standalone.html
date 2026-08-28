@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>행복바람심리상담연구소</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Gowun+Batang:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            beige: '#FDFBF7',
+                            green: '#E8F3E8',
+                            sage: '#148C7D',
+                            brown: '#5D4037',
+                            accent: '#FF8A65',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['"Noto Sans KR"', 'sans-serif'],
+                        serif: ['"Gowun Batang"', 'serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        [x-cloak] { display: none !important; }
+        body { background-color: #FDFBF7; color: #5D4037; }
+        .glass-morphism { background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.2); }
+        .nav-link.active { color: #148C7D; font-weight: 700; }
+        section { scroll-margin-top: 5rem; }
+    </style>
+</head>
+<body x-data="{ activePage: 'home', mobileMenuOpen: false }">
+
+    <!-- Navbar -->
+    <nav class="fixed top-0 left-0 right-0 z-50 glass-morphism border-b border-brand-green/30">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-20 items-center">
+                <a href="#" @click.prevent="activePage = 'home'" class="flex items-center gap-2">
+                    <span class="text-2xl font-serif font-bold text-brand-brown">행복바람<span class="text-brand-sage">심리상담연구소</span></span>
+                </a>
+
+                <!-- Desktop Nav -->
+                <div class="hidden md:flex space-x-8">
+                    <a href="#about" @click="activePage = 'about'" :class="{ 'active': activePage === 'about' }" class="nav-link text-sm font-medium hover:text-brand-sage transition-colors">상담소 소개</a>
+                    <a href="#counselors" @click="activePage = 'counselors'" :class="{ 'active': activePage === 'counselors' }" class="nav-link text-sm font-medium hover:text-brand-sage transition-colors">상담사 소개</a>
+                    <a href="#programs" @click="activePage = 'programs'" :class="{ 'active': activePage === 'programs' }" class="nav-link text-sm font-medium hover:text-brand-sage transition-colors">프로그램</a>
+                    <a href="#guide" @click="activePage = 'guide'" :class="{ 'active': activePage === 'guide' }" class="nav-link text-sm font-medium hover:text-brand-sage transition-colors">상담 안내</a>
+                    <a href="#reservation" @click="activePage = 'reservation'" :class="{ 'active': activePage === 'reservation' }" class="nav-link text-sm font-medium hover:text-brand-sage transition-colors">예약/문의</a>
+                </div>
+
+                <div class="md:hidden">
+                    <button @click="mobileMenuOpen = !mobileMenuOpen" class="text-brand-brown">
+                        <i x-show="!mobileMenuOpen" data-lucide="menu"></i>
+                        <i x-show="mobileMenuOpen" data-lucide="x"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mobile Menu -->
+        <div x-show="mobileMenuOpen" x-cloak class="md:hidden glass-morphism border-t border-brand-green/30 bg-brand-beige">
+            <div class="px-4 pt-2 pb-6 space-y-1">
+                <a href="#about" @click="activePage = 'about'; mobileMenuOpen = false" class="block px-3 py-3 text-base font-medium text-brand-brown hover:bg-brand-green/30 rounded-lg">상담소 소개</a>
+                <a href="#counselors" @click="activePage = 'counselors'; mobileMenuOpen = false" class="block px-3 py-3 text-base font-medium text-brand-brown hover:bg-brand-green/30 rounded-lg">상담사 소개</a>
+                <a href="#programs" @click="activePage = 'programs'; mobileMenuOpen = false" class="block px-3 py-3 text-base font-medium text-brand-brown hover:bg-brand-green/30 rounded-lg">프로그램</a>
+                <a href="#guide" @click="activePage = 'guide'; mobileMenuOpen = false" class="block px-3 py-3 text-base font-medium text-brand-brown hover:bg-brand-green/30 rounded-lg">상담 안내</a>
+                <a href="#reservation" @click="activePage = 'reservation'; mobileMenuOpen = false" class="block px-3 py-3 text-base font-medium text-brand-brown hover:bg-brand-green/30 rounded-lg">예약/문의</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="pt-20">
+        <!-- Home Section -->
+        <div x-show="activePage === 'home'" x-transition>
+            <section class="relative h-[85vh] flex items-center overflow-hidden bg-brand-green/20">
+                <div class="absolute inset-0 z-0">
+                    <img src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=1920&auto=format&fit=crop" alt="Hero Background" class="w-full h-full object-cover opacity-25">
+                </div>
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 w-full">
+                    <div class="max-w-2xl">
+                        <h2 class="text-brand-sage font-medium mb-4 tracking-widest uppercase text-sm">Mind Rest Area</h2>
+                        <h1 class="text-4xl md:text-6xl font-serif font-bold text-brand-brown leading-tight mb-6">
+                            지친 마음에 <br>
+                            <span class="text-brand-sage">행복바람</span>이 불어옵니다.
+                        </h1>
+                        <p class="text-lg text-brand-brown/80 mb-8 font-serif leading-relaxed">
+                            행복바람심리상담연구소는 당신의 마음이 쉬어갈 수 있는 아늑한 쉼터입니다. <br class="hidden md:block">
+                            전문가와 함께 내면의 평온을 찾아보세요.
+                        </p>
+                        <div class="flex flex-wrap gap-4">
+                            <a href="#reservation" @click="activePage = 'reservation'" class="bg-brand-sage text-white px-8 py-4 rounded-full font-bold hover:bg-brand-sage/90 transition-all shadow-lg flex items-center gap-2">
+                                상담 예약하기 <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                            </a>
+                            <a href="#about" @click="activePage = 'about'" class="bg-white text-brand-sage border border-brand-sage px-8 py-4 rounded-full font-bold hover:bg-brand-green/30 transition-all">상담소 둘러보기</a>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="py-24 bg-white">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+                    <h2 class="text-3xl font-serif font-bold text-brand-brown mb-4">함께 고민하겠습니다</h2>
+                    <p class="text-brand-brown/60 mb-16">일상에서 만나는 다양한 마음의 어려움, 혼자 고민하지 마세요.</p>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+                        <div class="p-10 rounded-3xl bg-brand-beige/50 border border-brand-green/30 text-center transition-transform hover:-translate-y-2">
+                            <div class="bg-brand-sage/10 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-6 text-brand-sage">
+                                <i data-lucide="user"></i>
+                            </div>
+                            <h3 class="text-xl font-bold mb-4">개인상담</h3>
+                            <p class="text-sm text-brand-brown/70 leading-relaxed">우울, 불안, 대인관계 스트레스 등 <br>개인의 심리적 성장을 돕습니다.</p>
+                        </div>
+                        <div class="p-10 rounded-3xl bg-brand-beige/50 border border-brand-green/30 text-center transition-transform hover:-translate-y-2">
+                            <div class="bg-brand-accent/10 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-6 text-brand-accent">
+                                <i data-lucide="heart"></i>
+                            </div>
+                            <h3 class="text-xl font-bold mb-4">커플/부부상담</h3>
+                            <p class="text-sm text-brand-brown/70 leading-relaxed">갈등 해결과 원활한 소통을 통해 <br>건강한 관계 회복을 지원합니다.</p>
+                        </div>
+                        <div class="p-10 rounded-3xl bg-brand-beige/50 border border-brand-green/30 text-center transition-transform hover:-translate-y-2">
+                            <div class="bg-brand-sage/10 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-6 text-brand-sage">
+                                <i data-lucide="clipboard-list"></i>
+                            </div>
+                            <h3 class="text-xl font-bold mb-4">전문 심리검사</h3>
+                            <p class="text-sm text-brand-brown/70 leading-relaxed">객관적인 검사를 통해 <br>자신을 더 깊이 이해하는 시간을 가집니다.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- About Section -->
+        <div x-show="activePage === 'about'" x-transition>
+            <section id="about" class="py-24 bg-brand-beige/20">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div class="grid md:grid-cols-2 gap-16 items-center mb-20">
+                        <div>
+                            <h2 class="text-brand-sage font-medium mb-4 tracking-widest uppercase text-sm">About Us</h2>
+                            <h1 class="text-4xl font-serif font-bold text-brand-brown leading-tight mb-8">
+                                지친 당신의 마음에 <br>행복의 바람이 되어드리겠습니다.
+                            </h1>
+                            <p class="text-lg text-brand-brown/70 mb-8 leading-relaxed font-serif">
+                                행복바람심리상담연구소는 개인의 심리적 안정과 행복한 삶을 위해 전문적이고 따뜻한 상담 서비스를 제공하는 통합 심리 공간입니다.
+                                <br><br>
+                                모든 상담 과정은 철저한 비밀 보장을 원칙으로 하며, 내담자 한 분 한 분의 고유한 삶의 이야기를 존중합니다.
+                            </p>
+                            <div class="space-y-4">
+                                <div class="flex items-center gap-3 text-brand-brown/80">
+                                    <i data-lucide="check" class="text-brand-sage w-5 h-5"></i>
+                                    <span>검증된 전문가 그룹의 맞춤형 솔루션</span>
+                                </div>
+                                <div class="flex items-center gap-3 text-brand-brown/80">
+                                    <i data-lucide="check" class="text-brand-sage w-5 h-5"></i>
+                                    <span>안락하고 편안한 오프라인 상담 환경</span>
+                                </div>
+                                <div class="flex items-center gap-3 text-brand-brown/80">
+                                    <i data-lucide="check" class="text-brand-sage w-5 h-5"></i>
+                                    <span>비밀 보장과 내담자 권리 최우선 보호</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <img src="https://images.unsplash.com/photo-1544787219-7f47ccb76574?q=80&w=800" class="rounded-3xl shadow-xl h-64 object-cover w-full" alt="Lounge">
+                            <img src="https://images.unsplash.com/photo-1586023492125-27b2c045efd7?q=80&w=800" class="rounded-3xl shadow-xl h-48 object-cover w-full mt-16" alt="Therapy Room">
+                        </div>
+                    </div>
+
+                    <!-- Healing Space Gallery -->
+                    <div class="pt-12 border-t border-brand-green/30">
+                        <div class="text-center mb-12">
+                            <span class="text-xs font-bold tracking-widest text-brand-sage uppercase px-3.5 py-1.5 bg-brand-sage/10 rounded-full inline-block mb-3">Healing Space</span>
+                            <h2 class="text-3xl font-serif font-bold text-brand-brown mb-3">마음이 편안해지는 공간</h2>
+                            <p class="text-brand-brown/70 font-serif">아늑하고 정갈한 인테리어로 내담자의 심리적 안정과 온전한 쉼을 돕습니다.</p>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div class="bg-white rounded-3xl overflow-hidden shadow-sm border border-brand-green/30">
+                                <img src="https://images.unsplash.com/photo-1544787219-7f47ccb76574?q=80&w=800&auto=format&fit=crop" class="w-full h-56 object-cover" alt="투명한 유리잔의 맑은 웰컴 티와 정갈한 수제 다과">
+                                <div class="p-6">
+                                    <h3 class="font-bold text-lg text-brand-brown mb-1">웰컴 티 & 정갈한 다과</h3>
+                                    <p class="text-xs text-brand-brown/70 leading-relaxed font-serif">상담 전 긴장을 부드럽게 완화해주는 투명한 잔의 맑은 웰컴 티와, 원목 트레이에 정갈하게 놓인 수제 다과가 준비된 편안한 쉼의 공간</p>
+                                </div>
+                            </div>
+                            <div class="bg-white rounded-3xl overflow-hidden shadow-sm border border-brand-green/30 md:translate-y-4">
+                                <img src="https://images.unsplash.com/photo-1586023492125-27b2c045efd7?q=80&w=800&auto=format&fit=crop" class="w-full h-56 object-cover" alt="1:1 개인 심리상담실">
+                                <div class="p-6">
+                                    <h3 class="font-bold text-lg text-brand-brown mb-1">1:1 개인 심리상담실</h3>
+                                    <p class="text-xs text-brand-brown/70 leading-relaxed font-serif">완벽한 방음과 비밀 보장이 이루어지는 아늑하고 안전한 독립 상담실</p>
+                                </div>
+                            </div>
+                            <div class="bg-white rounded-3xl overflow-hidden shadow-sm border border-brand-green/30">
+                                <img src="https://images.unsplash.com/photo-1513694203232-719a280e022f?q=80&w=800&auto=format&fit=crop" class="w-full h-56 object-cover" alt="자연 채광과 힐링 쉼터">
+                                <div class="p-6">
+                                    <h3 class="font-bold text-lg text-brand-brown mb-1">자연 채광과 힐링 쉼터</h3>
+                                    <p class="text-xs text-brand-brown/70 leading-relaxed font-serif">부드러운 자연광과 싱그러운 반려 식물이 머무는 평온한 휴식 공간</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Partner Organizations Section -->
+                    <div class="pt-20 border-t border-brand-green/30 mt-20">
+                        <div class="text-center max-w-3xl mx-auto mb-16">
+                            <span class="text-xs font-bold tracking-widest text-brand-sage uppercase px-3.5 py-1.5 bg-brand-sage/10 rounded-full inline-block mb-3">Partnership & Network</span>
+                            <h2 class="text-3xl font-serif font-bold text-brand-brown mb-4">주요 협력 기관 및 기업</h2>
+                            <p class="text-brand-brown/70 font-serif text-sm">행복바람 심리상담연구소는 교육청, 지자체 공공기관 및 기업들과 연계하여 전문적인 심리 상담, 교원 힐링, 재난 위기 회복 및 EAP 프로그램을 협력하고 있습니다.</p>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                            <div class="bg-white rounded-3xl p-6 border border-brand-green/30 shadow-xs flex flex-col justify-between">
+                                <div>
+                                    <div class="flex items-center justify-between mb-4">
+                                        <div class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center justify-center font-bold text-xs">교육</div>
+                                        <span class="text-[11px] text-brand-sage bg-brand-sage/10 px-2 py-0.5 rounded-full">교육 행정</span>
+                                    </div>
+                                    <h3 class="font-bold text-base text-brand-brown mb-1 font-serif">울산광역시교육청</h3>
+                                    <p class="text-xs text-brand-brown/70 font-serif leading-relaxed">교원 및 학생 심리 상담, 학교폭력 및 심리정서 지원 사업 협력</p>
+                                </div>
+                                <div class="pt-3 mt-3 border-t border-brand-green/20 text-[11px] text-brand-brown/60">학교 심리 지원</div>
+                            </div>
+                            <div class="bg-white rounded-3xl p-6 border border-brand-green/30 shadow-xs flex flex-col justify-between">
+                                <div>
+                                    <div class="flex items-center justify-between mb-4">
+                                        <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-700 border border-blue-200 flex items-center justify-center font-bold text-xs">공공</div>
+                                        <span class="text-[11px] text-brand-sage bg-brand-sage/10 px-2 py-0.5 rounded-full">노동 인권</span>
+                                    </div>
+                                    <h3 class="font-bold text-base text-brand-brown mb-1 font-serif">울산광역시노동인권센터</h3>
+                                    <p class="text-xs text-brand-brown/70 font-serif leading-relaxed">취약계층 노동자 심리치유 및 직무 스트레스 완화 상담 협력</p>
+                                </div>
+                                <div class="pt-3 mt-3 border-t border-brand-green/20 text-[11px] text-brand-brown/60">근로자 심리케어</div>
+                            </div>
+                            <div class="bg-white rounded-3xl p-6 border border-brand-green/30 shadow-xs flex flex-col justify-between">
+                                <div>
+                                    <div class="flex items-center justify-between mb-4">
+                                        <div class="w-10 h-10 rounded-xl bg-amber-50 text-amber-700 border border-amber-200 flex items-center justify-center font-bold text-xs">공공</div>
+                                        <span class="text-[11px] text-brand-sage bg-brand-sage/10 px-2 py-0.5 rounded-full">일자리 진흥</span>
+                                    </div>
+                                    <h3 class="font-bold text-base text-brand-brown mb-1 font-serif">울산광역시경제일자리진흥원</h3>
+                                    <p class="text-xs text-brand-brown/70 font-serif leading-relaxed">청년·구직자 심리역량 강화 및 중소기업 임직원 상담 연계</p>
+                                </div>
+                                <div class="pt-3 mt-3 border-t border-brand-green/20 text-[11px] text-brand-brown/60">기업 임직원 지원</div>
+                            </div>
+                            <div class="bg-white rounded-3xl p-6 border border-brand-green/30 shadow-xs flex flex-col justify-between">
+                                <div>
+                                    <div class="flex items-center justify-between mb-4">
+                                        <div class="w-10 h-10 rounded-xl bg-rose-50 text-rose-700 border border-rose-200 flex items-center justify-center font-bold text-xs">재난</div>
+                                        <span class="text-[11px] text-brand-sage bg-brand-sage/10 px-2 py-0.5 rounded-full">위기 회복</span>
+                                    </div>
+                                    <h3 class="font-bold text-base text-brand-brown mb-1 font-serif">울산광역시재난심리회복지원센터</h3>
+                                    <p class="text-xs text-brand-brown/70 font-serif leading-relaxed">재난·외상 경험자 및 위기 가구 심리 안정화, 긴급 심리지원 협력</p>
+                                </div>
+                                <div class="pt-3 mt-3 border-t border-brand-green/20 text-[11px] text-brand-brown/60">외상 후 스트레스 케어</div>
+                            </div>
+                            <div class="bg-white rounded-3xl p-6 border border-brand-green/30 shadow-xs flex flex-col justify-between">
+                                <div>
+                                    <div class="flex items-center justify-between mb-4">
+                                        <div class="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-700 border border-indigo-200 flex items-center justify-center font-bold text-xs">공단</div>
+                                        <span class="text-[11px] text-brand-sage bg-brand-sage/10 px-2 py-0.5 rounded-full">임직원 EAP</span>
+                                    </div>
+                                    <h3 class="font-bold text-base text-brand-brown mb-1 font-serif">울산중구시설관리공단</h3>
+                                    <p class="text-xs text-brand-brown/70 font-serif leading-relaxed">공단 임직원 직무 스트레스 관리, 정신건강 증진 EAP 프로그램 운영</p>
+                                </div>
+                                <div class="pt-3 mt-3 border-t border-brand-green/20 text-[11px] text-brand-brown/60">기업 맞춤형 EAP</div>
+                            </div>
+                            <div class="bg-white rounded-3xl p-6 border border-brand-green/30 shadow-xs flex flex-col justify-between">
+                                <div>
+                                    <div class="flex items-center justify-between mb-4">
+                                        <div class="w-10 h-10 rounded-xl bg-teal-50 text-teal-700 border border-teal-200 flex items-center justify-center font-bold text-xs">교육</div>
+                                        <span class="text-[11px] text-brand-sage bg-brand-sage/10 px-2 py-0.5 rounded-full">교원 힐링</span>
+                                    </div>
+                                    <h3 class="font-bold text-base text-brand-brown mb-1 font-serif">부산광역시교원힐링센터</h3>
+                                    <p class="text-xs text-brand-brown/70 font-serif leading-relaxed">교권 침해 및 교육활동 스트레스 극복을 위한 심리상담·집단 힐링</p>
+                                </div>
+                                <div class="pt-3 mt-3 border-t border-brand-green/20 text-[11px] text-brand-brown/60">교원 심리치유</div>
+                            </div>
+                            <div class="bg-white rounded-3xl p-6 border border-brand-green/30 shadow-xs flex flex-col justify-between">
+                                <div>
+                                    <div class="flex items-center justify-between mb-4">
+                                        <div class="w-10 h-10 rounded-xl bg-purple-50 text-purple-700 border border-purple-200 flex items-center justify-center font-bold text-xs">진흥원</div>
+                                        <span class="text-[11px] text-brand-sage bg-brand-sage/10 px-2 py-0.5 rounded-full">평생교육</span>
+                                    </div>
+                                    <h3 class="font-bold text-base text-brand-brown mb-1 font-serif">부산여성가족과 평생교육진흥원</h3>
+                                    <p class="text-xs text-brand-brown/70 font-serif leading-relaxed">가족 관계 증진, 부모 교육 및 여성가족 심리역량 강화 프로그램 연계</p>
+                                </div>
+                                <div class="pt-3 mt-3 border-t border-brand-green/20 text-[11px] text-brand-brown/60">가족·평생학습 지원</div>
+                            </div>
+                            <div class="bg-brand-sage/10 rounded-3xl p-6 border border-brand-sage/30 shadow-xs flex flex-col justify-between">
+                                <div>
+                                    <div class="flex items-center justify-between mb-4">
+                                        <div class="w-10 h-10 rounded-xl bg-brand-sage text-white flex items-center justify-center font-bold text-xs">EAP</div>
+                                        <span class="text-[11px] text-brand-sage bg-white px-2 py-0.5 rounded-full">제휴 네트워크</span>
+                                    </div>
+                                    <h3 class="font-bold text-base text-brand-brown mb-1 font-serif">기업 EAP & 맞춤형 제휴</h3>
+                                    <p class="text-xs text-brand-brown/70 font-serif leading-relaxed">임직원 마음건강 진단, 맞춤형 웰니스 워크숍 및 1:1 비밀보장 심리상담</p>
+                                </div>
+                                <button @click="activePage = 'reservation'" class="pt-3 mt-3 border-t border-brand-sage/20 text-[11px] font-bold text-brand-sage text-left hover:underline">
+                                    제휴 및 EAP 상담 문의 →
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- Counselors Section -->
+        <div x-show="activePage === 'counselors'" x-transition>
+            <section id="counselors" class="py-24 bg-white">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div class="text-center mb-16">
+                        <h2 class="text-3xl font-serif font-bold text-brand-brown mb-4">함께하는 상담사</h2>
+                        <p class="text-brand-brown/60">당신의 마음을 가장 잘 이해할 수 있는 전문가를 소개합니다.</p>
+                    </div>
+
+                    <div class="max-w-4xl mx-auto bg-brand-beige/30 rounded-[40px] overflow-hidden shadow-2xl border border-brand-green flex flex-col md:flex-row">
+                        <div class="md:w-5/12 min-h-[380px] md:min-h-[460px] overflow-hidden bg-brand-beige/40">
+                            <img src="https://images.unsplash.com/photo-1559839734-2b71f1536783?q=80&w=600&auto=format&fit=crop" class="w-full h-full object-cover" alt="박미경 상담 소장">
+                        </div>
+                        <div class="md:w-7/12 p-8 md:p-10 flex flex-col justify-between">
+                            <div>
+                                <!-- Header -->
+                                <div class="border-b border-brand-green/30 pb-5 mb-6">
+                                    <div class="flex items-baseline gap-3 mb-2">
+                                        <h3 class="text-3xl font-serif font-bold text-brand-brown">박미경</h3>
+                                        <span class="px-3 py-1 bg-brand-sage/10 text-brand-sage font-bold text-sm rounded-full">상담 소장</span>
+                                    </div>
+                                    <p class="text-base font-serif text-brand-brown/85 font-medium">교육학 박사(상담 심리 및 교육 심리 전공)</p>
+                                </div>
+
+                                <div class="space-y-6">
+                                    <!-- <자격&경력> -->
+                                    <div>
+                                        <h4 class="text-sm font-bold text-brand-brown tracking-wider mb-2.5 flex items-center gap-1.5">
+                                            <span>&lt;자격&amp;경력&gt;</span>
+                                        </h4>
+                                        <ul class="text-sm text-brand-brown/85 space-y-1.5 font-serif pl-1">
+                                            <li class="flex items-center gap-2">
+                                                <span class="w-1.5 h-1.5 rounded-full bg-brand-sage"></span>
+                                                <span>한국상담학회 슈퍼바이저</span>
+                                            </li>
+                                            <li class="flex items-center gap-2">
+                                                <span class="w-1.5 h-1.5 rounded-full bg-brand-sage"></span>
+                                                <span>한국상담학회 전문상담사 1급</span>
+                                            </li>
+                                            <li class="flex items-center gap-2">
+                                                <span class="w-1.5 h-1.5 rounded-full bg-brand-sage"></span>
+                                                <span>여성가족부 청소년상담사 1급</span>
+                                            </li>
+                                            <li class="flex items-center gap-2">
+                                                <span class="w-1.5 h-1.5 rounded-full bg-brand-sage"></span>
+                                                <span>한국상담심리학회 정회원</span>
+                                            </li>
+                                            <li class="flex items-center gap-2">
+                                                <span class="w-1.5 h-1.5 rounded-full bg-brand-sage"></span>
+                                                <span>한국부부가족상담학회 정회원</span>
+                                            </li>
+                                        </ul>
+                                    </div>
+
+                                    <!-- <상담 스타일> -->
+                                    <div>
+                                        <h4 class="text-sm font-bold text-brand-brown tracking-wider mb-2 flex items-center gap-1.5">
+                                            <span>&lt;상담 스타일&gt;</span>
+                                        </h4>
+                                        <div class="p-4 bg-white rounded-2xl border border-brand-green/40 shadow-xs">
+                                            <p class="text-sm font-bold text-brand-brown font-serif mb-2">개인 상담/기업 상담(EAP)/집단 상담/심리 검사/교육 전문</p>
+                                            <div class="flex flex-wrap gap-1.5">
+                                                <span class="px-2.5 py-0.5 bg-brand-sage/10 text-brand-sage text-xs font-semibold rounded-md">개인 상담</span>
+                                                <span class="px-2.5 py-0.5 bg-brand-sage/10 text-brand-sage text-xs font-semibold rounded-md">기업 상담(EAP)</span>
+                                                <span class="px-2.5 py-0.5 bg-brand-sage/10 text-brand-sage text-xs font-semibold rounded-md">집단 상담</span>
+                                                <span class="px-2.5 py-0.5 bg-brand-sage/10 text-brand-sage text-xs font-semibold rounded-md">심리 검사</span>
+                                                <span class="px-2.5 py-0.5 bg-brand-sage/10 text-brand-sage text-xs font-semibold rounded-md">교육 전문</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <button @click="activePage = 'reservation'" class="mt-6 w-full py-3.5 bg-brand-sage text-white font-bold rounded-2xl hover:bg-brand-sage/90 transition-all text-center">
+                                상담 예약하기
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- Programs Section -->
+        <div x-show="activePage === 'programs'" x-transition>
+            <section id="programs" class="py-24 bg-brand-beige/20">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    
+                    <!-- Featured Program Detail Banner -->
+                    <div class="mb-16 bg-white rounded-[32px] p-8 md:p-12 shadow-sm border border-brand-green/40">
+                        <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-brand-sage/10 text-brand-sage text-xs font-bold mb-4">
+                            <span>대표 프로그램 안내</span>
+                        </div>
+                        <h2 class="text-3xl md:text-4xl font-serif font-bold text-brand-brown mb-4">청소년 및 성인 상담 프로그램</h2>
+                        <div class="p-6 bg-brand-beige/40 rounded-2xl border border-brand-green/30 mb-8 font-serif leading-relaxed text-brand-brown/90">
+                            <strong>상담 개요:</strong> 학업, 진로, 대인관계, 정서적 혼란 등 생애주기별로 마주하는 다양한 심리적 갈등을 전문적으로 다룹니다. 안전하고 비밀이 보장되는 공간에서 자신의 내면을 깊이 탐색하고, 건강한 자아 존중감과 심리적 탄력성을 회복하도록 돕습니다.
+                        </div>
+
+                        <!-- Targets -->
+                        <div class="grid md:grid-cols-2 gap-6 mb-8">
+                            <div class="p-6 bg-white rounded-2xl border border-brand-green/40 shadow-sm">
+                                <h4 class="font-bold text-lg text-brand-brown mb-3 pb-2 border-b border-brand-green/30">청소년 (만 13세 ~ 18세)</h4>
+                                <ul class="space-y-2 text-sm text-brand-brown/80">
+                                    <li>• 학업 스트레스, 시험 불안 및 진로 고민</li>
+                                    <li>• 또래 관계 갈등, 따돌림 및 학교 부적응</li>
+                                    <li>• 부모-자녀 간 소통 단절 및 갈등</li>
+                                    <li>• 우울, 무기력, 분노 조절의 어려움 및 충동성</li>
+                                </ul>
+                            </div>
+                            <div class="p-6 bg-white rounded-2xl border border-brand-green/40 shadow-sm">
+                                <h4 class="font-bold text-lg text-brand-brown mb-3 pb-2 border-b border-brand-green/30">성인 (만 19세 이상)</h4>
+                                <ul class="space-y-2 text-sm text-brand-brown/80">
+                                    <li>• 우울, 공황, 만성적인 불안 및 스트레스 관리</li>
+                                    <li>• 직장 내 갈등, 번아웃(Burnout), 이직/경력 전환 고민</li>
+                                    <li>• 연인, 배우자, 가족 등 친밀한 대인관계 갈등</li>
+                                    <li>• 자존감 저하, 정체성 혼란, 트라우마(외상 후 스트레스) 치유</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <!-- Process Table -->
+                        <div class="mb-8 border border-brand-green/40 rounded-2xl overflow-hidden">
+                            <table class="w-full text-left text-sm">
+                                <thead class="bg-brand-green/30 text-brand-brown font-bold border-b border-brand-green/30">
+                                    <tr>
+                                        <th class="py-3 px-4 w-16 text-center">단계</th>
+                                        <th class="py-3 px-4 w-36">구분</th>
+                                        <th class="py-3 px-4">주요 내용</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-brand-green/20 bg-white">
+                                    <tr>
+                                        <td class="py-3 px-4 text-center font-bold text-brand-sage">01</td>
+                                        <td class="py-3 px-4 font-bold text-brand-brown">초기 접수 & 면담</td>
+                                        <td class="py-3 px-4 text-brand-brown/80">주 호소 문제 파악, 상담 목표 설정 (필요시 심리검사 병행)</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="py-3 px-4 text-center font-bold text-brand-sage">02</td>
+                                        <td class="py-3 px-4 font-bold text-brand-brown">심리 평가 & 탐색</td>
+                                        <td class="py-3 px-4 text-brand-brown/80">인지적·정서적 패턴 분석, 문제의 근본 원인 탐색</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="py-3 px-4 text-center font-bold text-brand-sage">03</td>
+                                        <td class="py-3 px-4 font-bold text-brand-brown">집중 상담 & 개입</td>
+                                        <td class="py-3 px-4 text-brand-brown/80">개인 맞춤형 상담 기법 적용, 대처 전략 습득 및 행동 변화</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="py-3 px-4 text-center font-bold text-brand-sage">04</td>
+                                        <td class="py-3 px-4 font-bold text-brand-brown">종결 & 사후 관리</td>
+                                        <td class="py-3 px-4 text-brand-brown/80">상담 목표 달성도 평가, 변화 유지 및 재발 방지 전략 점검</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Guidelines -->
+                        <div class="grid sm:grid-cols-3 gap-4 pt-4 border-t border-brand-green/30">
+                            <div class="p-4 rounded-2xl bg-brand-beige/40">
+                                <div class="font-bold text-brand-sage text-xs mb-1">진행 방식</div>
+                                <div class="text-xs text-brand-brown/80">1:1 개인 상담 (대면 원칙 / 필요시 화상 상담 가능)</div>
+                            </div>
+                            <div class="p-4 rounded-2xl bg-brand-beige/40">
+                                <div class="font-bold text-brand-sage text-xs mb-1">상담 시간</div>
+                                <div class="text-xs text-brand-brown/80">1회 50분 진행 (주 1회 정기 진행 권장)</div>
+                            </div>
+                            <div class="p-4 rounded-2xl bg-brand-beige/40">
+                                <div class="font-bold text-brand-sage text-xs mb-1">비밀 보장</div>
+                                <div class="text-xs text-brand-brown/80">상담 윤리 규정에 따른 100% 철저한 비밀 보장</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="text-center mb-12">
+                        <h2 class="text-3xl font-serif font-bold text-brand-brown mb-4">전체 프로그램 목록</h2>
+                        <p class="text-brand-brown/60">맞춤형 심리 솔루션을 통해 마음의 회복을 돕습니다.</p>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <div class="bg-white p-8 rounded-3xl shadow-sm border border-brand-green/40 hover:shadow-xl transition-all">
+                            <span class="text-brand-sage bg-brand-green/30 px-3 py-1 rounded-full text-xs font-bold mb-4 inline-block">개인상담</span>
+                            <h3 class="text-2xl font-bold mb-4">청소년 및 성인 상담</h3>
+                            <p class="text-sm text-brand-brown/70 leading-relaxed mb-6">우울, 불안, 스트레스 등 개인이 마주한 심리적 어려움을 심층적으로 다루고 성장을 지원합니다.</p>
+                            <div class="flex flex-wrap gap-2">
+                                <span class="bg-brand-beige px-2 py-1 rounded text-[10px] text-brand-brown/50">#청소년</span>
+                                <span class="bg-brand-beige px-2 py-1 rounded text-[10px] text-brand-brown/50">#성인</span>
+                                <span class="bg-brand-beige px-2 py-1 rounded text-[10px] text-brand-brown/50">#심리성장</span>
+                            </div>
+                        </div>
+                        <div class="bg-white p-8 rounded-3xl shadow-sm border border-brand-green/40 hover:shadow-xl transition-all">
+                            <span class="text-brand-sage bg-brand-green/30 px-3 py-1 rounded-full text-xs font-bold mb-4 inline-block">부부상담</span>
+                            <h3 class="text-2xl font-bold mb-4">부부 및 가족 관계 개선</h3>
+                            <p class="text-sm text-brand-brown/70 leading-relaxed mb-6">부부 갈등, 고착화된 의사소통 문제 해결을 통해 건강한 가족 시스템으로의 회복을 돕습니다.</p>
+                            <div class="flex flex-wrap gap-2">
+                                <span class="bg-brand-beige px-2 py-1 rounded text-[10px] text-brand-brown/50">#부부갈등</span>
+                                <span class="bg-brand-beige px-2 py-1 rounded text-[10px] text-brand-brown/50">#관계회복</span>
+                            </div>
+                        </div>
+                        <div class="bg-white p-8 rounded-3xl shadow-sm border border-brand-green/40 hover:shadow-xl transition-all">
+                            <span class="text-brand-sage bg-brand-green/30 px-3 py-1 rounded-full text-xs font-bold mb-4 inline-block">심리검사</span>
+                            <h3 class="text-2xl font-bold mb-4">종합 심리검사</h3>
+                            <p class="text-sm text-brand-brown/70 leading-relaxed mb-6">객관적인 지표를 활용해 현재의 심리적 상태와 성격 구조를 정밀하게 파악합니다.</p>
+                            <div class="flex flex-wrap gap-2">
+                                <span class="bg-brand-beige px-2 py-1 rounded text-[10px] text-brand-brown/50">#정밀진단</span>
+                                <span class="bg-brand-beige px-2 py-1 rounded text-[10px] text-brand-brown/50">#성격검사</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- Guide Section -->
+        <div x-show="activePage === 'guide'" x-transition>
+            <section id="guide" class="py-24 bg-white">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div class="text-center mb-16">
+                        <h2 class="text-3xl font-serif font-bold text-brand-brown mb-4">이용 안내</h2>
+                        <p class="text-brand-brown/60">처음 방문하시는 분들을 위한 가이드입니다.</p>
+                    </div>
+
+                    <div class="grid md:grid-cols-2 gap-12">
+                        <div class="space-y-6">
+                            <div class="flex gap-4 p-4 rounded-2xl bg-brand-beige/40 border border-brand-green/30">
+                                <div class="bg-brand-sage text-white text-xs font-bold px-2.5 py-1 rounded-full flex items-center justify-center shrink-0 h-7">STEP 1</div>
+                                <div>
+                                    <h4 class="font-bold text-base mb-1">상담 접수</h4>
+                                    <p class="text-sm text-brand-brown/70">홈페이지 또는 전화를 통해 편안하게 상담을 신청합니다.</p>
+                                </div>
+                            </div>
+                            <div class="flex gap-4 p-4 rounded-2xl bg-brand-beige/40 border border-brand-green/30">
+                                <div class="bg-brand-sage text-white text-xs font-bold px-2.5 py-1 rounded-full flex items-center justify-center shrink-0 h-7">STEP 2</div>
+                                <div>
+                                    <h4 class="font-bold text-base mb-1">초기 상담</h4>
+                                    <p class="text-sm text-brand-brown/70">현재 겪고 있는 어려움을 나누고 앞으로의 상담 목표를 설정합니다.</p>
+                                </div>
+                            </div>
+                            <div class="flex gap-4 p-4 rounded-2xl bg-brand-beige/40 border border-brand-green/30">
+                                <div class="bg-brand-sage text-white text-xs font-bold px-2.5 py-1 rounded-full flex items-center justify-center shrink-0 h-7">STEP 3</div>
+                                <div>
+                                    <h4 class="font-bold text-base mb-1">정기 상담</h4>
+                                    <p class="text-sm text-brand-brown/70">주 1회 정기적인 만남을 통해 심층적이고 체계적인 상담을 진행합니다.</p>
+                                </div>
+                            </div>
+                            <div class="flex gap-4 p-4 rounded-2xl bg-brand-beige/40 border border-brand-green/30">
+                                <div class="bg-brand-sage text-white text-xs font-bold px-2.5 py-1 rounded-full flex items-center justify-center shrink-0 h-7">STEP 4</div>
+                                <div>
+                                    <h4 class="font-bold text-base mb-1">상담 종결</h4>
+                                    <p class="text-sm text-brand-brown/70">긍정적인 마음의 변화를 확인하고 스스로 회복할 수 있는 힘을 다집니다.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-brand-beige rounded-3xl p-10 border border-brand-green">
+                            <h4 class="font-serif text-xl font-bold mb-6 flex items-center gap-2">
+                                <i data-lucide="clock" class="text-brand-sage"></i> 운영 시간
+                            </h4>
+                            <div class="space-y-4">
+                                <div class="flex justify-between border-b border-brand-brown/10 pb-2">
+                                    <span>월 - 금</span>
+                                    <span class="font-medium">10:00 - 20:00</span>
+                                </div>
+                                <div class="flex justify-between border-b border-brand-brown/10 pb-2">
+                                    <span>토요일</span>
+                                    <span class="font-medium">10:00 - 17:00</span>
+                                </div>
+                                <div class="flex justify-between text-brand-accent">
+                                    <span>일요일/공휴일</span>
+                                    <span class="font-bold">정기 휴무</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- Reservation Section -->
+        <div x-show="activePage === 'reservation'" x-transition>
+            <section id="reservation" class="py-24 bg-brand-beige/20">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div class="text-center mb-16">
+                        <h2 class="text-3xl font-serif font-bold text-brand-brown mb-4">예약 및 오시는 길</h2>
+                        <p class="text-brand-brown/60">궁금한 점이 있으시거나 예약을 원하시면 언제든 연락주세요.</p>
+                    </div>
+
+                    <div class="grid md:grid-cols-2 gap-12">
+                        <!-- Contact Form -->
+                        <div class="bg-white p-10 rounded-[40px] shadow-sm border border-brand-green/40">
+                            <form x-data="{ name: '', phone: '', message: '' }" @submit.prevent="alert('단일 파일 버전입니다. 실제 데이터는 전송되지 않으나 상담소로 연락주시기 바랍니다.')">
+                                <div class="space-y-6">
+                                    <div>
+                                        <label class="block text-sm font-bold mb-2">이름</label>
+                                        <input type="text" x-model="name" class="w-full px-5 py-4 rounded-xl border border-brand-green focus:border-brand-sage outline-none bg-brand-beige/20">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-bold mb-2">연락처</label>
+                                        <input type="tel" x-model="phone" class="w-full px-5 py-4 rounded-xl border border-brand-green focus:border-brand-sage outline-none bg-brand-beige/20" placeholder="010-0000-0000">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-bold mb-2">문의 내용</label>
+                                        <textarea x-model="message" class="w-full px-5 py-4 rounded-xl border border-brand-green focus:border-brand-sage outline-none bg-brand-beige/20 h-40"></textarea>
+                                    </div>
+                                    <button type="submit" class="w-full bg-brand-sage text-white py-5 rounded-xl font-bold">상담 문의하기</button>
+                                </div>
+                            </form>
+                        </div>
+
+                        <!-- Directions & Map -->
+                        <div class="space-y-8">
+                            <div class="bg-brand-green/30 p-8 rounded-3xl border border-brand-sage/20">
+                                <h4 class="font-bold flex items-center gap-2 mb-4"><i data-lucide="map-pin" class="text-brand-sage"></i> 주소</h4>
+                                <p class="text-brand-brown/80">울산광역시 울주군 삼남읍 도호1길 23 상가 408호</p>
+                            </div>
+                            <div class="bg-brand-green/30 p-8 rounded-3xl border border-brand-sage/20">
+                                <h4 class="font-bold flex items-center gap-2 mb-4"><i data-lucide="phone" class="text-brand-sage"></i> 연락처</h4>
+                                <p class="text-brand-brown/80 mb-2">전화: 052-254-0230</p>
+                                <p class="text-brand-brown/80">이메일: mikypa@naver.com</p>
+                            </div>
+                            <div class="h-64 rounded-3xl bg-brand-green border border-brand-green flex items-center justify-center text-brand-brown/40 relative overflow-hidden">
+                                <img src="https://picsum.photos/seed/map/400/300" class="w-full h-full object-cover grayscale opacity-50" alt="Map Placeholder">
+                                <span class="absolute p-4 glass-morphism rounded-xl font-bold">지도는 온라인 모드에서 확인 가능합니다</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-brand-brown text-brand-beige py-20 mt-auto">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex flex-col md:flex-row justify-between items-center gap-8 mb-12">
+                <div class="text-center md:text-left">
+                    <h3 class="font-serif text-3xl font-bold mb-2">행복바람<span class="text-brand-sage/70">심리상담연구소</span></h3>
+                    <p class="text-brand-beige/60 text-sm">마음의 평온을 함께 찾아갑니다</p>
+                </div>
+                <div class="flex gap-6">
+                    <a href="#" class="text-brand-beige/40 hover:text-brand-sage transition-colors">이용약관</a>
+                    <a href="#" class="text-brand-beige/40 hover:text-brand-sage transition-colors">개인정보처리방침</a>
+                </div>
+            </div>
+            <div class="border-t border-brand-beige/10 pt-10 text-center">
+                <p class="text-brand-beige/30 text-xs leading-relaxed">
+                    © 2026 행복바람심리상담연구소 (www.hbbr.kr) <br>
+                    울산광역시 울주군 삼남읍 도호1길 23 상가 408호 | 대표번호 052-254-0230 <br>
+                    All rights reserved.
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Initialize Lucide icons
+        lucide.createIcons();
+        
+        // Navigation Handler
+        window.addEventListener('hashchange', () => {
+            const hash = window.location.hash.replace('#', '');
+            if (['about', 'counselors', 'programs', 'guide', 'reservation'].includes(hash)) {
+                // Alpine will handle the switch if managed properly, but let's sync
+                window.dispatchEvent(new CustomEvent('nav-page', { detail: hash }));
+            }
+        });
+    </script>
+</body>
+</html>
