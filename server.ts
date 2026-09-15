@@ -2,6 +2,7 @@ import express from "express";
 import { createServer as createViteServer } from "vite";
 import Database from "better-sqlite3";
 import path from "path";
+import fs from "fs";
 import { fileURLToPath } from "url";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -52,17 +53,21 @@ db.exec(`
 `);
 
 // Seed data
-db.exec("DELETE FROM counselors");
-const insertCounselor = db.prepare("INSERT INTO counselors (name, title, education, certifications, style, tags, image_url) VALUES (?, ?, ?, ?, ?, ?, ?)");
-insertCounselor.run(
-  "박미경", 
-  "상담 소장", 
-  "교육학 박사(상담 심리 및 교육 심리 전공)", 
-  "한국상담학회 슈퍼바이저\n한국상담학회 전문상담사 1급\n여성가족부 청소년상담사 1급\n한국상담심리학회 정회원\n한국부부가족상담학회 정회원", 
-  "개인 상담/기업 상담(EAP)/집단 상담/심리 검사/교육 전문", 
-  "#개인상담 #기업상담 #집단상담 #심리검사 #교육전문", 
-  "https://images.unsplash.com/photo-1559839734-2b71f1536783?q=80&w=600&auto=format&fit=crop"
-);
+const existingCounselor = db.prepare("SELECT * FROM counselors WHERE name = ?").get("박미경") as any;
+if (!existingCounselor) {
+  const insertCounselor = db.prepare("INSERT INTO counselors (name, title, education, certifications, style, tags, image_url) VALUES (?, ?, ?, ?, ?, ?, ?)");
+  insertCounselor.run(
+    "박미경", 
+    "상담 소장", 
+    "교육학 박사(상담 심리 및 교육 심리 전공)", 
+    "한국상담학회 슈퍼바이저\n한국상담학회 전문상담사 1급\n여성가족부 청소년상담사 1급\n한국상담심리학회 정회원\n한국부부가족상담학회 정회원", 
+    "개인 상담/기업 상담(EAP)/집단 상담/심리 검사/교육 전문", 
+    "#개인상담 #기업상담 #집단상담 #심리검사 #교육전문", 
+    "/images/counselor_park.jpg"
+  );
+} else {
+  db.prepare("UPDATE counselors SET image_url = ? WHERE name = ?").run("/images/counselor_park.jpg", "박미경");
+}
 
 // Seed data
 db.exec("DELETE FROM programs");
@@ -77,12 +82,169 @@ async function startServer() {
   const app = express();
   const PORT = 3000;
 
-  app.use(express.json());
+  app.use(express.json({ limit: "30mb" }));
+  app.use(express.urlencoded({ extended: true, limit: "30mb" }));
 
   // API Routes
   app.get("/api/counselors", (req, res) => {
     const counselors = db.prepare("SELECT * FROM counselors").all();
     res.json(counselors);
+  });
+
+  app.post("/api/counselors/:id/image", (req, res) => {
+    const { id } = req.params;
+    const { imageBase64, filename } = req.body;
+
+    if (!imageBase64) {
+      return res.status(400).json({ error: "이미지 데이터가 전달되지 않았습니다." });
+    }
+
+    try {
+      const publicDir = path.join(process.cwd(), "public");
+      const imagesDir = path.join(publicDir, "images");
+      if (!fs.existsSync(imagesDir)) {
+        fs.mkdirSync(imagesDir, { recursive: true });
+      }
+
+      const matches = imageBase64.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
+      const buffer = matches ? Buffer.from(matches[2], "base64") : Buffer.from(imageBase64, "base64");
+
+      const safeFilename = filename ? filename.replace(/[^a-zA-Z0-9._-]/g, "_") : "counselor_park.jpg";
+      const filePath = path.join(imagesDir, safeFilename);
+      fs.writeFileSync(filePath, buffer);
+
+      // Also ensure standard counselor_park.jpg is updated
+      const defaultPath = path.join(imagesDir, "counselor_park.jpg");
+      fs.writeFileSync(defaultPath, buffer);
+
+      const imageUrl = `/images/${safeFilename}`;
+      db.prepare("UPDATE counselors SET image_url = ? WHERE id = ?").run(imageUrl, id);
+
+      res.json({ success: true, image_url: imageUrl });
+    } catch (err: any) {
+      console.error("Failed to save image:", err);
+      res.status(500).json({ error: "이미지 저장에 실패했습니다." });
+    }
+  });
+
+  // Welcome tea image upload endpoint
+  app.post("/api/welcome-tea/image", (req, res) => {
+    const { imageBase64, filename } = req.body;
+
+    if (!imageBase64) {
+      return res.status(400).json({ error: "이미지 데이터가 전달되지 않았습니다." });
+    }
+
+    try {
+      const publicDir = path.join(process.cwd(), "public");
+      const imagesDir = path.join(publicDir, "images");
+      if (!fs.existsSync(imagesDir)) {
+        fs.mkdirSync(imagesDir, { recursive: true });
+      }
+
+      const matches = imageBase64.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
+      const buffer = matches ? Buffer.from(matches[2], "base64") : Buffer.from(imageBase64, "base64");
+
+      const safeFilename = filename ? filename.replace(/[^a-zA-Z0-9._-]/g, "_") : "KakaoTalk_20260915_105726433_01.jpg";
+      const filePath = path.join(imagesDir, safeFilename);
+      fs.writeFileSync(filePath, buffer);
+
+      // Also ensure standard welcome_tea.jpg is updated
+      const defaultPath = path.join(imagesDir, "welcome_tea.jpg");
+      fs.writeFileSync(defaultPath, buffer);
+
+      // If dist/images exists, update it too
+      const distImagesDir = path.join(process.cwd(), "dist", "images");
+      if (fs.existsSync(distImagesDir)) {
+        fs.writeFileSync(path.join(distImagesDir, safeFilename), buffer);
+        fs.writeFileSync(path.join(distImagesDir, "welcome_tea.jpg"), buffer);
+      }
+
+      res.json({ success: true, image_url: `/images/${safeFilename}` });
+    } catch (err: any) {
+      console.error("Failed to save welcome tea image:", err);
+      res.status(500).json({ error: "이미지 저장에 실패했습니다." });
+    }
+  });
+
+  // Counseling room image upload endpoint
+  app.post("/api/counseling-room/image", (req, res) => {
+    const { imageBase64, filename } = req.body;
+
+    if (!imageBase64) {
+      return res.status(400).json({ error: "이미지 데이터가 전달되지 않았습니다." });
+    }
+
+    try {
+      const publicDir = path.join(process.cwd(), "public");
+      const imagesDir = path.join(publicDir, "images");
+      if (!fs.existsSync(imagesDir)) {
+        fs.mkdirSync(imagesDir, { recursive: true });
+      }
+
+      const matches = imageBase64.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
+      const buffer = matches ? Buffer.from(matches[2], "base64") : Buffer.from(imageBase64, "base64");
+
+      const safeFilename = filename ? filename.replace(/[^a-zA-Z0-9._-]/g, "_") : "KakaoTalk_20260908_110704420_01.jpg";
+      const filePath = path.join(imagesDir, safeFilename);
+      fs.writeFileSync(filePath, buffer);
+
+      // Also ensure standard counseling_room.jpg is updated
+      const defaultPath = path.join(imagesDir, "counseling_room.jpg");
+      fs.writeFileSync(defaultPath, buffer);
+
+      // If dist/images exists, update it too
+      const distImagesDir = path.join(process.cwd(), "dist", "images");
+      if (fs.existsSync(distImagesDir)) {
+        fs.writeFileSync(path.join(distImagesDir, safeFilename), buffer);
+        fs.writeFileSync(path.join(distImagesDir, "counseling_room.jpg"), buffer);
+      }
+
+      res.json({ success: true, image_url: `/images/${safeFilename}` });
+    } catch (err: any) {
+      console.error("Failed to save counseling room image:", err);
+      res.status(500).json({ error: "이미지 저장에 실패했습니다." });
+    }
+  });
+
+  // Healing space image upload endpoint
+  app.post("/api/healing-space/image", (req, res) => {
+    const { imageBase64, filename } = req.body;
+
+    if (!imageBase64) {
+      return res.status(400).json({ error: "이미지 데이터가 전달되지 않았습니다." });
+    }
+
+    try {
+      const publicDir = path.join(process.cwd(), "public");
+      const imagesDir = path.join(publicDir, "images");
+      if (!fs.existsSync(imagesDir)) {
+        fs.mkdirSync(imagesDir, { recursive: true });
+      }
+
+      const matches = imageBase64.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
+      const buffer = matches ? Buffer.from(matches[2], "base64") : Buffer.from(imageBase64, "base64");
+
+      const safeFilename = filename ? filename.replace(/[^a-zA-Z0-9._-]/g, "_") : "KakaoTalk_20260915_113754890_01.jpg";
+      const filePath = path.join(imagesDir, safeFilename);
+      fs.writeFileSync(filePath, buffer);
+
+      // Also ensure standard healing_space.jpg is updated
+      const defaultPath = path.join(imagesDir, "healing_space.jpg");
+      fs.writeFileSync(defaultPath, buffer);
+
+      // If dist/images exists, update it too
+      const distImagesDir = path.join(process.cwd(), "dist", "images");
+      if (fs.existsSync(distImagesDir)) {
+        fs.writeFileSync(path.join(distImagesDir, safeFilename), buffer);
+        fs.writeFileSync(path.join(distImagesDir, "healing_space.jpg"), buffer);
+      }
+
+      res.json({ success: true, image_url: `/images/${safeFilename}` });
+    } catch (err: any) {
+      console.error("Failed to save healing space image:", err);
+      res.status(500).json({ error: "이미지 저장에 실패했습니다." });
+    }
   });
 
   app.get("/api/programs", (req, res) => {

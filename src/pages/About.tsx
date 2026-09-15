@@ -12,7 +12,8 @@ import {
   HeartHandshake, 
   ShieldAlert, 
   Briefcase,
-  Layers
+  Layers,
+  Camera
 } from 'lucide-react';
 
 interface Partner {
@@ -101,6 +102,123 @@ const partners: Partner[] = [
 ];
 
 export default function About() {
+  const [teaImageUrl, setTeaImageUrl] = React.useState('/images/KakaoTalk_20260915_105726433_01.jpg');
+  const [uploading, setUploading] = React.useState(false);
+  const [uploadStatus, setUploadStatus] = React.useState<{ text: string; type: 'success' | 'error' } | null>(null);
+
+  const [roomImageUrl, setRoomImageUrl] = React.useState('/images/KakaoTalk_20260908_110704420_01.jpg');
+  const [uploadingRoom, setUploadingRoom] = React.useState(false);
+  const [roomUploadStatus, setRoomUploadStatus] = React.useState<{ text: string; type: 'success' | 'error' } | null>(null);
+
+  const [spaceImageUrl, setSpaceImageUrl] = React.useState('/images/KakaoTalk_20260915_113754890_01.jpg');
+  const [uploadingSpace, setUploadingSpace] = React.useState(false);
+  const [spaceUploadStatus, setSpaceUploadStatus] = React.useState<{ text: string; type: 'success' | 'error' } | null>(null);
+
+  const handleTeaImageUpload = async (file: File) => {
+    if (!file || !file.type.startsWith('image/')) return;
+    setUploading(true);
+    setUploadStatus(null);
+
+    const reader = new FileReader();
+    reader.onload = async () => {
+      try {
+        const base64Data = reader.result as string;
+        const res = await fetch('/api/welcome-tea/image', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            imageBase64: base64Data,
+            filename: file.name
+          })
+        });
+
+        if (res.ok) {
+          const result = await res.json();
+          setTeaImageUrl(`${result.image_url}?t=${Date.now()}`);
+          setUploadStatus({ text: '웰컴 티 이미지가 변경되었습니다.', type: 'success' });
+          setTimeout(() => setUploadStatus(null), 4000);
+        } else {
+          setUploadStatus({ text: '이미지 업로드에 실패했습니다.', type: 'error' });
+        }
+      } catch {
+        setUploadStatus({ text: '이미지 업로드 중 오류가 발생했습니다.', type: 'error' });
+      } finally {
+        setUploading(false);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleRoomImageUpload = async (file: File) => {
+    if (!file || !file.type.startsWith('image/')) return;
+    setUploadingRoom(true);
+    setRoomUploadStatus(null);
+
+    const reader = new FileReader();
+    reader.onload = async () => {
+      try {
+        const base64Data = reader.result as string;
+        const res = await fetch('/api/counseling-room/image', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            imageBase64: base64Data,
+            filename: file.name
+          })
+        });
+
+        if (res.ok) {
+          const result = await res.json();
+          setRoomImageUrl(`${result.image_url}?t=${Date.now()}`);
+          setRoomUploadStatus({ text: '1:1 개인 심리상담실 이미지가 변경되었습니다.', type: 'success' });
+          setTimeout(() => setRoomUploadStatus(null), 4000);
+        } else {
+          setRoomUploadStatus({ text: '이미지 업로드에 실패했습니다.', type: 'error' });
+        }
+      } catch {
+        setRoomUploadStatus({ text: '이미지 업로드 중 오류가 발생했습니다.', type: 'error' });
+      } finally {
+        setUploadingRoom(false);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleSpaceImageUpload = async (file: File) => {
+    if (!file || !file.type.startsWith('image/')) return;
+    setUploadingSpace(true);
+    setSpaceUploadStatus(null);
+
+    const reader = new FileReader();
+    reader.onload = async () => {
+      try {
+        const base64Data = reader.result as string;
+        const res = await fetch('/api/healing-space/image', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            imageBase64: base64Data,
+            filename: file.name
+          })
+        });
+
+        if (res.ok) {
+          const result = await res.json();
+          setSpaceImageUrl(`${result.image_url}?t=${Date.now()}`);
+          setSpaceUploadStatus({ text: '자연 채광과 힐링 쉼터 이미지가 변경되었습니다.', type: 'success' });
+          setTimeout(() => setSpaceUploadStatus(null), 4000);
+        } else {
+          setSpaceUploadStatus({ text: '이미지 업로드에 실패했습니다.', type: 'error' });
+        }
+      } catch {
+        setSpaceUploadStatus({ text: '이미지 업로드 중 오류가 발생했습니다.', type: 'error' });
+      } finally {
+        setUploadingSpace(false);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
   return (
     <div className="min-h-screen bg-white">
       {/* Hero Section */}
@@ -146,21 +264,64 @@ export default function About() {
             <motion.div 
               whileHover={{ y: -6 }} 
               transition={{ duration: 0.3 }}
-              className="bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-xl border border-brand-green/30 transition-all flex flex-col group"
+              className="bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-xl border border-brand-green/30 transition-all flex flex-col group relative"
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={(e) => {
+                e.preventDefault();
+                const file = e.dataTransfer.files?.[0];
+                if (file) handleTeaImageUpload(file);
+              }}
             >
-              <div className="h-64 relative overflow-hidden">
+              <div className="h-64 relative overflow-hidden bg-brand-beige/20">
                 <img 
-                  src="https://images.unsplash.com/photo-1544787219-7f47ccb76574?q=80&w=800&auto=format&fit=crop" 
-                  alt="투명한 유리잔의 따뜻한 웰컴 티와 정갈한 수제 다과" 
+                  src={teaImageUrl} 
+                  alt="따뜻한 웰컴 티와 정갈한 다과 세트" 
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
                   referrerPolicy="no-referrer" 
+                  onError={(e) => {
+                    const target = e.currentTarget;
+                    if (!target.src.includes('welcome_tea.jpg')) {
+                      target.src = '/images/welcome_tea.jpg';
+                    }
+                  }}
                 />
+
+                {/* Change Photo Overlay Button */}
+                <div className="absolute top-3 right-3 z-10">
+                  <label 
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-white/95 hover:bg-white text-brand-brown text-xs font-semibold rounded-full shadow-md cursor-pointer border border-brand-green/30 backdrop-blur-sm transition-all hover:scale-105"
+                    title="첨부하신 다과 이미지로 변경 또는 업로드"
+                  >
+                    <Camera className="w-3.5 h-3.5 text-brand-sage" />
+                    <span>{uploading ? '변경 중...' : '사진 변경'}</span>
+                    <input 
+                      type="file" 
+                      accept="image/*" 
+                      className="hidden" 
+                      disabled={uploading}
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) handleTeaImageUpload(file);
+                      }}
+                    />
+                  </label>
+                </div>
+
+                {uploadStatus && (
+                  <div className={`absolute bottom-3 left-3 right-3 py-1.5 px-3 rounded-lg text-xs font-medium text-center shadow-lg transition-all backdrop-blur-md z-20 ${
+                    uploadStatus.type === 'success' 
+                      ? 'bg-emerald-600/95 text-white border border-emerald-400/30' 
+                      : 'bg-red-600/95 text-white border border-red-400/30'
+                  }`}>
+                    {uploadStatus.text}
+                  </div>
+                )}
               </div>
               <div className="p-6 flex-1 flex flex-col justify-between">
                 <div>
-                  <h3 className="text-lg font-bold text-brand-brown mb-2">웰컴 티 & 정갈한 다과</h3>
+                  <h3 className="text-lg font-bold text-brand-brown mb-2">웰컴 티 &amp; 정갈한 다과</h3>
                   <p className="text-sm text-brand-brown/70 leading-relaxed font-serif">
-                    상담 전 긴장을 부드럽게 완화해주는 투명한 잔의 맑은 웰컴 티와, 원목 트레이에 정갈하게 놓인 수제 다과가 준비된 편안한 쉼의 공간입니다.
+                    상담 전 긴장을 부드럽게 완화해주는 향긋한 웰컴 티와, 정갈하게 준비된 다과로 온전한 쉼과 평온을 전해드립니다.
                   </p>
                 </div>
               </div>
@@ -170,15 +331,58 @@ export default function About() {
             <motion.div 
               whileHover={{ y: -6 }} 
               transition={{ duration: 0.3 }}
-              className="bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-xl border border-brand-green/30 transition-all flex flex-col md:translate-y-4"
+              className="bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-xl border border-brand-green/30 transition-all flex flex-col md:translate-y-4 group relative"
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={(e) => {
+                e.preventDefault();
+                const file = e.dataTransfer.files?.[0];
+                if (file) handleRoomImageUpload(file);
+              }}
             >
-              <div className="h-64 relative overflow-hidden">
+              <div className="h-64 relative overflow-hidden bg-brand-beige/20">
                 <img 
-                  src="https://images.unsplash.com/photo-1586023492125-27b2c045efd7?q=80&w=800&auto=format&fit=crop" 
-                  alt="아늑하고 안전한 1:1 맞춤 상담실" 
+                  src={roomImageUrl} 
+                  alt="아늑하고 안전한 1:1 개인 심리상담실" 
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
                   referrerPolicy="no-referrer" 
+                  onError={(e) => {
+                    const target = e.currentTarget;
+                    if (!target.src.includes('counseling_room.jpg')) {
+                      target.src = '/images/counseling_room.jpg';
+                    }
+                  }}
                 />
+
+                {/* Change Photo Overlay Button */}
+                <div className="absolute top-3 right-3 z-10">
+                  <label 
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-white/95 hover:bg-white text-brand-brown text-xs font-semibold rounded-full shadow-md cursor-pointer border border-brand-green/30 backdrop-blur-sm transition-all hover:scale-105"
+                    title="첨부하신 상담실 사진으로 변경 또는 드래그 앤 드롭"
+                  >
+                    <Camera className="w-3.5 h-3.5 text-brand-sage" />
+                    <span>{uploadingRoom ? '변경 중...' : '사진 변경'}</span>
+                    <input 
+                      type="file" 
+                      accept="image/*" 
+                      className="hidden" 
+                      disabled={uploadingRoom}
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) handleRoomImageUpload(file);
+                      }}
+                    />
+                  </label>
+                </div>
+
+                {roomUploadStatus && (
+                  <div className={`absolute bottom-3 left-3 right-3 py-1.5 px-3 rounded-lg text-xs font-medium text-center shadow-lg transition-all backdrop-blur-md z-20 ${
+                    roomUploadStatus.type === 'success' 
+                      ? 'bg-emerald-600/95 text-white border border-emerald-400/30' 
+                      : 'bg-red-600/95 text-white border border-red-400/30'
+                  }`}>
+                    {roomUploadStatus.text}
+                  </div>
+                )}
               </div>
               <div className="p-6 flex-1 flex flex-col justify-between">
                 <div>
@@ -194,15 +398,58 @@ export default function About() {
             <motion.div 
               whileHover={{ y: -6 }} 
               transition={{ duration: 0.3 }}
-              className="bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-xl border border-brand-green/30 transition-all flex flex-col"
+              className="bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-xl border border-brand-green/30 transition-all flex flex-col group relative"
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={(e) => {
+                e.preventDefault();
+                const file = e.dataTransfer.files?.[0];
+                if (file) handleSpaceImageUpload(file);
+              }}
             >
-              <div className="h-64 relative overflow-hidden">
+              <div className="h-64 relative overflow-hidden bg-brand-beige/20">
                 <img 
-                  src="https://images.unsplash.com/photo-1513694203232-719a280e022f?q=80&w=800&auto=format&fit=crop" 
-                  alt="사계절의 평온이 머무는 휴식 공간" 
+                  src={spaceImageUrl} 
+                  alt="자연 채광과 힐링 쉼터" 
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
                   referrerPolicy="no-referrer" 
+                  onError={(e) => {
+                    const target = e.currentTarget;
+                    if (!target.src.includes('healing_space.jpg')) {
+                      target.src = '/images/healing_space.jpg';
+                    }
+                  }}
                 />
+
+                {/* Change Photo Overlay Button */}
+                <div className="absolute top-3 right-3 z-10">
+                  <label 
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-white/95 hover:bg-white text-brand-brown text-xs font-semibold rounded-full shadow-md cursor-pointer border border-brand-green/30 backdrop-blur-sm transition-all hover:scale-105"
+                    title="첨부하신 힐링 쉼터 사진으로 변경 또는 드래그 앤 드롭"
+                  >
+                    <Camera className="w-3.5 h-3.5 text-brand-sage" />
+                    <span>{uploadingSpace ? '변경 중...' : '사진 변경'}</span>
+                    <input 
+                      type="file" 
+                      accept="image/*" 
+                      className="hidden" 
+                      disabled={uploadingSpace}
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) handleSpaceImageUpload(file);
+                      }}
+                    />
+                  </label>
+                </div>
+
+                {spaceUploadStatus && (
+                  <div className={`absolute bottom-3 left-3 right-3 py-1.5 px-3 rounded-lg text-xs font-medium text-center shadow-lg transition-all backdrop-blur-md z-20 ${
+                    spaceUploadStatus.type === 'success' 
+                      ? 'bg-emerald-600/95 text-white border border-emerald-400/30' 
+                      : 'bg-red-600/95 text-white border border-red-400/30'
+                  }`}>
+                    {spaceUploadStatus.text}
+                  </div>
+                )}
               </div>
               <div className="p-6 flex-1 flex flex-col justify-between">
                 <div>

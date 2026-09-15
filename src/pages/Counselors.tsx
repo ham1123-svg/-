@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'motion/react';
-import { Search, Award, Sparkles, CheckCircle2, ArrowRight } from 'lucide-react';
+import { Search, Award, Sparkles, CheckCircle2, ArrowRight, Camera, Upload, Check } from 'lucide-react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { Counselor } from '../types';
 
@@ -10,15 +10,78 @@ export default function Counselors() {
   const [counselors, setCounselors] = useState<Counselor[]>([]);
   const [searchTerm, setSearchTerm] = useState(initialSearch);
   const [loading, setLoading] = useState(true);
+  const [uploadingId, setUploadingId] = useState<number | null>(null);
+  const [uploadMessage, setUploadMessage] = useState<{ id: number; text: string; type: 'success' | 'error' } | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [activeCounselorId, setActiveCounselorId] = useState<number | null>(null);
 
   useEffect(() => {
+    fetchCounselors();
+  }, []);
+
+  const fetchCounselors = () => {
     fetch('/api/counselors')
       .then(res => res.json())
       .then(data => {
         setCounselors(data);
         setLoading(false);
-      });
-  }, []);
+      })
+      .catch(() => setLoading(false));
+  };
+
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>, counselorId: number) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    await uploadImageFile(file, counselorId);
+  };
+
+  const uploadImageFile = async (file: File, counselorId: number) => {
+    setUploadingId(counselorId);
+    setUploadMessage(null);
+
+    const reader = new FileReader();
+    reader.onload = async () => {
+      try {
+        const base64Data = reader.result as string;
+        const res = await fetch(`/api/counselors/${counselorId}/image`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            imageBase64: base64Data,
+            filename: file.name
+          })
+        });
+
+        if (res.ok) {
+          const result = await res.json();
+          setCounselors(prev =>
+            prev.map(c => c.id === counselorId ? { ...c, image_url: result.image_url } : c)
+          );
+          setUploadMessage({
+            id: counselorId,
+            text: '프로필 사진이 성공적으로 변경되었습니다.',
+            type: 'success'
+          });
+          setTimeout(() => setUploadMessage(null), 4000);
+        } else {
+          setUploadMessage({
+            id: counselorId,
+            text: '사진 업로드에 실패했습니다. 다시 시도해주세요.',
+            type: 'error'
+          });
+        }
+      } catch (err) {
+        setUploadMessage({
+          id: counselorId,
+          text: '사진 업로드 중 오류가 발생했습니다.',
+          type: 'error'
+        });
+      } finally {
+        setUploadingId(null);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
 
   const filteredCounselors = counselors.filter(c => 
     c.name.includes(searchTerm) || 
@@ -74,14 +137,60 @@ export default function Counselors() {
                   viewport={{ once: true }}
                   className="bg-white rounded-3xl overflow-hidden shadow-xl border border-brand-green/20 flex flex-col md:flex-row"
                 >
-                  {/* Left: Profile Image & Badges */}
-                  <div className="md:w-5/12 min-h-[340px] md:min-h-[440px] relative bg-brand-beige/40">
+                  {/* Left: Profile Image & Badges & Photo Change */}
+                  <div 
+                    className="md:w-5/12 min-h-[340px] md:min-h-[440px] relative bg-brand-beige/40 group overflow-hidden"
+                    onDragOver={(e) => e.preventDefault()}
+                    onDrop={async (e) => {
+                      e.preventDefault();
+                      const file = e.dataTransfer.files?.[0];
+                      if (file && file.type.startsWith('image/')) {
+                        await uploadImageFile(file, counselor.id);
+                      }
+                    }}
+                  >
                     <img 
                       src={counselor.image_url} 
                       alt={counselor.name} 
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                       referrerPolicy="no-referrer"
+                      onError={(e) => {
+                        const target = e.currentTarget;
+                        if (!target.src.includes('unsplash.com')) {
+                          target.src = 'https://images.unsplash.com/photo-1559839734-2b71f1536783?q=80&w=600&auto=format&fit=crop';
+                        }
+                      }}
                     />
+
+                    {/* Change Photo Overlay Button */}
+                    <div className="absolute top-4 right-4 z-10">
+                      <label 
+                        className="flex items-center gap-1.5 px-3 py-1.5 bg-white/95 hover:bg-white text-brand-brown text-xs font-semibold rounded-full shadow-md cursor-pointer border border-brand-green/30 backdrop-blur-sm transition-all hover:scale-105"
+                        title="첨부하신 프로필 사진으로 변경하기"
+                      >
+                        <Camera className="w-3.5 h-3.5 text-brand-sage" />
+                        <span>{uploadingId === counselor.id ? '변경 중...' : '사진 변경'}</span>
+                        <input 
+                          type="file" 
+                          accept="image/*" 
+                          className="hidden" 
+                          disabled={uploadingId === counselor.id}
+                          onChange={(e) => handleFileSelect(e, counselor.id)}
+                        />
+                      </label>
+                    </div>
+
+                    {/* Status Message */}
+                    {uploadMessage && uploadMessage.id === counselor.id && (
+                      <div className={`absolute top-14 left-4 right-4 z-10 px-3 py-2 rounded-xl text-xs font-medium text-center shadow-lg backdrop-blur-md ${
+                        uploadMessage.type === 'success' 
+                          ? 'bg-brand-sage text-white' 
+                          : 'bg-red-500 text-white'
+                      }`}>
+                        {uploadMessage.text}
+                      </div>
+                    )}
+
                     <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent md:hidden" />
                     <div className="absolute bottom-4 left-4 right-4 flex flex-wrap gap-1.5">
                       {counselor.tags.split(' ').filter(Boolean).map(tag => (
