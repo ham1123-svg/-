@@ -26,6 +26,8 @@ interface ColumnArticle {
   date: string;
   category: string;
   image: string;
+  detailImage?: string;
+  imageCaption?: string;
   summary: string;
   readTime: string;
   sections: {
@@ -68,7 +70,9 @@ const columns: ColumnArticle[] = [
     authorTitle: "행복바람심리상담연구소 소장",
     date: "2026.09.15",
     category: "아동/청소년",
-    image: "https://images.unsplash.com/photo-1503454537195-1dcabb73ffb9?auto=format&fit=crop&q=80&w=800",
+    image: "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?auto=format&fit=crop&q=80&w=600&h=600",
+    detailImage: "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?auto=format&fit=crop&q=80&w=1200&h=675",
+    imageCaption: "아이의 산만함을 깊이 이해하고 건강한 집중과 성장을 돕는 학습·심리 환경",
     readTime: "5분 읽기",
     summary: "아이의 산만함은 발달적 특성일까요, 아니면 전문가의 개입이 필요한 ADHD일까요? 감별의 3대 핵심 기준과 숨겨진 심리적 원인, 가정에서 실천하는 양육 솔루션을 정리해 드립니다.",
     sections: [
@@ -148,7 +152,9 @@ const columns: ColumnArticle[] = [
     authorTitle: "행복바람심리상담연구소 소장",
     date: "2026.08.28",
     category: "성인/직장인",
-    image: "https://images.unsplash.com/photo-1506126613408-eca07ce68773?auto=format&fit=crop&q=80&w=800",
+    image: "https://images.unsplash.com/photo-1545205597-3d9d02c29597?auto=format&fit=crop&q=80&w=600&h=600",
+    detailImage: "https://images.unsplash.com/photo-1545205597-3d9d02c29597?auto=format&fit=crop&q=80&w=1200&h=675",
+    imageCaption: "지친 일상에 깊은 쉼과 회복을 선물하는 마음챙김 명상과 자기 자비",
     readTime: "4분 읽기",
     summary: "끝없는 피로감과 무기력에 지친 직장인을 위한 심리학적 처방전. 신체 감각 인지부터 자기 자비(Self-Compassion)까지 일상 회복의 단계를 전합니다.",
     sections: [
@@ -184,7 +190,9 @@ const columns: ColumnArticle[] = [
     authorTitle: "행복바람심리상담연구소 소장",
     date: "2026.08.10",
     category: "부부/가족",
-    image: "https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?auto=format&fit=crop&q=80&w=800",
+    image: "https://images.unsplash.com/photo-1522543558187-768b6df7c25c?auto=format&fit=crop&q=80&w=600&h=600",
+    detailImage: "https://images.unsplash.com/photo-1522543558187-768b6df7c25c?auto=format&fit=crop&q=80&w=1200&h=675",
+    imageCaption: "비난과 방어를 멈추고 서로의 마음에 따뜻하게 닿는 부부 비폭력 대화",
     readTime: "4분 읽기",
     summary: "서로에게 상처를 주는 비난의 대화를 멈추고, '관찰-느낌-욕구-부탁'의 4단계 비폭력 대화로 진심을 전하는 부부 관계 회복 가이드입니다.",
     sections: [
@@ -478,13 +486,21 @@ export default function Community() {
                 </div>
 
                 {/* Hero Cover Image */}
-                <div className="rounded-2xl overflow-hidden shadow-sm max-h-80">
+                <div className="relative rounded-2xl overflow-hidden shadow-sm border border-brand-green/20 bg-brand-beige/30 aspect-[16/9] w-full">
                   <img
-                    src={activeArticle.image}
+                    src={activeArticle.detailImage || activeArticle.image}
                     alt={activeArticle.title}
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-cover object-center"
                     referrerPolicy="no-referrer"
                   />
+                  {activeArticle.imageCaption && (
+                    <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-brand-brown/85 via-brand-brown/40 to-transparent p-4 sm:p-5 pt-8 sm:pt-10">
+                      <p className="text-xs sm:text-sm text-white/95 font-medium tracking-wide flex items-center gap-2">
+                        <span className="w-1.5 h-1.5 rounded-full bg-brand-sage shrink-0 inline-block" />
+                        {activeArticle.imageCaption}
+                      </p>
+                    </div>
+                  )}
                 </div>
 
                 {/* Article Sections */}
