@@ -4,12 +4,25 @@ import { Search, Award, Sparkles, CheckCircle2, ArrowRight } from 'lucide-react'
 import { useSearchParams, Link } from 'react-router-dom';
 import { Counselor } from '../types';
 
+const defaultCounselors: Counselor[] = [
+  {
+    id: 1,
+    name: "박미경",
+    title: "상담 소장",
+    education: "교육학 박사(상담 심리 및 교육 심리 전공)",
+    certifications: "한국상담학회 슈퍼바이저\n한국상담학회 전문상담사 1급\n여성가족부 청소년상담사 1급\n한국상담심리학회 정회원\n한국부부가족상담학회 정회원",
+    style: "개인 상담/기업 상담(EAP)/집단 상담/심리 검사/교육 전문",
+    tags: "#개인상담 #기업상담 #집단상담 #심리검사 #교육전문",
+    image_url: "/images/counselor_park.jpg"
+  }
+];
+
 export default function Counselors() {
   const [searchParams] = useSearchParams();
   const initialSearch = searchParams.get('search') || '';
-  const [counselors, setCounselors] = useState<Counselor[]>([]);
+  const [counselors, setCounselors] = useState<Counselor[]>(defaultCounselors);
   const [searchTerm, setSearchTerm] = useState(initialSearch);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     fetchCounselors();
@@ -19,10 +32,11 @@ export default function Counselors() {
     fetch('/api/counselors')
       .then(res => res.json())
       .then(data => {
-        setCounselors(data);
-        setLoading(false);
+        if (Array.isArray(data) && data.length > 0) {
+          setCounselors(data);
+        }
       })
-      .catch(() => setLoading(false));
+      .catch(() => {});
   };
 
   const filteredCounselors = counselors.filter(c => 
@@ -83,21 +97,24 @@ export default function Counselors() {
                   <div className="md:w-5/12 min-h-[340px] md:min-h-[440px] relative bg-brand-beige/40 group overflow-hidden">
                     <img 
                       src={counselor.image_url || '/images/counselor_park.jpg'} 
-                      alt={counselor.name} 
+                      alt={`${counselor.name} ${counselor.title || '상담사'}`} 
                       className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                      loading="eager"
+                      decoding="async"
                       referrerPolicy="no-referrer"
                       onError={(e) => {
                         const target = e.currentTarget;
-                        if (!target.src.includes('counselor_park.jpg')) {
+                        if (!target.src.endsWith('counselor_park.jpg')) {
                           target.src = '/images/counselor_park.jpg';
                         }
                       }}
                     />
 
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent md:hidden" />
-                    <div className="absolute bottom-4 left-4 right-4 flex flex-wrap gap-1.5">
+
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent md:hidden" />
+                    <div className="absolute bottom-4 left-4 right-4 flex flex-wrap gap-1.5 z-10">
                       {counselor.tags.split(' ').filter(Boolean).map(tag => (
-                        <span key={tag} className="px-2.5 py-1 bg-white/90 backdrop-blur-sm text-brand-brown text-xs font-medium rounded-full shadow-xs border border-brand-green/20">
+                        <span key={tag} className="px-2.5 py-1 bg-white/95 backdrop-blur-sm text-brand-brown text-xs font-medium rounded-full shadow-xs border border-brand-green/20">
                           {tag}
                         </span>
                       ))}

@@ -101,6 +101,11 @@ const partners: Partner[] = [
 ];
 
 export default function About() {
+  // 고정된 웹 최적화 공간 이미지 경로 (전 세계 초고속 및 불변 로딩)
+  const teaImageUrl = '/images/welcome_tea.jpg';
+  const roomImageUrl = '/images/counseling_room.jpg';
+  const spaceImageUrl = '/images/healing_space.jpg';
+
   return (
     <div className="min-h-screen bg-white">
       {/* Hero Section */}
@@ -150,10 +155,18 @@ export default function About() {
             >
               <div className="h-64 relative overflow-hidden bg-brand-beige/20">
                 <img 
-                  src="/images/welcome_tea.jpg" 
-                  alt="따뜻한 웰컴 티와 정갈한 수제 다과 세트" 
+                  src={teaImageUrl} 
+                  alt="따뜻한 웰컴 티와 정갈한 다과 세트" 
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
+                  loading="lazy"
+                  decoding="async"
                   referrerPolicy="no-referrer" 
+                  onError={(e) => {
+                    const target = e.currentTarget;
+                    if (!target.src.endsWith('welcome_tea.jpg')) {
+                      target.src = '/images/welcome_tea.jpg';
+                    }
+                  }}
                 />
               </div>
               <div className="p-6 flex-1 flex flex-col justify-between">
@@ -174,10 +187,18 @@ export default function About() {
             >
               <div className="h-64 relative overflow-hidden bg-brand-beige/20">
                 <img 
-                  src="/images/counseling_room.jpg" 
+                  src={roomImageUrl} 
                   alt="아늑하고 안전한 1:1 개인 심리상담실" 
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
+                  loading="lazy"
+                  decoding="async"
                   referrerPolicy="no-referrer" 
+                  onError={(e) => {
+                    const target = e.currentTarget;
+                    if (!target.src.endsWith('counseling_room.jpg')) {
+                      target.src = '/images/counseling_room.jpg';
+                    }
+                  }}
                 />
               </div>
               <div className="p-6 flex-1 flex flex-col justify-between">
@@ -198,15 +219,23 @@ export default function About() {
             >
               <div className="h-64 relative overflow-hidden bg-brand-beige/20">
                 <img 
-                  src="/images/healing_space.jpg" 
-                  alt="자연 채광과 힐링 쉼터" 
+                  src={spaceImageUrl} 
+                  alt="편안하고 싱그러운 힐링 쉼터" 
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
+                  loading="lazy"
+                  decoding="async"
                   referrerPolicy="no-referrer" 
+                  onError={(e) => {
+                    const target = e.currentTarget;
+                    if (!target.src.endsWith('healing_space.jpg')) {
+                      target.src = '/images/healing_space.jpg';
+                    }
+                  }}
                 />
               </div>
               <div className="p-6 flex-1 flex flex-col justify-between">
                 <div>
-                  <h3 className="text-lg font-bold text-brand-brown mb-2">자연 채광과 힐링 쉼터</h3>
+                  <h3 className="text-lg font-bold text-brand-brown mb-2">편안하고 싱그러운 힐링 쉼터</h3>
                   <p className="text-sm text-brand-brown/70 leading-relaxed font-serif">
                     부드러운 자연광과 싱그러운 반려 식물들이 조화를 이루어 지친 일상에 깊은 평온을 선사합니다.
                   </p>

@@ -85,6 +85,17 @@ async function startServer() {
   app.use(express.json({ limit: "30mb" }));
   app.use(express.urlencoded({ extended: true, limit: "30mb" }));
 
+  // Static images route with aggressive cache control for global high-speed delivery
+  const publicImagesPath = path.join(process.cwd(), "public", "images");
+  if (fs.existsSync(publicImagesPath)) {
+    app.use("/images", express.static(publicImagesPath, {
+      maxAge: "7d",
+      setHeaders: (res) => {
+        res.setHeader("Cache-Control", "public, max-age=604800, stale-while-revalidate=86400");
+      }
+    }));
+  }
+
   // API Routes
   app.get("/api/counselors", (req, res) => {
     const counselors = db.prepare("SELECT * FROM counselors").all();
@@ -145,7 +156,7 @@ async function startServer() {
       const matches = imageBase64.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
       const buffer = matches ? Buffer.from(matches[2], "base64") : Buffer.from(imageBase64, "base64");
 
-      const safeFilename = filename ? filename.replace(/[^a-zA-Z0-9._-]/g, "_") : "KakaoTalk_20260915_105726433_01.jpg";
+      const safeFilename = filename ? filename.replace(/[^a-zA-Z0-9._-]/g, "_") : "welcome_tea.jpg";
       const filePath = path.join(imagesDir, safeFilename);
       fs.writeFileSync(filePath, buffer);
 
@@ -185,7 +196,7 @@ async function startServer() {
       const matches = imageBase64.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
       const buffer = matches ? Buffer.from(matches[2], "base64") : Buffer.from(imageBase64, "base64");
 
-      const safeFilename = filename ? filename.replace(/[^a-zA-Z0-9._-]/g, "_") : "KakaoTalk_20260908_110704420_01.jpg";
+      const safeFilename = filename ? filename.replace(/[^a-zA-Z0-9._-]/g, "_") : "counseling_room.jpg";
       const filePath = path.join(imagesDir, safeFilename);
       fs.writeFileSync(filePath, buffer);
 
@@ -225,7 +236,7 @@ async function startServer() {
       const matches = imageBase64.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
       const buffer = matches ? Buffer.from(matches[2], "base64") : Buffer.from(imageBase64, "base64");
 
-      const safeFilename = filename ? filename.replace(/[^a-zA-Z0-9._-]/g, "_") : "KakaoTalk_20260915_113754890_01.jpg";
+      const safeFilename = filename ? filename.replace(/[^a-zA-Z0-9._-]/g, "_") : "healing_space.jpg";
       const filePath = path.join(imagesDir, safeFilename);
       fs.writeFileSync(filePath, buffer);
 
