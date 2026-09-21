@@ -22,7 +22,9 @@ export interface Reservation {
   name: string;
   phone: string;
   program_id: number;
+  program_title?: string;
   preferred_date: string;
   preferred_time: string;
   status?: string;
+  created_at?: string;
 }

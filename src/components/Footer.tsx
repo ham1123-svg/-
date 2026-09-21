@@ -46,11 +46,12 @@ export default function Footer() {
           </div>
           
           <div>
-            <h4 className="font-bold mb-6 text-brand-sage uppercase tracking-wider text-sm">Legal</h4>
+            <h4 className="font-bold mb-6 text-brand-sage uppercase tracking-wider text-sm">Legal & Admin</h4>
             <ul className="space-y-4 text-sm text-brand-beige/60">
               <li><Link to="/privacy" className="hover:text-brand-sage transition-colors">개인정보처리방침</Link></li>
               <li><Link to="/terms" className="hover:text-brand-sage transition-colors">이용약관</Link></li>
               <li><Link to="/confidentiality" className="hover:text-brand-sage transition-colors">비밀보장원칙</Link></li>
+              <li><Link to="/admin" className="hover:text-brand-sage transition-colors text-brand-sage/80 font-medium">운영자 관리 모드</Link></li>
             </ul>
           </div>
         </div>

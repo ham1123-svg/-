@@ -24,10 +24,21 @@ import Reservation from './pages/Reservation';
 import Confidentiality from './pages/Confidentiality';
 import Privacy from './pages/Privacy';
 import Terms from './pages/Terms';
+import Admin from './pages/Admin';
+
+// Route change scroll helper
+function ScrollToTopOnNavigate() {
+  const { pathname } = useLocation();
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
+  return null;
+}
 
 export default function App() {
   return (
     <Router>
+      <ScrollToTopOnNavigate />
       <div className="flex flex-col min-h-screen">
         <Navbar />
         <main className="flex-grow pt-16">
@@ -43,6 +54,7 @@ export default function App() {
               <Route path="/confidentiality" element={<Confidentiality />} />
               <Route path="/privacy" element={<Privacy />} />
               <Route path="/terms" element={<Terms />} />
+              <Route path="/admin" element={<Admin />} />
             </Routes>
           </AnimatePresence>
         </main>

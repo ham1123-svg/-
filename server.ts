@@ -50,7 +50,19 @@ db.exec(`
     result TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   );
+
+  CREATE TABLE IF NOT EXISTS admin_settings (
+    key TEXT PRIMARY KEY,
+    value TEXT NOT NULL
+  );
 `);
+
+// Seed default admin password if not set
+const defaultPw = db.prepare("SELECT value FROM admin_settings WHERE key = 'admin_password'").get() as any;
+if (!defaultPw) {
+  db.prepare("INSERT OR REPLACE INTO admin_settings (key, value) VALUES ('admin_password', '1234')").run();
+  db.prepare("INSERT OR REPLACE INTO admin_settings (key, value) VALUES ('is_default_password', '1')").run();
+}
 
 // Seed data
 const existingCounselor = db.prepare("SELECT * FROM counselors WHERE name = ?").get("박미경") as any;
@@ -263,10 +275,93 @@ async function startServer() {
     res.json(programs);
   });
 
+  app.get("/api/reservations", (req, res) => {
+    try {
+      const reservations = db.prepare(`
+        SELECT r.*, p.title as program_title 
+        FROM reservations r 
+        LEFT JOIN programs p ON r.program_id = p.id 
+        ORDER BY r.id DESC
+      `).all();
+      res.json(reservations);
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
   app.post("/api/reservations", (req, res) => {
     const { name, phone, program_id, preferred_date, preferred_time } = req.body;
     const info = db.prepare("INSERT INTO reservations (name, phone, program_id, preferred_date, preferred_time) VALUES (?, ?, ?, ?, ?)").run(name, phone, program_id, preferred_date, preferred_time);
     res.json({ id: info.lastInsertRowid, status: "success" });
+  });
+
+  app.patch("/api/reservations/:id", (req, res) => {
+    try {
+      const { status } = req.body;
+      db.prepare("UPDATE reservations SET status = ? WHERE id = ?").run(status, req.params.id);
+      res.json({ success: true });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.delete("/api/reservations/:id", (req, res) => {
+    try {
+      db.prepare("DELETE FROM reservations WHERE id = ?").run(req.params.id);
+      res.json({ success: true });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // Admin authentication and password management
+  app.get("/api/admin/status", (req, res) => {
+    try {
+      const row = db.prepare("SELECT value FROM admin_settings WHERE key = 'is_default_password'").get() as any;
+      const isDefault = row ? row.value === '1' : true;
+      res.json({ isDefaultPassword: isDefault });
+    } catch (err: any) {
+      res.json({ isDefaultPassword: true });
+    }
+  });
+
+  app.post("/api/admin/login", (req, res) => {
+    try {
+      const { password } = req.body;
+      const row = db.prepare("SELECT value FROM admin_settings WHERE key = 'admin_password'").get() as any;
+      const currentPw = row ? row.value : '1234';
+
+      if (password && password.trim() === currentPw) {
+        res.json({ success: true });
+      } else {
+        res.status(401).json({ success: false, error: '비밀번호가 일치하지 않습니다.' });
+      }
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.post("/api/admin/change-password", (req, res) => {
+    try {
+      const { currentPassword, newPassword } = req.body;
+      if (!newPassword || newPassword.trim().length < 4) {
+        return res.status(400).json({ success: false, error: '새 비밀번호는 최소 4자 이상이어야 합니다.' });
+      }
+
+      const row = db.prepare("SELECT value FROM admin_settings WHERE key = 'admin_password'").get() as any;
+      const currentPw = row ? row.value : '1234';
+
+      if (currentPassword !== currentPw) {
+        return res.status(400).json({ success: false, error: '현재 비밀번호가 올바르지 않습니다.' });
+      }
+
+      db.prepare("UPDATE admin_settings SET value = ? WHERE key = 'admin_password'").run(newPassword.trim());
+      db.prepare("UPDATE admin_settings SET value = '0' WHERE key = 'is_default_password'").run();
+
+      res.json({ success: true, message: '비밀번호가 성공적으로 변경되었습니다.' });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
   });
 
   app.post("/api/self-diagnosis", (req, res) => {
