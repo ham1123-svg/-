@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
-import { Search, ChevronRight, ClipboardList, Heart, User, Users, ArrowRight, BookOpen } from 'lucide-react';
+import { 
+  Search, ChevronRight, ClipboardList, Heart, User, Users, 
+  ArrowRight, BookOpen, Sparkles, ShieldCheck, Activity, Brain 
+} from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { cn } from '../lib/utils';
 
@@ -130,6 +133,64 @@ export default function Home() {
                 >
                   {tag.label}
                 </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Self-Diagnosis Banner Section */}
+      <section className="py-16 bg-gradient-to-b from-brand-beige/20 to-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="bg-brand-brown text-white rounded-3xl p-8 sm:p-12 relative overflow-hidden shadow-xl">
+            <div className="relative z-10 max-w-2xl">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-white/20 text-brand-green font-semibold text-xs rounded-full mb-4">
+                <Sparkles className="w-3.5 h-3.5" />
+                간편 3분 마음 체크 (100% 무료 & 비밀 보장)
+              </span>
+              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-serif font-bold text-white mb-4 leading-tight">
+                지금 내 마음의 날씨는 어떨까요?<br />
+                <span className="text-brand-green">간이 심리 자가진단</span>으로 확인해보세요
+              </h2>
+              <p className="text-white/80 text-sm sm:text-base mb-8 leading-relaxed">
+                우울, 번아웃, 만성 스트레스, 관계 갈등 등 현재 마음 상태를 스스로 점검하고, 
+                진단 결과에 따라 꼭 필요한 맞춤형 상담 프로그램을 추천받으실 수 있습니다.
+              </p>
+              <div className="flex flex-wrap gap-4">
+                <Link
+                  to="/self-diagnosis"
+                  className="px-6 py-3.5 bg-brand-sage hover:bg-brand-sage/90 text-white font-bold rounded-2xl transition-all shadow-md hover:shadow-lg flex items-center gap-2 text-sm sm:text-base"
+                >
+                  <Activity className="w-4 h-4" />
+                  <span>자가진단 시작하기</span>
+                  <ArrowRight className="w-4 h-4" />
+                </Link>
+                <Link
+                  to="/programs"
+                  className="px-6 py-3.5 bg-white/10 hover:bg-white/20 text-white font-semibold rounded-2xl transition-all border border-white/20 text-sm sm:text-base"
+                >
+                  상담 프로그램 둘러보기
+                </Link>
+              </div>
+            </div>
+
+            {/* Decorative Badges / Right illustration */}
+            <div className="hidden lg:flex absolute right-12 top-1/2 -translate-y-1/2 flex-col gap-3 w-80">
+              {[
+                { title: "종합 마음 건강 점검", desc: "우울·불안·스트레스 종합", count: "9문항" },
+                { title: "우울 & 번아웃 척도", desc: "무기력 및 정서적 고갈", count: "7문항" },
+                { title: "불안 & 스트레스 척도", desc: "과긴장 및 초조함 점검", count: "7문항" },
+                { title: "부부·가족 관계 척도", desc: "소통 단절 및 관계 피로", count: "7문항" },
+              ].map((item, idx) => (
+                <div key={idx} className="bg-white/10 backdrop-blur-xs p-3.5 rounded-2xl border border-white/15 flex items-center justify-between">
+                  <div>
+                    <div className="font-bold text-xs text-white">{item.title}</div>
+                    <div className="text-[11px] text-white/70">{item.desc}</div>
+                  </div>
+                  <span className="text-[10px] bg-brand-sage px-2 py-0.5 rounded-full font-bold text-white">
+                    {item.count}
+                  </span>
+                </div>
               ))}
             </div>
           </div>

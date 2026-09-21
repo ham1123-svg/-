@@ -364,6 +364,15 @@ async function startServer() {
     }
   });
 
+  app.get("/api/self-diagnosis", (req, res) => {
+    try {
+      const records = db.prepare("SELECT * FROM self_diagnosis ORDER BY created_at DESC LIMIT 50").all();
+      res.json(records);
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
   app.post("/api/self-diagnosis", (req, res) => {
     const { nickname, test_type, score, result } = req.body;
     const info = db.prepare("INSERT INTO self_diagnosis (nickname, test_type, score, result) VALUES (?, ?, ?, ?)").run(nickname, test_type, score, result);

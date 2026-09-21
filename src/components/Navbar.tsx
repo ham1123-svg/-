@@ -7,6 +7,7 @@ const navItems = [
   { name: '상담소 소개', path: '/about' },
   { name: '상담사 소개', path: '/counselors' },
   { name: '프로그램', path: '/programs' },
+  { name: '자가진단', path: '/self-diagnosis' },
   { name: '상담 안내', path: '/guide' },
   { name: '커뮤니티', path: '/community' },
   { name: '예약/오시는 길', path: '/reservation' },

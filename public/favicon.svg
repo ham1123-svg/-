@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+  <defs>
+    <linearGradient id="breezeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#84A59D" />
+      <stop offset="100%" stop-color="#6B8E7B" />
+    </linearGradient>
+    <linearGradient id="leafGrad" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#4F772D" />
+      <stop offset="100%" stop-color="#90A955" />
+    </linearGradient>
+    <filter id="softShadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#3D312A" flood-opacity="0.15" />
+    </filter>
+  </defs>
+
+  <!-- Background Circle with subtle warmth -->
+  <circle cx="50" cy="50" r="46" fill="#F4F1DE" stroke="#D8E2DC" stroke-width="2" />
+
+  <!-- Gentle Wind Stream (행복바람) -->
+  <path d="M 22 56 C 30 42, 45 42, 58 48 C 68 53, 78 50, 80 43" 
+        fill="none" 
+        stroke="url(#breezeGrad)" 
+        stroke-width="5" 
+        stroke-linecap="round" 
+        filter="url(#softShadow)" />
+        
+  <path d="M 28 66 C 36 56, 48 56, 60 61 C 70 65, 75 62, 78 58" 
+        fill="none" 
+        stroke="url(#breezeGrad)" 
+        stroke-width="3" 
+        stroke-linecap="round" 
+        opacity="0.75" />
+
+  <!-- Healing Sprout / Leaf (마음 치유) -->
+  <path d="M 50 30 C 50 18, 68 18, 66 32 C 64 42, 50 48, 50 48 C 50 48, 42 38, 50 30 Z" 
+        fill="url(#leafGrad)" />
+        
+  <path d="M 50 48 C 50 38, 38 34, 38 24 C 38 18, 48 18, 50 26" 
+        fill="none" 
+        stroke="#90A955" 
+        stroke-width="2.5" 
+        stroke-linecap="round" />
+        
+  <!-- Center Heart-like Node of Peace -->
+  <circle cx="50" cy="48" r="3.5" fill="#3D312A" opacity="0.8" />
+</svg>

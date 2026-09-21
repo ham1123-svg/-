@@ -1,5 +1,6 @@
 import React from 'react';
 import { motion } from 'motion/react';
+import { Link } from 'react-router-dom';
 import { 
   ClipboardCheck, UserPlus, CalendarCheck, CheckCircle, 
   ArrowRight, Clock, CreditCard, ShieldCheck 
@@ -79,6 +80,31 @@ export default function Guide() {
                 )}
               </motion.div>
             ))}
+          </div>
+        </section>
+
+        {/* Self-Diagnosis Callout Banner */}
+        <section className="mb-24">
+          <div className="bg-gradient-to-r from-brand-brown to-brand-brown/95 text-white rounded-3xl p-8 sm:p-10 shadow-lg relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-6">
+            <div className="space-y-2 text-center md:text-left">
+              <span className="px-3 py-1 bg-white/20 text-brand-green font-semibold text-xs rounded-full inline-block">
+                맞춤 프로그램 추천
+              </span>
+              <h3 className="text-xl sm:text-2xl font-serif font-bold text-white">
+                어떤 상담이 나에게 필요할지 망설여지시나요?
+              </h3>
+              <p className="text-sm text-white/80 max-w-xl leading-relaxed">
+                간이 심리 자가진단 질문지를 통해 현재의 우울, 스트레스, 관계 고민을 점검하고 
+                나에게 가장 적합한 치유 프로그램을 즉시 추천받아보세요.
+              </p>
+            </div>
+            <Link
+              to="/self-diagnosis"
+              className="px-6 py-3.5 bg-brand-sage hover:bg-brand-sage/90 text-white font-bold rounded-2xl transition-all shadow-md shrink-0 flex items-center gap-2 text-sm"
+            >
+              <span>간이 자가진단 시작하기</span>
+              <ArrowRight className="w-4 h-4" />
+            </Link>
           </div>
         </section>
 

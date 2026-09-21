@@ -21,6 +21,7 @@ import Programs from './pages/Programs';
 import Guide from './pages/Guide';
 import Community from './pages/Community';
 import Reservation from './pages/Reservation';
+import SelfDiagnosisPage from './pages/SelfDiagnosisPage';
 import Confidentiality from './pages/Confidentiality';
 import Privacy from './pages/Privacy';
 import Terms from './pages/Terms';
@@ -49,6 +50,7 @@ export default function App() {
               <Route path="/counselors" element={<Counselors />} />
               <Route path="/programs" element={<Programs />} />
               <Route path="/guide" element={<Guide />} />
+              <Route path="/self-diagnosis" element={<SelfDiagnosisPage />} />
               <Route path="/community" element={<Community />} />
               <Route path="/reservation" element={<Reservation />} />
               <Route path="/confidentiality" element={<Confidentiality />} />
