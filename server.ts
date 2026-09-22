@@ -3,15 +3,14 @@ import { createServer as createViteServer } from "vite";
 import Database from "better-sqlite3";
 import path from "path";
 import fs from "fs";
-import { fileURLToPath } from "url";
 import { 
   sendReservationNotification, 
   isNotificationGatewayConfigured, 
   formatPhoneNumber 
 } from "./src/server/notificationService.ts";
+import nodemailer from "nodemailer";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const rootDir = process.cwd();
 
 const db = new Database("counseling.db");
 
@@ -80,6 +79,14 @@ db.exec(`
     reason TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   );
+
+  CREATE TABLE IF NOT EXISTS admin_recovery_codes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    email TEXT NOT NULL,
+    code TEXT NOT NULL,
+    expires_at TEXT NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
 `);
 
 // Safe migration for admin_notes column in reservations table
@@ -89,11 +96,17 @@ try {
   // Column already exists
 }
 
-// Seed default admin password if not set
+// Seed default admin password to 3485 (or migrate old 1234 to 3485)
 const defaultPw = db.prepare("SELECT value FROM admin_settings WHERE key = 'admin_password'").get() as any;
-if (!defaultPw) {
-  db.prepare("INSERT OR REPLACE INTO admin_settings (key, value) VALUES ('admin_password', '1234')").run();
+if (!defaultPw || defaultPw.value === '1234') {
+  db.prepare("INSERT OR REPLACE INTO admin_settings (key, value) VALUES ('admin_password', '3485')").run();
   db.prepare("INSERT OR REPLACE INTO admin_settings (key, value) VALUES ('is_default_password', '1')").run();
+}
+
+// Seed registered admin emails for password recovery
+const adminEmailRow = db.prepare("SELECT value FROM admin_settings WHERE key = 'admin_email'").get() as any;
+if (!adminEmailRow) {
+  db.prepare("INSERT OR REPLACE INTO admin_settings (key, value) VALUES ('admin_email', 'hahm1123@gmail.com, mikypa@naver.com')").run();
 }
 
 // Seed data
@@ -1016,6 +1029,66 @@ async function startServer() {
     }
   });
 
+  // Helper function to send recovery verification email or log to notifications
+  async function sendAdminRecoveryEmail(toEmail: string, verificationCode: string) {
+    if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
+      try {
+        const transporter = nodemailer.createTransport({
+          host: process.env.SMTP_HOST,
+          port: Number(process.env.SMTP_PORT) || 587,
+          secure: process.env.SMTP_SECURE === 'true',
+          auth: {
+            user: process.env.SMTP_USER,
+            pass: process.env.SMTP_PASS,
+          },
+        });
+
+        await transporter.sendMail({
+          from: `"${process.env.SMTP_FROM_NAME || '행복바람심리상담연구소'}" <${process.env.SMTP_USER}>`,
+          to: toEmail,
+          subject: '[행복바람심리상담연구소] 관리자 비밀번호 확인 인증코드',
+          text: `안녕하세요, 행복바람심리상담연구소 관리자님.\n\n요청하신 관리자 비밀번호 확인 인증코드입니다.\n\n■ 인증코드: ${verificationCode}\n\n15분 이내에 관리자 페이지에서 입력해 주시기 바랍니다.`,
+          html: `
+            <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 520px; margin: 0 auto; padding: 28px; border: 1px solid #e2e8f0; border-radius: 20px; background-color: #ffffff;">
+              <h2 style="color: #4a3e3d; font-size: 20px; margin-bottom: 8px;">행복바람심리상담연구소</h2>
+              <p style="color: #64748b; font-size: 14px; margin-bottom: 24px;">관리자 전용 비밀번호 확인 및 본인 인증 안내</p>
+              
+              <p style="color: #334155; font-size: 14px; line-height: 1.6;">안녕하세요. 요청하신 관리자 비밀번호 확인을 위한 6자리 인증코드입니다.</p>
+              
+              <div style="background-color: #f7f9f8; border: 1.5px dashed #6B8E7B; border-radius: 14px; padding: 22px; text-align: center; margin: 24px 0;">
+                <div style="font-size: 12px; font-weight: bold; color: #6B8E7B; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px;">Security Verification Code</div>
+                <div style="font-size: 34px; font-weight: 800; letter-spacing: 8px; color: #4a3e3d; font-family: monospace;">${verificationCode}</div>
+                <div style="font-size: 12px; color: #94a3b8; margin-top: 8px;">본 코드는 발송 시점으로부터 15분간 유효합니다.</div>
+              </div>
+
+              <p style="font-size: 12px; color: #94a3b8; line-height: 1.5;">본 메일은 행복바람 웹사이트 관리자 로그인 화면에서 '비밀번호 찾기'를 요청하여 발송되었습니다. 본인이 요청하지 않은 경우 즉시 관리자 비밀번호를 변경해 주세요.</p>
+            </div>
+          `
+        });
+      } catch (err: any) {
+        console.error("Failed to send recovery email via SMTP:", err);
+      }
+    }
+
+    // Record in notification_logs table as EMAIL log
+    try {
+      db.prepare(`
+        INSERT INTO notification_logs (
+          recipient_name, recipient_phone, channel, template_title, content, status
+        ) VALUES (?, ?, ?, ?, ?, ?)
+      `).run(
+        '관리자',
+        toEmail,
+        'EMAIL',
+        '[행복바람] 관리자 비밀번호 확인 인증코드',
+        `[행복바람심리상담연구소] 관리자 비밀번호 확인 인증코드: ${verificationCode} (15분간 유효)`,
+        'SUCCESS'
+      );
+    } catch (logErr) {
+      console.error("Failed to log recovery email:", logErr);
+    }
+  }
+
   // Admin authentication and password management
   app.get("/api/admin/status", (req, res) => {
     try {
@@ -1031,7 +1104,7 @@ async function startServer() {
     try {
       const { password } = req.body;
       const row = db.prepare("SELECT value FROM admin_settings WHERE key = 'admin_password'").get() as any;
-      const currentPw = row ? row.value : '1234';
+      const currentPw = row ? row.value : '3485';
 
       if (password && password.trim() === currentPw) {
         res.json({ success: true });
@@ -1051,7 +1124,7 @@ async function startServer() {
       }
 
       const row = db.prepare("SELECT value FROM admin_settings WHERE key = 'admin_password'").get() as any;
-      const currentPw = row ? row.value : '1234';
+      const currentPw = row ? row.value : '3485';
 
       if (currentPassword !== currentPw) {
         return res.status(400).json({ success: false, error: '현재 비밀번호가 올바르지 않습니다.' });
@@ -1061,6 +1134,154 @@ async function startServer() {
       db.prepare("UPDATE admin_settings SET value = '0' WHERE key = 'is_default_password'").run();
 
       res.json({ success: true, message: '비밀번호가 성공적으로 변경되었습니다.' });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // Password Recovery via Registered Admin Email
+  app.post("/api/admin/forgot-password/request", async (req, res) => {
+    try {
+      const { email } = req.body;
+      if (!email || typeof email !== 'string') {
+        return res.status(400).json({ success: false, error: '이메일 주소를 입력해 주세요.' });
+      }
+
+      const cleanInputEmail = email.trim().toLowerCase();
+
+      // Check registered admin emails
+      const row = db.prepare("SELECT value FROM admin_settings WHERE key = 'admin_email'").get() as any;
+      const registeredEmailsStr = row ? row.value : 'hahm1123@gmail.com, mikypa@naver.com';
+      const registeredList = registeredEmailsStr.split(',').map((e: string) => e.trim().toLowerCase());
+
+      const isMatch = registeredList.includes(cleanInputEmail);
+      if (!isMatch) {
+        return res.status(400).json({ 
+          success: false, 
+          error: '등록된 관리자 이메일과 일치하지 않습니다. 연구소에 등록된 관리자 이메일을 입력해 주세요.' 
+        });
+      }
+
+      // Generate 6-digit random code
+      const code = Math.floor(100000 + Math.random() * 900000).toString();
+      const expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString();
+
+      // Store in DB
+      db.prepare("INSERT INTO admin_recovery_codes (email, code, expires_at) VALUES (?, ?, ?)").run(cleanInputEmail, code, expiresAt);
+
+      // Send email & log
+      await sendAdminRecoveryEmail(cleanInputEmail, code);
+
+      // Mask email for display
+      const parts = cleanInputEmail.split('@');
+      const maskedUser = parts[0].length > 3 ? `${parts[0].slice(0, 2)}***${parts[0].slice(-1)}` : `${parts[0].slice(0, 1)}**`;
+      const maskedEmail = `${maskedUser}@${parts[1]}`;
+
+      res.json({
+        success: true,
+        email: maskedEmail,
+        message: '등록된 관리자 이메일로 6자리 인증코드가 전송되었습니다.',
+        // Dev convenience if SMTP is not set
+        devCode: (!process.env.SMTP_HOST || process.env.NODE_ENV !== 'production') ? code : undefined
+      });
+    } catch (err: any) {
+      res.status(500).json({ success: false, error: err.message });
+    }
+  });
+
+  app.post("/api/admin/forgot-password/verify", (req, res) => {
+    try {
+      const { email, code } = req.body;
+      if (!email || !code) {
+        return res.status(400).json({ success: false, error: '이메일과 인증코드를 모두 입력해 주세요.' });
+      }
+
+      const cleanEmail = email.trim().toLowerCase();
+      const cleanCode = code.trim();
+
+      const record = db.prepare(`
+        SELECT * FROM admin_recovery_codes 
+        WHERE LOWER(email) = ? AND code = ? 
+        ORDER BY id DESC LIMIT 1
+      `).get(cleanEmail, cleanCode) as any;
+
+      if (!record) {
+        return res.status(400).json({ success: false, error: '인증코드가 올바르지 않습니다.' });
+      }
+
+      const isExpired = new Date(record.expires_at).getTime() < Date.now();
+      if (isExpired) {
+        return res.status(400).json({ success: false, error: '인증코드 유효 시간(15분)이 만료되었습니다. 다시 요청해 주세요.' });
+      }
+
+      // Retrieve current admin password
+      const pwRow = db.prepare("SELECT value FROM admin_settings WHERE key = 'admin_password'").get() as any;
+      const currentPw = pwRow ? pwRow.value : '3485';
+
+      res.json({
+        success: true,
+        password: currentPw,
+        message: '관리자 인증이 완료되었습니다.'
+      });
+    } catch (err: any) {
+      res.status(500).json({ success: false, error: err.message });
+    }
+  });
+
+  app.post("/api/admin/forgot-password/reset", (req, res) => {
+    try {
+      const { email, code, newPassword } = req.body;
+      if (!email || !code || !newPassword || newPassword.trim().length < 4) {
+        return res.status(400).json({ success: false, error: '유효한 인증코드와 4자 이상의 새 비밀번호를 입력해 주세요.' });
+      }
+
+      const cleanEmail = email.trim().toLowerCase();
+      const cleanCode = code.trim();
+
+      const record = db.prepare(`
+        SELECT * FROM admin_recovery_codes 
+        WHERE LOWER(email) = ? AND code = ? 
+        ORDER BY id DESC LIMIT 1
+      `).get(cleanEmail, cleanCode) as any;
+
+      if (!record || new Date(record.expires_at).getTime() < Date.now()) {
+        return res.status(400).json({ success: false, error: '인증코드가 올바르지 않거나 만료되었습니다.' });
+      }
+
+      // Update password
+      db.prepare("UPDATE admin_settings SET value = ? WHERE key = 'admin_password'").run(newPassword.trim());
+      db.prepare("UPDATE admin_settings SET value = '0' WHERE key = 'is_default_password'").run();
+
+      // Clean up used recovery codes for this email
+      db.prepare("DELETE FROM admin_recovery_codes WHERE LOWER(email) = ?").run(cleanEmail);
+
+      res.json({
+        success: true,
+        message: '비밀번호가 성공적으로 재설정되었습니다.'
+      });
+    } catch (err: any) {
+      res.status(500).json({ success: false, error: err.message });
+    }
+  });
+
+  app.get("/api/admin/registered-email", (req, res) => {
+    try {
+      const row = db.prepare("SELECT value FROM admin_settings WHERE key = 'admin_email'").get() as any;
+      const emails = row ? row.value : 'hahm1123@gmail.com, mikypa@naver.com';
+      res.json({ email: emails });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.post("/api/admin/registered-email", (req, res) => {
+    try {
+      const { email } = req.body;
+      if (!email || typeof email !== 'string' || !email.includes('@')) {
+        return res.status(400).json({ success: false, error: '유효한 이메일 주소를 입력해 주세요.' });
+      }
+      db.prepare("INSERT OR REPLACE INTO admin_settings (key, value) VALUES ('admin_email', ?)").run(email.trim());
+      res.json({ success: true, message: '관리자 이메일이 성공적으로 저장되었습니다.' });
     } catch (err: any) {
       res.status(500).json({ error: err.message });
     }
@@ -1082,7 +1303,7 @@ async function startServer() {
   });
 
   app.get("/standalone", (req, res) => {
-    res.sendFile(path.join(__dirname, "standalone.html"));
+    res.sendFile(path.join(rootDir, "standalone.html"));
   });
 
   // Vite middleware for development
@@ -1093,9 +1314,10 @@ async function startServer() {
     });
     app.use(vite.middlewares);
   } else {
-    app.use(express.static(path.join(__dirname, "dist")));
+    const distPath = path.join(rootDir, "dist");
+    app.use(express.static(distPath));
     app.get("*", (req, res) => {
-      res.sendFile(path.join(__dirname, "dist", "index.html"));
+      res.sendFile(path.join(distPath, "index.html"));
     });
   }
 

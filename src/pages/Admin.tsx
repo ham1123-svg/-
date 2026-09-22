@@ -5,11 +5,12 @@ import {
   AlertCircle, Search, RefreshCw, Trash2, ChevronDown, 
   Filter, Lock, KeyRound, LogOut, ArrowUpRight, X,
   MessageSquareText, Send, BellRing, Info, Check, PhoneCall,
-  CalendarCheck, Edit3, Plus
+  CalendarCheck, Edit3, Plus, HelpCircle, Mail
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Reservation, NotificationLog, Program, RESERVATION_TIME_SLOTS, TIME_SLOT_DETAILS } from '../types';
 import AdminScheduleManager from '../components/AdminScheduleManager';
+import AdminForgotPasswordModal from '../components/AdminForgotPasswordModal';
 
 const TIME_SLOTS = [...RESERVATION_TIME_SLOTS];
 
@@ -24,6 +25,7 @@ export default function Admin() {
   const [passwordInput, setPasswordInput] = useState('');
   const [authError, setAuthError] = useState('');
   const [loginLoading, setLoginLoading] = useState(false);
+  const [showForgotModal, setShowForgotModal] = useState(false);
 
   // View Mode: 'calendar' (Timetable) or 'table' (List)
   const [viewMode, setViewMode] = useState<'calendar' | 'table'>('calendar');
@@ -178,15 +180,11 @@ export default function Admin() {
         setAuthError('');
         loadReservations();
       } else {
-        setAuthError(
-          isDefaultPassword 
-            ? '비밀번호가 일치하지 않습니다. (초기 기본 비밀번호: 1234)' 
-            : '비밀번호가 일치하지 않습니다. 다시 확인해 주세요.'
-        );
+        setAuthError('비밀번호가 일치하지 않습니다. 다시 확인해 주세요.');
       }
     } catch (err) {
       // Fallback
-      if (passwordInput.trim() === '1234') {
+      if (passwordInput.trim() === '3485') {
         setIsAuthenticated(true);
         sessionStorage.setItem('hbbr_admin_auth', 'true');
         localStorage.removeItem('hbbr_admin_auth');
@@ -429,38 +427,38 @@ export default function Admin() {
                   type="password"
                   value={passwordInput}
                   onChange={(e) => setPasswordInput(e.target.value)}
-                  placeholder={isDefaultPassword ? "비밀번호 입력 (기본값: 1234)" : "관리자 비밀번호 입력"}
+                  placeholder="관리자 비밀번호 입력"
                   className="w-full px-4 py-3 pl-10 rounded-xl border border-brand-green/40 focus:border-brand-sage outline-none bg-brand-beige/10 text-brand-brown"
                   autoFocus
                 />
                 <KeyRound className="w-4 h-4 text-brand-brown/40 absolute left-3.5 top-3.5" />
               </div>
-              {authError && (
-                <p className="text-xs text-red-500 mt-2 font-medium flex items-center gap-1">
-                  <AlertCircle className="w-3.5 h-3.5" />
-                  {authError}
-                </p>
-              )}
+              <div className="flex items-center justify-between mt-2 gap-2 flex-wrap">
+                {authError ? (
+                  <p className="text-xs text-red-500 font-medium flex items-center gap-1">
+                    <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                    {authError}
+                  </p>
+                ) : <span />}
+                <button
+                  type="button"
+                  onClick={() => setShowForgotModal(true)}
+                  className="text-xs text-brand-sage hover:underline font-semibold flex items-center gap-1 cursor-pointer ml-auto"
+                >
+                  <HelpCircle className="w-3.5 h-3.5" />
+                  <span>비밀번호 찾기 (등록 이메일 확인)</span>
+                </button>
+              </div>
             </div>
 
             <button
               type="submit"
               disabled={loginLoading}
-              className="w-full py-3.5 bg-brand-sage hover:bg-brand-sage/90 text-white font-bold rounded-xl transition-all shadow-md hover:shadow-lg disabled:opacity-60 flex items-center justify-center gap-2"
+              className="w-full py-3.5 bg-brand-sage hover:bg-brand-sage/90 text-white font-bold rounded-xl transition-all shadow-md hover:shadow-lg disabled:opacity-60 flex items-center justify-center gap-2 cursor-pointer"
             >
               {loginLoading && <RefreshCw className="w-4 h-4 animate-spin" />}
               <span>관리자 페이지 입장하기</span>
             </button>
-
-            {/* 초기 비밀번호 1234 안내 문구: 비밀번호 변경 후에는 나타나지 않음 */}
-            {isDefaultPassword && (
-              <div className="pt-4 border-t border-brand-green/10 text-center">
-                <div className="text-xs text-brand-brown/70 bg-brand-beige/50 p-3 rounded-xl border border-brand-green/20 leading-relaxed">
-                  💡 <span className="font-semibold text-brand-brown">초기 접속 안내:</span> 운영자 초기 기본 비밀번호는 <strong className="text-brand-sage font-bold">1234</strong> 입니다.<br />
-                  <span className="text-[11px] text-brand-brown/60">(입장 후 비밀번호를 변경하시면 이 안내는 자동으로 사라집니다)</span>
-                </div>
-              </div>
-            )}
 
             <div className="text-center pt-2">
               <Link to="/" className="inline-block text-xs text-brand-brown/60 hover:text-brand-sage transition-colors">
@@ -468,6 +466,16 @@ export default function Admin() {
               </Link>
             </div>
           </form>
+
+          {/* Password Recovery Modal */}
+          <AdminForgotPasswordModal
+            isOpen={showForgotModal}
+            onClose={() => setShowForgotModal(false)}
+            onPasswordRecovered={(pw) => {
+              setPasswordInput(pw);
+              setAuthError('');
+            }}
+          />
         </motion.div>
       </div>
     );

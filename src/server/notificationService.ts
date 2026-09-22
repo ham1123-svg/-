@@ -1,5 +1,5 @@
 import crypto from 'crypto';
-import { NotificationResult } from '../types';
+import { NotificationResult } from '../types.js';
 
 export interface ReservationNotificationParams {
   reservationId?: number;
