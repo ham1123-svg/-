@@ -1,5 +1,18 @@
 import crypto from 'crypto';
-import { NotificationResult } from '../types.js';
+
+export interface NotificationResult {
+  success: boolean;
+  channel: 'ALIMTALK' | 'SMS';
+  status: 'SENT' | 'SIMULATED' | 'FAILED' | 'PENDING_CONFIG';
+  message: string;
+  templateTitle: string;
+  content: string;
+  buttons?: Array<{ title: string; url: string; type: string }>;
+  recipientName: string;
+  recipientPhone: string;
+  error?: string;
+  messageId?: string;
+}
 
 export interface ReservationNotificationParams {
   reservationId?: number;

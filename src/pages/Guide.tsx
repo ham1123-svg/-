@@ -1,10 +1,12 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { motion } from 'motion/react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { 
   ClipboardCheck, UserPlus, CalendarCheck, CheckCircle, 
-  ArrowRight, Clock, CreditCard, ShieldCheck 
+  ArrowRight, Clock, CreditCard, ShieldCheck, HelpCircle,
+  Sparkles, FileText, ChevronRight
 } from 'lucide-react';
+import FAQ from '../components/FAQ';
 
 const steps = [
   { 
@@ -34,16 +36,63 @@ const steps = [
 ];
 
 export default function Guide() {
+  const location = useLocation();
+
+  useEffect(() => {
+    if (location.hash) {
+      const element = document.querySelector(location.hash);
+      if (element) {
+        setTimeout(() => {
+          element.scrollIntoView({ behavior: 'smooth' });
+        }, 100);
+      }
+    }
+  }, [location]);
+
+  const scrollToSection = (id: string) => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-brand-beige/20 py-20">
+    <div className="min-h-screen bg-brand-beige/20 py-16 sm:py-20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-16">
-          <h1 className="text-4xl font-serif font-bold text-brand-brown mb-4">상담 안내</h1>
-          <p className="text-brand-brown/60">상담이 처음이신 분들을 위해 차근차근 안내해 드립니다.</p>
+        <div className="text-center mb-10 sm:mb-12">
+          <h1 className="text-3xl sm:text-4xl font-serif font-bold text-brand-brown mb-4">상담 안내</h1>
+          <p className="text-sm sm:text-base text-brand-brown/70 max-w-2xl mx-auto">
+            상담이 처음이신 분들을 위해 신청 절차부터 비용, 자주 묻는 질문까지 친절히 안내해 드립니다.
+          </p>
+
+          {/* Quick Jump Navigation Pills */}
+          <div className="mt-8 flex flex-wrap items-center justify-center gap-2.5">
+            <button
+              onClick={() => scrollToSection('process')}
+              className="px-4 py-2 rounded-xl bg-white hover:bg-brand-green/20 text-xs sm:text-sm font-semibold text-brand-brown border border-brand-green/30 transition-all shadow-2xs hover:shadow-xs cursor-pointer flex items-center gap-1.5"
+            >
+              <ClipboardCheck className="w-4 h-4 text-brand-sage" />
+              <span>상담 진행 과정</span>
+            </button>
+            <button
+              onClick={() => scrollToSection('pricing')}
+              className="px-4 py-2 rounded-xl bg-white hover:bg-brand-green/20 text-xs sm:text-sm font-semibold text-brand-brown border border-brand-green/30 transition-all shadow-2xs hover:shadow-xs cursor-pointer flex items-center gap-1.5"
+            >
+              <CreditCard className="w-4 h-4 text-brand-sage" />
+              <span>비용 및 시간 안내</span>
+            </button>
+            <button
+              onClick={() => scrollToSection('faq')}
+              className="px-4 py-2 rounded-xl bg-brand-sage hover:bg-brand-sage/90 text-xs sm:text-sm font-semibold text-white transition-all shadow-2xs hover:shadow-xs cursor-pointer flex items-center gap-1.5"
+            >
+              <HelpCircle className="w-4 h-4 text-white" />
+              <span>자주 묻는 질문 (FAQ)</span>
+            </button>
+          </div>
         </div>
 
         {/* Process Visualization */}
-        <section className="mb-24">
+        <section id="process" className="mb-24 scroll-mt-24">
           <div className="text-center mb-12">
             <span className="text-xs font-bold tracking-widest text-brand-sage uppercase px-3.5 py-1.5 bg-brand-sage/10 rounded-full inline-block mb-3">
               Counseling Process
@@ -109,7 +158,7 @@ export default function Guide() {
         </section>
 
         {/* Pricing & Time Table */}
-        <section className="grid md:grid-cols-2 gap-12">
+        <section id="pricing" className="grid md:grid-cols-2 gap-12 scroll-mt-24">
           <motion.div 
             initial={{ opacity: 0, x: -20 }}
             whileInView={{ opacity: 1, x: 0 }}
@@ -183,6 +232,11 @@ export default function Guide() {
             </div>
           </motion.div>
         </section>
+
+        {/* Frequently Asked Questions (FAQ) Section */}
+        <div className="mt-28 scroll-mt-24" id="faq">
+          <FAQ />
+        </div>
       </div>
     </div>
   );

@@ -62,6 +62,23 @@ export interface NotificationLog {
   created_at: string;
 }
 
+export interface Testimonial {
+  id: string;
+  clientName: string;
+  ageGroupAndRole: string;
+  category: 'adult' | 'couple' | 'youth' | 'anxiety';
+  categoryLabel: string;
+  programTaken: string;
+  rating: number;
+  headline: string;
+  story: string;
+  beforeState: string;
+  afterState: string;
+  counselorInsight?: string;
+  period: string;
+  tags: string[];
+}
+
 export const WEEKDAY_TIME_SLOTS = [
   '09:00',
   '10:30',

@@ -383,7 +383,7 @@ export default function SitemapModal({ isOpen, onClose }: SitemapModalProps) {
                   <li>
                     <button
                       type="button"
-                      onClick={() => handleNavigate('/guide')}
+                      onClick={() => handleNavigate('/guide#process')}
                       className="w-full text-left py-1 px-2 rounded-lg hover:bg-brand-green/20 text-brand-brown/85 font-medium flex items-center justify-between group cursor-pointer"
                     >
                       <span>상담 절차 및 진행 방법</span>
@@ -393,7 +393,7 @@ export default function SitemapModal({ isOpen, onClose }: SitemapModalProps) {
                   <li>
                     <button
                       type="button"
-                      onClick={() => handleNavigate('/guide')}
+                      onClick={() => handleNavigate('/guide#pricing')}
                       className="w-full text-left py-1 px-2 rounded-lg hover:bg-brand-green/20 text-brand-brown/85 font-medium flex items-center justify-between group cursor-pointer"
                     >
                       <span>비용 안내 및 환불 규정</span>
@@ -403,7 +403,7 @@ export default function SitemapModal({ isOpen, onClose }: SitemapModalProps) {
                   <li>
                     <button
                       type="button"
-                      onClick={() => handleNavigate('/guide')}
+                      onClick={() => handleNavigate('/guide#faq')}
                       className="w-full text-left py-1 px-2 rounded-lg hover:bg-brand-green/20 text-brand-brown/85 font-medium flex items-center justify-between group cursor-pointer"
                     >
                       <span>자주 묻는 질문 (FAQ)</span>

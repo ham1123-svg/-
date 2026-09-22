@@ -4,6 +4,7 @@ import { Heart, User, Users, BookOpen, CheckCircle2, X, Clock, ShieldCheck, Cale
 import { Link } from 'react-router-dom';
 import { Program } from '../types';
 import { cn } from '../lib/utils';
+import WeeklyScheduleCalendar from '../components/WeeklyScheduleCalendar';
 
 interface ProgramDetail {
   overview: string;
@@ -229,13 +230,20 @@ export default function Programs() {
                   };
                   setSelectedProgram(target);
                 }}
-                className="bg-brand-sage text-white px-7 py-3.5 rounded-xl font-bold hover:bg-brand-sage/90 transition-all shadow-sm flex items-center gap-2"
+                className="bg-brand-sage text-white px-7 py-3.5 rounded-xl font-bold hover:bg-brand-sage/90 transition-all shadow-sm flex items-center gap-2 cursor-pointer"
               >
                 상세 안내 및 진행과정 보기 <ArrowRight className="w-4 h-4" />
               </button>
+              <a
+                href="#weekly-schedule"
+                className="bg-brand-green/30 text-brand-sage border border-brand-sage/30 px-6 py-3.5 rounded-xl font-bold hover:bg-brand-green/50 transition-all flex items-center gap-2 cursor-pointer"
+              >
+                <Clock className="w-4 h-4" />
+                주간 일정표 확인
+              </a>
               <Link
                 to="/reservation"
-                className="bg-brand-green/30 text-brand-sage border border-brand-sage/30 px-7 py-3.5 rounded-xl font-bold hover:bg-brand-green/50 transition-all flex items-center gap-2"
+                className="bg-white text-brand-brown border border-brand-brown/20 px-6 py-3.5 rounded-xl font-bold hover:bg-brand-beige/40 transition-all flex items-center gap-2"
               >
                 상담 예약하기
               </Link>
@@ -315,6 +323,28 @@ export default function Programs() {
             ))}
           </div>
         )}
+
+        {/* Visual Weekly Schedule Grid Section */}
+        <section id="weekly-schedule" className="mt-20 pt-10 border-t border-brand-green/20">
+          <div className="text-center mb-10">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-brand-sage/10 text-brand-sage text-xs font-bold mb-3">
+              <Calendar className="w-3.5 h-3.5" />
+              <span>실시간 상담 슬롯 조회 & 빠른 예약</span>
+            </div>
+            <h2 className="text-3xl font-serif font-bold text-brand-brown mb-3">
+              주간 상담 가능 시간표
+            </h2>
+            <p className="text-brand-brown/70 max-w-2xl mx-auto text-sm sm:text-base leading-relaxed">
+              희망하시는 맞춤형 심리상담 프로그램을 확인하셨다면, 이번 주와 다음 주의 비어 있는 상담 일정을 한눈에 확인해 보세요.
+              원하시는 시간대를 클릭하시면 해당 일정으로 예약 신청서가 즉시 연결됩니다.
+            </p>
+          </div>
+
+          <WeeklyScheduleCalendar
+            variant="programs"
+            subtitle="원하시는 날짜와 시간대를 클릭하시면 해당 일정이 선택되며, [이 시간으로 예약 신청하기] 버튼으로 즉시 이동합니다."
+          />
+        </section>
       </div>
 
       {/* Program Detail Modal */}
@@ -471,19 +501,27 @@ export default function Programs() {
                 <p className="text-xs sm:text-sm text-brand-brown/70">
                   전화 문의: <strong className="text-brand-brown">052-254-0230</strong>
                 </p>
-                <div className="flex gap-3">
+                <div className="flex flex-wrap gap-2.5 items-center">
                   <button 
                     onClick={() => setSelectedProgram(null)}
-                    className="px-5 py-2.5 rounded-xl border border-brand-brown/20 text-brand-brown font-medium hover:bg-white text-sm"
+                    className="px-4 py-2.5 rounded-xl border border-brand-brown/20 text-brand-brown font-medium hover:bg-white text-sm cursor-pointer"
                   >
                     닫기
                   </button>
+                  <a
+                    href="#weekly-schedule"
+                    onClick={() => setSelectedProgram(null)}
+                    className="px-4 py-2.5 rounded-xl border border-brand-sage/40 text-brand-sage hover:bg-brand-sage/10 transition-all text-sm font-semibold flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <Clock className="w-4 h-4" />
+                    주간 시간표 확인
+                  </a>
                   <Link
-                    to="/reservation"
-                    className="px-6 py-2.5 rounded-xl bg-brand-sage text-white font-bold hover:bg-brand-sage/90 transition-all text-sm flex items-center gap-2 shadow-sm"
+                    to={`/reservation?program=${encodeURIComponent(selectedProgram.title)}`}
+                    className="px-5 py-2.5 rounded-xl bg-brand-sage text-white font-bold hover:bg-brand-sage/90 transition-all text-sm flex items-center gap-2 shadow-sm"
                   >
                     <Calendar className="w-4 h-4" />
-                    상담 예약하기
+                    이 프로그램 예약하기
                   </Link>
                 </div>
               </div>

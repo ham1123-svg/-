@@ -2,10 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { 
   Search, ChevronRight, ClipboardList, Heart, User, Users, 
-  ArrowRight, BookOpen, Sparkles, ShieldCheck, Activity, Brain 
+  ArrowRight, BookOpen, Sparkles, ShieldCheck, Activity, Brain, Star 
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { cn } from '../lib/utils';
+import TestimonialsSection from '../components/TestimonialsSection';
 
 const hashtags = [
   { label: "#청소년상담", tag: "청소년" },
@@ -68,6 +69,24 @@ export default function Home() {
                 <Link to="/about" className="bg-white/80 backdrop-blur-sm text-brand-sage border border-brand-sage/30 px-8 py-4 rounded-full font-bold hover:bg-brand-green/30 transition-all flex items-center gap-2 shadow-sm">
                   상담소 둘러보기
                 </Link>
+              </div>
+
+              {/* Social Proof Trust Badge */}
+              <div className="mt-8 pt-6 border-t border-brand-brown/10 flex items-center gap-3 flex-wrap">
+                <div className="flex items-center text-amber-500">
+                  {[...Array(5)].map((_, i) => (
+                    <Star key={i} className="w-4 h-4 fill-amber-400 stroke-none" />
+                  ))}
+                </div>
+                <div className="text-xs sm:text-sm font-bold text-brand-brown">
+                  실제 내담자 만족도 <span className="text-brand-sage font-extrabold">98.6%</span> (5.0 / 5.0)
+                </div>
+                <a
+                  href="#testimonials-section"
+                  className="text-xs text-brand-sage underline font-semibold hover:text-brand-brown transition-colors cursor-pointer"
+                >
+                  내담자 실제 후기 보기 ↓
+                </a>
               </div>
             </motion.div>
 
@@ -230,6 +249,9 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      {/* Testimonials Section */}
+      <TestimonialsSection />
     </div>
   );
 }

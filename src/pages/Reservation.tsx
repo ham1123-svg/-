@@ -5,10 +5,11 @@ import {
   MapPin, Phone, Mail, Clock, Send, CheckCircle, 
   CalendarCheck2, PhoneCall, HeartHandshake, Sparkles, ChevronRight, ShieldCheck,
   MessageSquareText, CheckCircle2, RotateCcw, Home as HomeIcon, BellRing, ExternalLink,
-  CalendarDays, Check
+  CalendarDays, Check, HelpCircle
 } from 'lucide-react';
 import { Program, NotificationResult, ScheduleBlock, Reservation as ReservationType, RESERVATION_TIME_SLOTS, TIME_SLOT_DETAILS } from '../types';
 import WeeklyScheduleCalendar from '../components/WeeklyScheduleCalendar';
+import ReservationConfirmModal from '../components/ReservationConfirmModal';
 
 export default function Reservation() {
   const [searchParams] = useSearchParams();
@@ -18,12 +19,14 @@ export default function Reservation() {
     name: '',
     phone: '',
     program_id: '',
-    preferred_date: '',
-    preferred_time: '',
+    preferred_date: searchParams.get('date') || '',
+    preferred_time: searchParams.get('time') || '',
   });
   const [sendKakaoNotify, setSendKakaoNotify] = useState<boolean>(true);
   const [submitted, setSubmitted] = useState<boolean>(false);
   const [submitting, setSubmitting] = useState<boolean>(false);
+  const [showConfirmModal, setShowConfirmModal] = useState<boolean>(false);
+  const [submittedReservationId, setSubmittedReservationId] = useState<number | undefined>(undefined);
   const [notificationResult, setNotificationResult] = useState<NotificationResult | null>(null);
   const [scheduleBlocks, setScheduleBlocks] = useState<ScheduleBlock[]>([]);
   const [existingReservations, setExistingReservations] = useState<ReservationType[]>([]);
@@ -56,6 +59,16 @@ export default function Reservation() {
           }
         }
       });
+
+    const dateQuery = searchParams.get('date');
+    const timeQuery = searchParams.get('time');
+    if (dateQuery || timeQuery) {
+      setFormData(prev => ({
+        ...prev,
+        preferred_date: dateQuery || prev.preferred_date,
+        preferred_time: timeQuery || prev.preferred_time,
+      }));
+    }
 
     loadScheduleData();
   }, [searchParams]);
@@ -151,7 +164,11 @@ export default function Reservation() {
         if (result.notification) {
           setNotificationResult(result.notification);
         }
+        if (result.id) {
+          setSubmittedReservationId(result.id);
+        }
         setSubmitted(true);
+        setShowConfirmModal(true);
         loadScheduleData();
       } else {
         const errData = await response.json().catch(() => ({}));
@@ -282,6 +299,23 @@ export default function Reservation() {
                 );
               })}
             </div>
+
+            {/* Quick FAQ Guidance Helper */}
+            <div className="mt-5 pt-4 border-t border-brand-green/15 flex flex-col sm:flex-row items-center justify-between gap-3 bg-brand-green/10 rounded-2xl p-3 sm:px-4">
+              <div className="flex items-center gap-2.5 text-xs text-brand-brown/80">
+                <HelpCircle className="w-4 h-4 text-brand-sage shrink-0" />
+                <span>
+                  <strong>비밀보장, 진료기록 여부, 결제 및 일정 변경</strong> 등 상담 전 자주 묻는 질문이 정리되어 있습니다.
+                </span>
+              </div>
+              <Link
+                to="/guide#faq"
+                className="inline-flex items-center gap-1 text-xs font-bold text-brand-sage hover:text-brand-brown bg-white px-3 py-1.5 rounded-xl border border-brand-green/30 transition-all shadow-2xs hover:shadow-xs shrink-0"
+              >
+                <span>자주 묻는 질문 (FAQ) 보러가기</span>
+                <ChevronRight className="w-3.5 h-3.5" />
+              </Link>
+            </div>
           </div>
         </motion.section>
 
@@ -397,6 +431,14 @@ export default function Reservation() {
                 </div>
 
                 <div className="flex flex-wrap items-center justify-center gap-3">
+                  <button 
+                    type="button"
+                    onClick={() => setShowConfirmModal(true)}
+                    className="inline-flex items-center gap-1.5 px-5 py-2.5 bg-[#FEE500] hover:bg-[#FADB00] text-[#371D1E] text-xs font-bold rounded-xl transition-all shadow-xs cursor-pointer"
+                  >
+                    <MessageSquareText className="w-3.5 h-3.5 fill-[#371D1E]" />
+                    <span>알림톡 확인창 다시 열기</span>
+                  </button>
                   <button 
                     onClick={() => {
                       setSubmitted(false);
@@ -686,6 +728,32 @@ export default function Reservation() {
           </div>
         </div>
       </div>
+
+      {/* Interactive Reservation Confirmation & Automatic Alimtalk Modal */}
+      <ReservationConfirmModal
+        isOpen={showConfirmModal}
+        onClose={() => setShowConfirmModal(false)}
+        reservationData={{
+          id: submittedReservationId,
+          name: formData.name,
+          phone: formData.phone,
+          preferred_date: formData.preferred_date,
+          preferred_time: formData.preferred_time,
+          program_id: formData.program_id,
+        }}
+        program={selectedProgram}
+        notificationResult={notificationResult}
+        onResetForm={() => {
+          setSubmitted(false);
+          setFormData({
+            name: '',
+            phone: '',
+            program_id: '',
+            preferred_date: '',
+            preferred_time: '',
+          });
+        }}
+      />
     </div>
   );
 }

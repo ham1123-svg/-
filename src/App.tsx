@@ -29,10 +29,12 @@ import Admin from './pages/Admin';
 
 // Route change scroll helper
 function ScrollToTopOnNavigate() {
-  const { pathname } = useLocation();
+  const { pathname, hash } = useLocation();
   useEffect(() => {
-    window.scrollTo(0, 0);
-  }, [pathname]);
+    if (!hash) {
+      window.scrollTo(0, 0);
+    }
+  }, [pathname, hash]);
   return null;
 }
 
