@@ -143,9 +143,7 @@ async function startServer() {
   app.use(express.urlencoded({ extended: true, limit: "30mb" }));
 
   // Static images route with aggressive cache control for global high-speed delivery
-  const publicImagesPath = fs.existsSync(path.join(process.cwd(), "public", "images"))
-    ? path.join(process.cwd(), "public", "images")
-    : path.join(__dirname, "images");
+  const publicImagesPath = path.join(process.cwd(), "public", "images");
   if (fs.existsSync(publicImagesPath)) {
     app.use("/images", express.static(publicImagesPath, {
       maxAge: "7d",
@@ -1305,14 +1303,7 @@ async function startServer() {
   });
 
   app.get("/standalone", (req, res) => {
-    const standalonePath = fs.existsSync(path.join(rootDir, "standalone.html"))
-      ? path.join(rootDir, "standalone.html")
-      : path.join(__dirname, "standalone.html");
-    if (fs.existsSync(standalonePath)) {
-      res.sendFile(standalonePath);
-    } else {
-      res.redirect("/");
-    }
+    res.sendFile(path.join(rootDir, "standalone.html"));
   });
 
   // Vite middleware for development
@@ -1323,9 +1314,7 @@ async function startServer() {
     });
     app.use(vite.middlewares);
   } else {
-    const distPath = fs.existsSync(path.join(__dirname, "index.html"))
-      ? __dirname
-      : path.join(rootDir, "dist");
+    const distPath = path.join(rootDir, "dist");
     app.use(express.static(distPath));
     app.get("*", (req, res) => {
       res.sendFile(path.join(distPath, "index.html"));
