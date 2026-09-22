@@ -147,28 +147,38 @@ export default function Guide() {
             viewport={{ once: true }}
             className="bg-white rounded-3xl p-8 shadow-xl border border-brand-green/10"
           >
-            <div className="flex items-center gap-3 mb-8">
+            <div className="flex items-center gap-3 mb-6">
               <Clock className="w-6 h-6 text-brand-sage" />
-              <h2 className="text-2xl font-serif font-bold text-brand-brown">상담 시간 안내</h2>
+              <div>
+                <h2 className="text-2xl font-serif font-bold text-brand-brown">상담 시간 안내</h2>
+                <p className="text-xs text-brand-sage font-semibold mt-0.5">1일 5회 1:1 집중 심층 상담 운영</p>
+              </div>
             </div>
-            <div className="space-y-6">
-              <div className="flex justify-between items-center py-4 border-b border-brand-green/10">
-                <span className="font-medium">평일</span>
-                <span className="text-brand-brown/70">10:00 - 20:00</span>
-              </div>
-              <div className="flex justify-between items-center py-4 border-b border-brand-green/10">
-                <span className="font-medium">토요일</span>
-                <span className="text-brand-brown/70">10:00 - 17:00</span>
-              </div>
-              <div className="flex justify-between items-center py-4 border-b border-brand-green/10 text-red-400">
-                <span className="font-medium">일요일 및 공휴일</span>
-                <span className="font-bold">휴무</span>
+            <div className="space-y-3">
+              {[
+                { session: '1회차', time: '09:00 ~ 10:00', desc: '오전 집중 상담 1' },
+                { session: '2회차', time: '10:30 ~ 11:30', desc: '오전 집중 상담 2' },
+                { session: '3회차', time: '14:00 ~ 15:00', desc: '오후 집중 상담 1' },
+                { session: '4회차', time: '15:30 ~ 16:30', desc: '오후 집중 상담 2' },
+                { session: '5회차', time: '19:00 ~ 20:00', desc: '야간 퇴근 후 상담' },
+              ].map((slot) => (
+                <div key={slot.session} className="flex justify-between items-center py-2.5 px-3 bg-brand-beige/20 rounded-xl border border-brand-green/10">
+                  <div className="flex items-center gap-2">
+                    <span className="px-2 py-0.5 bg-brand-sage text-white text-[11px] font-bold rounded-md">{slot.session}</span>
+                    <span className="font-semibold text-sm text-brand-brown">{slot.time}</span>
+                  </div>
+                  <span className="text-xs text-brand-brown/60 hidden sm:inline">{slot.desc}</span>
+                </div>
+              ))}
+              <div className="flex justify-between items-center py-3 px-3 border-t border-brand-green/15 text-red-500 font-semibold text-sm mt-2">
+                <span>일요일 및 법정 공휴일</span>
+                <span className="px-2 py-0.5 bg-red-50 text-red-600 rounded-md text-xs font-bold">정기 휴무</span>
               </div>
             </div>
             <div className="mt-8 p-4 bg-brand-green/20 rounded-2xl flex items-start gap-3">
               <ShieldCheck className="w-5 h-5 text-brand-sage shrink-0 mt-1" />
               <p className="text-sm text-brand-brown/80 leading-relaxed">
-                상담은 100% 예약제로 운영됩니다. 원활한 상담을 위해 예약 시간을 엄수해 주시기 바랍니다.
+                상담은 1일 5회 사전 예약제로 엄격하게 운영됩니다. 내담자 간 마주침을 최소화하고 깊이 있는 상담 품질을 유지하기 위해 예약 시간을 엄수해 주시기 바랍니다.
               </p>
             </div>
           </motion.div>

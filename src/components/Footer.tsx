@@ -38,7 +38,7 @@ export default function Footer() {
               <li className="flex items-start gap-2">
                 <span className="w-20 shrink-0 font-bold text-brand-beige">운영시간:</span>
                 <div className="space-y-1">
-                  <div>평일 10:00 - 20:00 / 토요일 10:00 - 17:00</div>
+                  <div>월~토 1일 5회 사전 예약제 (09:00, 10:30, 14:00, 15:30, 19:00)</div>
                   <div className="text-brand-beige/50">일요일, 공휴일 휴무</div>
                 </div>
               </li>

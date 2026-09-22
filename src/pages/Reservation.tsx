@@ -1,14 +1,18 @@
-import React, { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import React, { useState, useEffect, useRef } from 'react';
+import { useSearchParams, Link } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { 
   MapPin, Phone, Mail, Clock, Send, CheckCircle, 
-  CalendarCheck2, PhoneCall, HeartHandshake, Sparkles, ChevronRight, ShieldCheck 
+  CalendarCheck2, PhoneCall, HeartHandshake, Sparkles, ChevronRight, ShieldCheck,
+  MessageSquareText, CheckCircle2, RotateCcw, Home as HomeIcon, BellRing, ExternalLink,
+  CalendarDays, Check
 } from 'lucide-react';
-import { Program } from '../types';
+import { Program, NotificationResult, ScheduleBlock, Reservation as ReservationType, RESERVATION_TIME_SLOTS, TIME_SLOT_DETAILS } from '../types';
+import WeeklyScheduleCalendar from '../components/WeeklyScheduleCalendar';
 
 export default function Reservation() {
   const [searchParams] = useSearchParams();
+  const formRef = useRef<HTMLDivElement>(null);
   const [programs, setPrograms] = useState<Program[]>([]);
   const [formData, setFormData] = useState({
     name: '',
@@ -17,7 +21,25 @@ export default function Reservation() {
     preferred_date: '',
     preferred_time: '',
   });
-  const [submitted, setSubmitted] = useState(false);
+  const [sendKakaoNotify, setSendKakaoNotify] = useState<boolean>(true);
+  const [submitted, setSubmitted] = useState<boolean>(false);
+  const [submitting, setSubmitting] = useState<boolean>(false);
+  const [notificationResult, setNotificationResult] = useState<NotificationResult | null>(null);
+  const [scheduleBlocks, setScheduleBlocks] = useState<ScheduleBlock[]>([]);
+  const [existingReservations, setExistingReservations] = useState<ReservationType[]>([]);
+  const [formError, setFormError] = useState<string>('');
+
+  const loadScheduleData = () => {
+    fetch('/api/schedule-blocks')
+      .then(res => res.json())
+      .then(data => { if (Array.isArray(data)) setScheduleBlocks(data); })
+      .catch(() => {});
+
+    fetch('/api/reservations')
+      .then(res => res.json())
+      .then(data => { if (Array.isArray(data)) setExistingReservations(data); })
+      .catch(() => {});
+  };
 
   useEffect(() => {
     fetch('/api/programs')
@@ -34,22 +56,116 @@ export default function Reservation() {
           }
         }
       });
+
+    loadScheduleData();
   }, [searchParams]);
+
+  // Sunday & Saturday check for preferred_date
+  const dayOfWeek = formData.preferred_date ? new Date(formData.preferred_date + 'T00:00:00').getDay() : -1;
+  const isSunday = dayOfWeek === 0;
+  const isSaturday = dayOfWeek === 6;
+
+  // Check availability for each of the 5 slots
+  const slotAvailability = React.useMemo(() => {
+    const map = new Map<string, { available: boolean; reason: string }>();
+    const dateStr = formData.preferred_date;
+
+    RESERVATION_TIME_SLOTS.forEach(time => {
+      if (!dateStr) {
+        map.set(time, { available: true, reason: '' });
+        return;
+      }
+      if (isSunday) {
+        map.set(time, { available: false, reason: '일요일 정기휴무' });
+        return;
+      }
+      if (isSaturday && time === '19:00') {
+        map.set(time, { available: false, reason: '토요일 야간 미운영' });
+        return;
+      }
+
+      // Check full-day block
+      const dayBlock = scheduleBlocks.find(b => b.block_date === dateStr && !b.block_time);
+      if (dayBlock) {
+        map.set(time, { available: false, reason: dayBlock.reason || '전일 마감' });
+        return;
+      }
+
+      // Check specific slot block
+      const slotBlock = scheduleBlocks.find(b => b.block_date === dateStr && b.block_time === time);
+      if (slotBlock) {
+        map.set(time, { available: false, reason: slotBlock.reason || '마감' });
+        return;
+      }
+
+      // Check booked
+      const isBooked = existingReservations.some(
+        r => r.preferred_date === dateStr && r.preferred_time === time && r.status !== 'cancelled'
+      );
+      if (isBooked) {
+        map.set(time, { available: false, reason: '예약 완료' });
+        return;
+      }
+
+      map.set(time, { available: true, reason: '' });
+    });
+
+    return map;
+  }, [formData.preferred_date, scheduleBlocks, existingReservations, isSunday, isSaturday]);
+
+  // Clear preferred_time if user changed date to one where that slot is closed
+  useEffect(() => {
+    if (formData.preferred_date && formData.preferred_time) {
+      const status = slotAvailability.get(formData.preferred_time);
+      if (status && !status.available) {
+        setFormData(prev => ({ ...prev, preferred_time: '' }));
+      }
+    }
+  }, [formData.preferred_date, slotAvailability]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const response = await fetch('/api/reservations', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        ...formData,
-        program_id: parseInt(formData.program_id)
-      }),
-    });
-    if (response.ok) {
-      setSubmitted(true);
+    setFormError('');
+
+    // Pre-validation
+    if (formData.preferred_date && formData.preferred_time) {
+      const slotStatus = slotAvailability.get(formData.preferred_time);
+      if (slotStatus && !slotStatus.available) {
+        setFormError(`선택하신 시간(${formData.preferred_time})은 [${slotStatus.reason}] 사유로 현재 예약이 불가합니다. 다른 일시를 선택해 주세요.`);
+        return;
+      }
+    }
+
+    setSubmitting(true);
+    try {
+      const response = await fetch('/api/reservations', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...formData,
+          program_id: parseInt(formData.program_id)
+        }),
+      });
+      if (response.ok) {
+        const result = await response.json();
+        if (result.notification) {
+          setNotificationResult(result.notification);
+        }
+        setSubmitted(true);
+        loadScheduleData();
+      } else {
+        const errData = await response.json().catch(() => ({}));
+        setFormError(errData.error || '예약 신청 중 오류가 발생했습니다. 다시 시도해 주세요.');
+      }
+    } catch (err) {
+      console.error('Failed to submit reservation:', err);
+      setFormError('서버 연결 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.');
+    } finally {
+      setSubmitting(false);
     }
   };
+
+  const selectedProgram = programs.find(p => p.id.toString() === formData.program_id);
 
   const steps = [
     {
@@ -169,7 +285,27 @@ export default function Reservation() {
           </div>
         </motion.section>
 
-        <div className="grid lg:grid-cols-2 gap-12">
+        {/* Weekly Schedule Availability Calendar */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.1 }}
+        >
+          <WeeklyScheduleCalendar
+            selectedDate={formData.preferred_date}
+            selectedTime={formData.preferred_time}
+            onSelectSlot={(date, time) => {
+              setFormData(prev => ({
+                ...prev,
+                preferred_date: date,
+                preferred_time: time
+              }));
+            }}
+            formRef={formRef}
+          />
+        </motion.div>
+
+        <div className="grid lg:grid-cols-2 gap-12" ref={formRef} id="reservation-form-section">
           {/* Reservation Form */}
           <motion.div 
             initial={{ opacity: 0, x: -20 }}
@@ -177,27 +313,126 @@ export default function Reservation() {
             className="bg-white rounded-3xl p-8 shadow-xl border border-brand-green/10"
           >
             {submitted ? (
-              <div className="h-full flex flex-col items-center justify-center py-20 text-center">
-                <div className="w-20 h-20 bg-brand-green rounded-full flex items-center justify-center text-brand-sage mb-6">
-                  <CheckCircle className="w-10 h-10" />
+              <div className="h-full flex flex-col items-center justify-center py-8 text-center">
+                <div className="w-16 h-16 bg-brand-green/30 rounded-full flex items-center justify-center text-brand-sage mb-4 ring-8 ring-brand-green/10">
+                  <CheckCircle className="w-8 h-8" />
                 </div>
-                <h2 className="text-2xl font-bold text-brand-brown mb-4">예약 신청이 완료되었습니다!</h2>
-                <p className="text-brand-brown/60 mb-8">
-                  담당자가 확인 후 빠른 시일 내에 안내 전화를 드리겠습니다. <br />
-                  조금만 기다려 주세요.
+                <h2 className="text-2xl font-serif font-bold text-brand-brown mb-2">예약 신청이 정상 접수되었습니다!</h2>
+                <p className="text-sm text-brand-brown/70 mb-6 max-w-md leading-relaxed">
+                  소중한 마음을 나누어 주셔서 감사합니다. 담당 상담사가 접수 내용을 확인 후 <strong className="text-brand-brown">24시간 이내 유선 전화</strong>로 일정을 최종 확정해 드립니다.
                 </p>
-                <button 
-                  onClick={() => setSubmitted(false)}
-                  className="text-brand-sage font-bold hover:underline"
-                >
-                  새로운 예약 신청하기
-                </button>
+
+                {/* Kakao Alimtalk / SMS Notification Preview Card */}
+                <div className="w-full max-w-md bg-amber-50/80 border border-amber-200/90 rounded-3xl p-5 text-left mb-6 shadow-sm">
+                  <div className="flex items-center justify-between gap-2 pb-3 mb-3 border-b border-amber-200/60">
+                    <div className="flex items-center gap-2">
+                      <div className="w-7 h-7 bg-[#FEE500] rounded-xl flex items-center justify-center text-[#371D1E] font-bold text-xs shadow-xs">
+                        <MessageSquareText className="w-4 h-4 fill-[#371D1E]" />
+                      </div>
+                      <div>
+                        <span className="text-xs font-bold text-amber-950 flex items-center gap-1.5">
+                          카카오 알림톡 & 문자 자동 발송
+                          <span className="px-1.5 py-0.2 bg-emerald-100 text-emerald-800 text-[10px] font-semibold rounded-full">
+                            전송 완료
+                          </span>
+                        </span>
+                        <div className="text-[11px] text-amber-800/80">
+                          수신 번호: {formData.phone} ({formData.name} 님)
+                        </div>
+                      </div>
+                    </div>
+                    <span className="text-[10px] text-amber-700/60 font-mono">
+                      {new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                  </div>
+
+                  {/* Kakao Talk Speech Bubble Mockup */}
+                  <div className="bg-white rounded-2xl p-4 border border-amber-100 shadow-xs space-y-3">
+                    <div className="text-xs font-bold text-amber-900 border-b border-amber-100 pb-2 flex items-center justify-between">
+                      <span>[행복바람심리상담연구소]</span>
+                      <span className="text-[10px] text-amber-600 font-normal">알림톡 안내</span>
+                    </div>
+
+                    <p className="text-xs text-brand-brown/90 leading-relaxed">
+                      안녕하세요, <strong className="text-brand-brown font-bold">{formData.name}</strong> 님.<br />
+                      마음의 평온을 찾는 행복바람심리상담연구소입니다.<br />
+                      신청하신 상담 예약이 안전하게 접수되었습니다.
+                    </p>
+
+                    <div className="bg-brand-beige/30 rounded-xl p-3 text-xs space-y-1.5 text-brand-brown/80 border border-brand-green/20">
+                      <div className="flex justify-between">
+                        <span className="text-brand-brown/60">신청 프로그램:</span>
+                        <span className="font-semibold text-brand-brown">
+                          {selectedProgram ? `[${selectedProgram.category}] ${selectedProgram.title}` : '맞춤 심리상담'}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-brand-brown/60">희망 방문일:</span>
+                        <span className="font-semibold text-brand-brown">{formData.preferred_date}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-brand-brown/60">희망 시간:</span>
+                        <span className="font-semibold text-brand-brown">{formData.preferred_time}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-brand-brown/60">상담소 위치:</span>
+                        <span className="font-semibold text-brand-brown text-[11px]">도호1길 23 상가 408호</span>
+                      </div>
+                    </div>
+
+                    <div className="pt-1 space-y-1.5">
+                      <a
+                        href="tel:052-254-0230"
+                        className="w-full py-2 bg-[#FEE500] hover:bg-[#FADB00] text-[#371D1E] font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 transition-all shadow-xs"
+                      >
+                        <PhoneCall className="w-3.5 h-3.5" />
+                        <span>상담소 유선 문의 (052-254-0230)</span>
+                      </a>
+                    </div>
+                  </div>
+
+                  <p className="mt-3 text-[11px] text-amber-900/70 leading-relaxed text-center">
+                    💡 카카오톡 미설치 또는 알림 차단 시 <strong className="font-semibold">일반 장문 문자(LMS)</strong>로 자동 전환 발송됩니다.
+                  </p>
+                </div>
+
+                <div className="flex flex-wrap items-center justify-center gap-3">
+                  <button 
+                    onClick={() => {
+                      setSubmitted(false);
+                      setFormData({
+                        name: '',
+                        phone: '',
+                        program_id: '',
+                        preferred_date: '',
+                        preferred_time: '',
+                      });
+                    }}
+                    className="inline-flex items-center gap-1.5 px-5 py-2.5 bg-brand-sage text-white text-xs font-bold rounded-xl hover:bg-brand-sage/90 transition-all shadow-sm"
+                  >
+                    <RotateCcw className="w-3.5 h-3.5" />
+                    <span>새로운 예약 신청하기</span>
+                  </button>
+                  <Link
+                    to="/"
+                    className="inline-flex items-center gap-1.5 px-5 py-2.5 bg-brand-beige/50 text-brand-brown text-xs font-bold rounded-xl hover:bg-brand-beige/80 transition-all border border-brand-green/20"
+                  >
+                    <HomeIcon className="w-3.5 h-3.5" />
+                    <span>홈페이지 메인으로</span>
+                  </Link>
+                </div>
               </div>
             ) : (
               <>
-                <h2 className="text-2xl font-serif font-bold text-brand-brown mb-8 flex items-center gap-2">
-                  <Send className="w-6 h-6 text-brand-sage" /> 온라인 예약 신청
-                </h2>
+                <div className="flex items-center justify-between mb-8">
+                  <h2 className="text-2xl font-serif font-bold text-brand-brown flex items-center gap-2">
+                    <Send className="w-6 h-6 text-brand-sage" /> 온라인 예약 신청
+                  </h2>
+                  <span className="px-2.5 py-1 bg-brand-green/30 text-brand-brown text-xs font-semibold rounded-full">
+                    간편 1분 접수
+                  </span>
+                </div>
+
                 <form onSubmit={handleSubmit} className="space-y-6">
                   <div className="grid md:grid-cols-2 gap-6">
                     <div className="space-y-2">
@@ -206,7 +441,7 @@ export default function Reservation() {
                         required
                         type="text" 
                         placeholder="성함을 입력해 주세요"
-                        className="w-full px-4 py-3 rounded-xl border border-brand-green/30 focus:border-brand-sage outline-none bg-brand-beige/10"
+                        className="w-full px-4 py-3 rounded-xl border border-brand-green/30 focus:border-brand-sage outline-none bg-brand-beige/10 text-sm"
                         value={formData.name}
                         onChange={e => setFormData({...formData, name: e.target.value})}
                       />
@@ -217,7 +452,7 @@ export default function Reservation() {
                         required
                         type="tel" 
                         placeholder="010-0000-0000"
-                        className="w-full px-4 py-3 rounded-xl border border-brand-green/30 focus:border-brand-sage outline-none bg-brand-beige/10"
+                        className="w-full px-4 py-3 rounded-xl border border-brand-green/30 focus:border-brand-sage outline-none bg-brand-beige/10 text-sm"
                         value={formData.phone}
                         onChange={e => setFormData({...formData, phone: e.target.value})}
                       />
@@ -228,7 +463,7 @@ export default function Reservation() {
                     <label className="text-sm font-bold text-brand-brown/70 ml-1">상담 프로그램 선택</label>
                     <select 
                       required
-                      className="w-full px-4 py-3 rounded-xl border border-brand-green/30 focus:border-brand-sage outline-none bg-brand-beige/10 appearance-none"
+                      className="w-full px-4 py-3 rounded-xl border border-brand-green/30 focus:border-brand-sage outline-none bg-brand-beige/10 appearance-none text-sm"
                       value={formData.program_id}
                       onChange={e => setFormData({...formData, program_id: e.target.value})}
                     >
@@ -241,47 +476,156 @@ export default function Reservation() {
                   
                   <div className="grid md:grid-cols-2 gap-6">
                     <div className="space-y-2">
-                      <label className="text-sm font-bold text-brand-brown/70 ml-1">희망 날짜</label>
+                      <div className="flex items-center justify-between">
+                        <label className="text-sm font-bold text-brand-brown/70 ml-1">희망 날짜</label>
+                        {formData.preferred_date && (
+                          <span className="text-[11px] font-semibold text-brand-sage bg-brand-sage/10 px-2 py-0.5 rounded-md flex items-center gap-1">
+                            <Check className="w-3 h-3 stroke-[2.5]" />
+                            시간표 연동됨
+                          </span>
+                        )}
+                      </div>
                       <input 
                         required
                         type="date" 
-                        className="w-full px-4 py-3 rounded-xl border border-brand-green/30 focus:border-brand-sage outline-none bg-brand-beige/10"
+                        className="w-full px-4 py-3 rounded-xl border border-brand-green/30 focus:border-brand-sage outline-none bg-brand-beige/10 text-sm"
                         value={formData.preferred_date}
                         onChange={e => setFormData({...formData, preferred_date: e.target.value})}
                       />
                     </div>
                     <div className="space-y-2">
-                      <label className="text-sm font-bold text-brand-brown/70 ml-1">희망 시간</label>
+                      <div className="flex items-center justify-between">
+                        <label className="text-sm font-bold text-brand-brown/70 ml-1">
+                          희망 시간 {isSaturday ? '(토요일 4회 운영)' : '(평일 5회 운영)'}
+                        </label>
+                        {formData.preferred_time && (
+                          <span className="text-[11px] font-semibold text-brand-sage bg-brand-sage/10 px-2 py-0.5 rounded-md flex items-center gap-1">
+                            <Check className="w-3 h-3 stroke-[2.5]" />
+                            {formData.preferred_time}
+                          </span>
+                        )}
+                      </div>
+
+                      {/* 1일 5회 (토요일 4회) Quick Select Buttons */}
+                      <div className="grid grid-cols-5 gap-1.5 pt-1">
+                        {[
+                          { time: '09:00', label: '1회차' },
+                          { time: '10:30', label: '2회차' },
+                          { time: '14:00', label: '3회차' },
+                          { time: '15:30', label: '4회차' },
+                          { time: '19:00', label: '5회차', isSatClosed: true }
+                        ].map(slot => {
+                          const slotInfo = slotAvailability.get(slot.time);
+                          const isAvailable = slotInfo ? slotInfo.available : true;
+                          const isSelected = formData.preferred_time === slot.time;
+                          const isSatBlocked = isSaturday && slot.time === '19:00';
+
+                          return (
+                            <button
+                              key={slot.time}
+                              type="button"
+                              disabled={!isAvailable}
+                              onClick={() => {
+                                if (isAvailable) {
+                                  setFormData({ ...formData, preferred_time: slot.time });
+                                }
+                              }}
+                              className={`py-1.5 px-1 rounded-xl text-center border transition-all ${
+                                isSelected
+                                  ? 'bg-brand-sage text-white border-brand-sage shadow-xs font-bold cursor-pointer'
+                                  : isAvailable
+                                  ? 'bg-white border-brand-green/25 text-brand-brown/80 hover:bg-brand-beige/40 text-xs cursor-pointer'
+                                  : 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed opacity-60'
+                              }`}
+                              title={
+                                !isAvailable
+                                  ? `${slot.time} - [${slotInfo?.reason || (isSatBlocked ? '토요일 미운영' : '예약 마감')}]`
+                                  : `${slot.time} 선택`
+                              }
+                            >
+                              <div className="text-[10px] opacity-75">{slot.label}</div>
+                              <div className="text-xs font-extrabold">{slot.time}</div>
+                              {!isAvailable && (
+                                <div className="text-[9px] text-rose-500 font-bold mt-0.5">
+                                  {isSatBlocked ? '미운영' : slotInfo?.reason?.includes('휴진') ? '휴진' : '마감'}
+                                </div>
+                              )}
+                            </button>
+                          );
+                        })}
+                      </div>
+
                       <select 
                         required
-                        className="w-full px-4 py-3 rounded-xl border border-brand-green/30 focus:border-brand-sage outline-none bg-brand-beige/10 appearance-none"
+                        className="w-full px-4 py-3 rounded-xl border border-brand-green/30 focus:border-brand-sage outline-none bg-brand-beige/10 appearance-none text-sm cursor-pointer mt-1"
                         value={formData.preferred_time}
                         onChange={e => setFormData({...formData, preferred_time: e.target.value})}
                       >
-                        <option value="">시간 선택</option>
-                        <option value="10:00">10:00</option>
-                        <option value="11:00">11:00</option>
-                        <option value="13:00">13:00</option>
-                        <option value="14:00">14:00</option>
-                        <option value="15:00">15:00</option>
-                        <option value="16:00">16:00</option>
-                        <option value="17:00">17:00</option>
-                        <option value="18:00">18:00</option>
-                        <option value="19:00">19:00</option>
+                        <option value="">상담 시간대 선택 {isSaturday ? '(토요일 4회: 09:00~15:30)' : '(평일 5회: 09:00~19:00)'}</option>
+                        {[
+                          { time: '09:00', label: '1회차 (09:00 ~ 10:00)' },
+                          { time: '10:30', label: '2회차 (10:30 ~ 11:30)' },
+                          { time: '14:00', label: '3회차 (14:00 ~ 15:00)' },
+                          { time: '15:30', label: '4회차 (15:30 ~ 16:30)' },
+                          { time: '19:00', label: '5회차 (19:00 ~ 20:00 - 평일만 운영)' }
+                        ].map(slot => {
+                          const slotInfo = slotAvailability.get(slot.time);
+                          const isAvailable = slotInfo ? slotInfo.available : true;
+                          return (
+                            <option key={slot.time} value={slot.time} disabled={!isAvailable}>
+                              {slot.label} {!isAvailable ? ` - [${slotInfo?.reason || '마감'}]` : ''}
+                            </option>
+                          );
+                        })}
                       </select>
                     </div>
                   </div>
+
+                  {formError && (
+                    <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-800 flex items-center gap-2">
+                      <span className="w-1.5 h-1.5 rounded-full bg-rose-600 shrink-0"></span>
+                      <span>{formError}</span>
+                    </div>
+                  )}
+
+                  {/* Kakao Alimtalk & SMS notification agreement */}
+                  <div className="p-4 rounded-2xl bg-amber-50/80 border border-amber-200 flex items-start gap-3">
+                    <input 
+                      type="checkbox"
+                      id="kakao-notify-agreement"
+                      checked={sendKakaoNotify}
+                      onChange={e => setSendKakaoNotify(e.target.checked)}
+                      className="mt-1 w-4 h-4 rounded border-amber-300 text-amber-600 focus:ring-amber-500 cursor-pointer"
+                    />
+                    <label htmlFor="kakao-notify-agreement" className="text-xs text-amber-950 cursor-pointer leading-relaxed">
+                      <span className="font-bold flex items-center gap-1 text-amber-900">
+                        <MessageSquareText className="w-4 h-4 text-amber-600 shrink-0" />
+                        카카오 알림톡 및 문자(SMS) 접수 안내 수신 (무료)
+                      </span>
+                      <span className="text-amber-800/80 block mt-0.5">
+                        예약 신청 완료 즉시 접수 상세 내역과 상담실 위치 안내가 고객님의 카카오톡(미설치 시 문자)으로 자동 전송됩니다.
+                      </span>
+                    </label>
+                  </div>
                   
                   <p className="text-xs text-brand-brown/40 leading-relaxed">
-                    * 가예약 신청 후 담당자가 확인 전화를 드려 최종 확정됩니다. <br />
-                    * 당일 예약은 전화(052-254-0230)로 문의해 주시기 바랍니다.
+                    * 온라인 가예약 신청 후 상담사가 확인 전화를 드려 일정이 최종 확정됩니다. <br />
+                    * 당일 긴급 상담은 대표 전화(052-254-0230)로 문의해 주시기 바랍니다.
                   </p>
                   
                   <button 
                     type="submit"
-                    className="w-full py-4 bg-brand-sage text-white font-bold rounded-2xl shadow-lg hover:bg-brand-sage/90 transition-all"
+                    disabled={submitting}
+                    className="w-full py-4 bg-brand-sage hover:bg-brand-sage/90 text-white font-bold rounded-2xl shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
                   >
-                    예약 신청하기
+                    {submitting ? (
+                      <span>예약 접수 중...</span>
+                    ) : (
+                      <>
+                        <span>예약 신청 완료하기</span>
+                        <ChevronRight className="w-4 h-4" />
+                      </>
+                    )}
                   </button>
                 </form>
               </>
@@ -329,7 +673,7 @@ export default function Reservation() {
                 </div>
                 <div className="flex items-start gap-3">
                   <Clock className="w-5 h-5 text-brand-sage shrink-0 mt-1" />
-                  <p className="text-brand-brown/80">평일 10:00 - 20:00 / 토요일 10:00 - 17:00</p>
+                  <p className="text-brand-brown/80">1일 5회 사전 예약제 (09:00, 10:30, 14:00, 15:30, 19:00)</p>
                 </div>
               </div>
               <div className="mt-8 p-4 bg-white/50 rounded-2xl">

@@ -4,6 +4,11 @@ import Database from "better-sqlite3";
 import path from "path";
 import fs from "fs";
 import { fileURLToPath } from "url";
+import { 
+  sendReservationNotification, 
+  isNotificationGatewayConfigured, 
+  formatPhoneNumber 
+} from "./src/server/notificationService.ts";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -42,6 +47,18 @@ db.exec(`
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   );
 
+  CREATE TABLE IF NOT EXISTS notification_logs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    reservation_id INTEGER,
+    recipient_name TEXT NOT NULL,
+    recipient_phone TEXT NOT NULL,
+    channel TEXT DEFAULT 'ALIMTALK',
+    template_title TEXT,
+    message_content TEXT,
+    status TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+
   CREATE TABLE IF NOT EXISTS self_diagnosis (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     nickname TEXT NOT NULL,
@@ -55,7 +72,22 @@ db.exec(`
     key TEXT PRIMARY KEY,
     value TEXT NOT NULL
   );
+
+  CREATE TABLE IF NOT EXISTS schedule_blocks (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    block_date TEXT NOT NULL,
+    block_time TEXT,
+    reason TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
 `);
+
+// Safe migration for admin_notes column in reservations table
+try {
+  db.exec("ALTER TABLE reservations ADD COLUMN admin_notes TEXT");
+} catch (e) {
+  // Column already exists
+}
 
 // Seed default admin password if not set
 const defaultPw = db.prepare("SELECT value FROM admin_settings WHERE key = 'admin_password'").get() as any;
@@ -289,16 +321,686 @@ async function startServer() {
     }
   });
 
-  app.post("/api/reservations", (req, res) => {
-    const { name, phone, program_id, preferred_date, preferred_time } = req.body;
-    const info = db.prepare("INSERT INTO reservations (name, phone, program_id, preferred_date, preferred_time) VALUES (?, ?, ?, ?, ?)").run(name, phone, program_id, preferred_date, preferred_time);
-    res.json({ id: info.lastInsertRowid, status: "success" });
+  app.post("/api/reservations", async (req, res) => {
+    try {
+      const { name, phone, program_id, preferred_date, preferred_time } = req.body;
+
+      if (!preferred_date || !preferred_time) {
+        return res.status(400).json({ error: "희망 날짜와 시간을 모두 선택해 주세요." });
+      }
+
+      // 1. Day of week & Saturday / Sunday checks
+      const dateParts = preferred_date.split('-');
+      if (dateParts.length === 3) {
+        const d = new Date(parseInt(dateParts[0], 10), parseInt(dateParts[1], 10) - 1, parseInt(dateParts[2], 10));
+        const dayOfWeek = d.getDay();
+        if (dayOfWeek === 0) {
+          return res.status(400).json({ error: "일요일은 센터 정기 휴무일입니다." });
+        }
+        if (dayOfWeek === 6 && preferred_time === '19:00') {
+          return res.status(400).json({ 
+            error: "토요일은 09:00, 10:30, 14:00, 15:30 (4회차)만 운영되며 19:00 야간 상담은 운영하지 않습니다." 
+          });
+        }
+      }
+
+      // Check if blocked or closed by admin
+      const blocked = db.prepare(`
+        SELECT * FROM schedule_blocks 
+        WHERE block_date = ? AND (block_time IS NULL OR block_time = ?)
+      `).get(preferred_date, preferred_time) as any;
+      if (blocked) {
+        return res.status(400).json({ 
+          error: `선택하신 일시(${preferred_date} ${preferred_time})는 [${blocked.reason || '예약 마감'}] 상태입니다. 다른 시간을 선택해 주세요.` 
+        });
+      }
+
+      // Check if duplicate booking exists
+      const existing = db.prepare(`
+        SELECT id FROM reservations 
+        WHERE preferred_date = ? AND preferred_time = ? AND status != 'cancelled'
+      `).get(preferred_date, preferred_time) as any;
+      if (existing) {
+        return res.status(400).json({ 
+          error: `선택하신 일시(${preferred_date} ${preferred_time})는 이미 다른 예약이 접수되어 마감되었습니다. 다른 시간을 선택해 주세요.` 
+        });
+      }
+
+      // Initial status is 'pending' waiting for admin confirmation
+      const info = db.prepare("INSERT INTO reservations (name, phone, program_id, preferred_date, preferred_time, status) VALUES (?, ?, ?, ?, ?, 'pending')").run(name, phone, program_id, preferred_date, preferred_time);
+      const reservationId = Number(info.lastInsertRowid);
+
+      // Look up program title for notification template
+      let programTitle = "맞춤 심리상담";
+      if (program_id) {
+        const prog = db.prepare("SELECT title, category FROM programs WHERE id = ?").get(program_id) as any;
+        if (prog) {
+          programTitle = `[${prog.category}] ${prog.title}`;
+        }
+      }
+
+      // Initial Receipt Log (simulated/preview receipt notification)
+      let notificationResult = null;
+      try {
+        notificationResult = await sendReservationNotification({
+          reservationId,
+          recipientName: name,
+          recipientPhone: phone,
+          programTitle,
+          preferredDate: preferred_date,
+          preferredTime: preferred_time,
+          type: 'RECEIVED'
+        });
+
+        db.prepare(`
+          INSERT INTO notification_logs 
+          (reservation_id, recipient_name, recipient_phone, channel, template_title, message_content, status) 
+          VALUES (?, ?, ?, ?, ?, ?, ?)
+        `).run(
+          reservationId,
+          name,
+          phone,
+          notificationResult.channel,
+          notificationResult.templateTitle,
+          notificationResult.content,
+          notificationResult.status
+        );
+      } catch (notifyErr) {
+        console.error("Failed to process receipt notification log:", notifyErr);
+      }
+
+      res.json({ 
+        id: reservationId, 
+        status: "pending",
+        message: "예약 신청이 정상 접수되었습니다. 관리자 확인 후 예약이 확정되며 카카오톡 알림톡이 발송됩니다.",
+        notification: notificationResult
+      });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
   });
 
-  app.patch("/api/reservations/:id", (req, res) => {
+  // Dedicated endpoint: Confirm reservation and send KakaoTalk notification
+  app.post("/api/reservations/:id/confirm", async (req, res) => {
     try {
-      const { status } = req.body;
-      db.prepare("UPDATE reservations SET status = ? WHERE id = ?").run(status, req.params.id);
+      const reservationId = req.params.id;
+      const reservation = db.prepare(`
+        SELECT r.*, p.title as program_title, p.category as program_category 
+        FROM reservations r 
+        LEFT JOIN programs p ON r.program_id = p.id 
+        WHERE r.id = ?
+      `).get(reservationId) as any;
+
+      if (!reservation) {
+        return res.status(404).json({ error: "예약 내역을 찾을 수 없습니다." });
+      }
+
+      // Update status to 'confirmed'
+      db.prepare("UPDATE reservations SET status = 'confirmed' WHERE id = ?").run(reservationId);
+
+      const programTitle = reservation.program_title 
+        ? `[${reservation.program_category}] ${reservation.program_title}` 
+        : "맞춤 심리상담";
+
+      // Send KakaoTalk Confirmation Notification automatically
+      const notificationResult = await sendReservationNotification({
+        reservationId: Number(reservationId),
+        recipientName: reservation.name,
+        recipientPhone: reservation.phone,
+        programTitle,
+        preferredDate: reservation.preferred_date,
+        preferredTime: reservation.preferred_time,
+        type: 'CONFIRMED'
+      });
+
+      // Record in notification logs
+      db.prepare(`
+        INSERT INTO notification_logs 
+        (reservation_id, recipient_name, recipient_phone, channel, template_title, message_content, status) 
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+      `).run(
+        reservationId,
+        reservation.name,
+        reservation.phone,
+        notificationResult.channel,
+        notificationResult.templateTitle,
+        notificationResult.content,
+        notificationResult.status
+      );
+
+      res.json({ 
+        success: true, 
+        status: 'confirmed',
+        message: `예약이 성공적으로 확정되었습니다. 고객님(${reservation.phone})께 카카오톡 알림톡이 자동 발송되었습니다.`,
+        notification: notificationResult 
+      });
+    } catch (err: any) {
+      console.error("Failed to confirm reservation:", err);
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // Notification status and logs API
+  app.get("/api/notifications/config", (req, res) => {
+    try {
+      const isConfigured = isNotificationGatewayConfigured();
+      res.json({
+        configured: isConfigured,
+        channel: "카카오 알림톡 (SMS 자동 대체)",
+        senderNumber: process.env.ALIMTALK_SENDER_NUMBER || "052-254-0230",
+        pfId: process.env.ALIMTALK_PFID || "@행복바람심리상담연구소",
+        templateId: process.env.ALIMTALK_TEMPLATE_ID || "RESERVATION_CONFIRM_V1",
+        mode: isConfigured ? "LIVE_GATEWAY" : "SIMULATED_PREVIEW"
+      });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.get("/api/notifications", (req, res) => {
+    try {
+      const logs = db.prepare(`
+        SELECT * FROM notification_logs ORDER BY id DESC LIMIT 50
+      `).all();
+      res.json(logs);
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.post("/api/notifications/resend/:id", async (req, res) => {
+    try {
+      const reservationId = req.params.id;
+      const reservation = db.prepare(`
+        SELECT r.*, p.title as program_title, p.category as program_category 
+        FROM reservations r 
+        LEFT JOIN programs p ON r.program_id = p.id 
+        WHERE r.id = ?
+      `).get(reservationId) as any;
+
+      if (!reservation) {
+        return res.status(404).json({ error: "예약 정보를 찾을 수 없습니다." });
+      }
+
+      const programTitle = reservation.program_title 
+        ? `[${reservation.program_category}] ${reservation.program_title}` 
+        : "맞춤 심리상담";
+
+      const notificationResult = await sendReservationNotification({
+        reservationId: reservation.id,
+        recipientName: reservation.name,
+        recipientPhone: reservation.phone,
+        programTitle,
+        preferredDate: reservation.preferred_date,
+        preferredTime: reservation.preferred_time
+      });
+
+      db.prepare(`
+        INSERT INTO notification_logs 
+        (reservation_id, recipient_name, recipient_phone, channel, template_title, message_content, status) 
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+      `).run(
+        reservation.id,
+        reservation.name,
+        reservation.phone,
+        notificationResult.channel,
+        notificationResult.templateTitle,
+        notificationResult.content,
+        notificationResult.status
+      );
+
+      res.json({ success: true, notification: notificationResult });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.patch("/api/reservations/:id", async (req, res) => {
+    try {
+      const reservationId = req.params.id;
+      const current = db.prepare("SELECT * FROM reservations WHERE id = ?").get(reservationId) as any;
+      if (!current) {
+        return res.status(404).json({ error: "예약 내역을 찾을 수 없습니다." });
+      }
+
+      const {
+        status = current.status,
+        preferred_date = current.preferred_date,
+        preferred_time = current.preferred_time,
+        name = current.name,
+        phone = current.phone,
+        program_id = current.program_id,
+        admin_notes = current.admin_notes,
+        notify_client = false
+      } = req.body;
+
+      db.prepare(`
+        UPDATE reservations 
+        SET status = ?, preferred_date = ?, preferred_time = ?, name = ?, phone = ?, program_id = ?, admin_notes = ? 
+        WHERE id = ?
+      `).run(status, preferred_date, preferred_time, name, phone, program_id, admin_notes, reservationId);
+
+      const isNewlyConfirmed = status === 'confirmed' && current.status !== 'confirmed';
+      const shouldNotify = notify_client || isNewlyConfirmed;
+
+      let notificationResult = null;
+      if (shouldNotify) {
+        let progTitle = "맞춤 심리상담";
+        if (program_id) {
+          const prog = db.prepare("SELECT title, category FROM programs WHERE id = ?").get(program_id) as any;
+          if (prog) progTitle = `[${prog.category}] ${prog.title}`;
+        }
+
+        try {
+          notificationResult = await sendReservationNotification({
+            reservationId: Number(reservationId),
+            recipientName: name,
+            recipientPhone: phone,
+            programTitle: isNewlyConfirmed ? progTitle : `${progTitle} (일정 변경 안내)`,
+            preferredDate: preferred_date,
+            preferredTime: preferred_time,
+            type: 'CONFIRMED'
+          });
+
+          db.prepare(`
+            INSERT INTO notification_logs 
+            (reservation_id, recipient_name, recipient_phone, channel, template_title, message_content, status) 
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+          `).run(
+            reservationId,
+            name,
+            phone,
+            notificationResult.channel,
+            notificationResult.templateTitle,
+            notificationResult.content,
+            notificationResult.status
+          );
+        } catch (e) {
+          console.error("Failed to send notification on reservation patch:", e);
+        }
+      }
+
+      res.json({ success: true, notification: notificationResult });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // Admin manually creates appointment (phone/walk-in)
+  app.post("/api/reservations/admin", async (req, res) => {
+    try {
+      const { name, phone, program_id, preferred_date, preferred_time, status = 'confirmed', admin_notes = '', notify_client = false } = req.body;
+      const info = db.prepare(`
+        INSERT INTO reservations (name, phone, program_id, preferred_date, preferred_time, status, admin_notes)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+      `).run(name, phone, program_id, preferred_date, preferred_time, status, admin_notes);
+
+      const reservationId = Number(info.lastInsertRowid);
+      let notificationResult = null;
+
+      if (notify_client) {
+        let progTitle = "맞춤 심리상담";
+        if (program_id) {
+          const prog = db.prepare("SELECT title, category FROM programs WHERE id = ?").get(program_id) as any;
+          if (prog) progTitle = `[${prog.category}] ${prog.title}`;
+        }
+
+        try {
+          notificationResult = await sendReservationNotification({
+            reservationId,
+            recipientName: name,
+            recipientPhone: phone,
+            programTitle: progTitle,
+            preferredDate: preferred_date,
+            preferredTime: preferred_time
+          });
+
+          db.prepare(`
+            INSERT INTO notification_logs 
+            (reservation_id, recipient_name, recipient_phone, channel, template_title, message_content, status) 
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+          `).run(
+            reservationId,
+            name,
+            phone,
+            notificationResult.channel,
+            notificationResult.templateTitle,
+            notificationResult.content,
+            notificationResult.status
+          );
+        } catch (e) {
+          console.error("Failed to notify on admin reservation create:", e);
+        }
+      }
+
+      res.json({ success: true, id: reservationId, notification: notificationResult });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // Schedule Blocks (holiday/workshop/break times)
+  app.get("/api/schedule-blocks", (req, res) => {
+    try {
+      const blocks = db.prepare("SELECT * FROM schedule_blocks ORDER BY block_date ASC, block_time ASC").all();
+      res.json(blocks);
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.post("/api/schedule-blocks", (req, res) => {
+    try {
+      const { 
+        block_date, 
+        start_date, 
+        end_date, 
+        dates,
+        days_of_week, 
+        block_time, 
+        block_times, 
+        reason, 
+        exclude_sundays 
+      } = req.body;
+      const blockReason = reason || "예약 마감";
+
+      const timesToBlock: (string | null)[] = Array.isArray(block_times) && block_times.length > 0
+        ? block_times
+        : [block_time || null];
+
+      let targetDates: string[] = [];
+
+      // 1. Explicit dates array provided
+      if (Array.isArray(dates) && dates.length > 0) {
+        targetDates = Array.from(new Set(dates)).sort();
+      }
+      // 2. Period / Date Range Mode
+      else if (start_date && end_date) {
+        const start = new Date(start_date + "T00:00:00");
+        const end = new Date(end_date + "T00:00:00");
+        if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+          return res.status(400).json({ error: "유효하지 않은 날짜 형식입니다." });
+        }
+        if (start > end) {
+          return res.status(400).json({ error: "종료일은 시작일보다 빠를 수 없습니다." });
+        }
+
+        // Limit range to max 365 days to prevent excessive loops
+        const diffDays = Math.round((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+        if (diffDays > 365) {
+          return res.status(400).json({ error: "기간 설정은 최대 1년(365일)까지 가능합니다." });
+        }
+
+        const allowedDaysOfWeek: number[] | null = Array.isArray(days_of_week) && days_of_week.length > 0
+          ? days_of_week.map(Number)
+          : null;
+
+        const cur = new Date(start);
+        while (cur <= end) {
+          const dayOfWeek = cur.getDay(); // 0 = Sunday
+          const isSundayExcluded = (exclude_sundays !== false) && dayOfWeek === 0;
+
+          if (!isSundayExcluded) {
+            if (!allowedDaysOfWeek || allowedDaysOfWeek.includes(dayOfWeek)) {
+              const y = cur.getFullYear();
+              const m = String(cur.getMonth() + 1).padStart(2, "0");
+              const d = String(cur.getDate()).padStart(2, "0");
+              targetDates.push(`${y}-${m}-${d}`);
+            }
+          }
+          cur.setDate(cur.getDate() + 1);
+        }
+      }
+      // 3. Single Date Mode
+      else if (block_date) {
+        targetDates = [block_date];
+      } else {
+        return res.status(400).json({ error: "마감할 날짜 또는 기간을 지정해 주세요." });
+      }
+
+      if (targetDates.length === 0) {
+        return res.status(400).json({ error: "조건에 해당하는 유효한 마감 대상 날짜가 없습니다." });
+      }
+
+      let insertedCount = 0;
+      const insertStmt = db.prepare(`
+        INSERT INTO schedule_blocks (block_date, block_time, reason)
+        VALUES (?, ?, ?)
+      `);
+      const checkSlotStmt = db.prepare(`
+        SELECT id FROM schedule_blocks WHERE block_date = ? AND block_time = ?
+      `);
+      const checkDayStmt = db.prepare(`
+        SELECT id FROM schedule_blocks WHERE block_date = ? AND block_time IS NULL
+      `);
+
+      db.transaction(() => {
+        for (const curDateStr of targetDates) {
+          for (const timeVal of timesToBlock) {
+            if (timeVal) {
+              const dayBlocked = checkDayStmt.get(curDateStr);
+              const slotBlocked = checkSlotStmt.get(curDateStr, timeVal);
+              if (!dayBlocked && !slotBlocked) {
+                insertStmt.run(curDateStr, timeVal, blockReason);
+                insertedCount++;
+              }
+            } else {
+              // Whole day block: clear individual slot blocks for this date and set full day block
+              const dayBlocked = checkDayStmt.get(curDateStr);
+              if (!dayBlocked) {
+                db.prepare("DELETE FROM schedule_blocks WHERE block_date = ?").run(curDateStr);
+                insertStmt.run(curDateStr, null, blockReason);
+                insertedCount++;
+              }
+            }
+          }
+        }
+      })();
+
+      res.json({ success: true, count: insertedCount, days: targetDates.length, dates: targetDates });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // Batch delete schedule blocks (Supports ID list, Date range, Target Dates list, Specific Time filter, and Weekday filter)
+  app.post("/api/schedule-blocks/batch-delete", (req, res) => {
+    try {
+      const { ids, start_date, end_date, dates, block_times, days_of_week } = req.body;
+
+      if (Array.isArray(ids) && ids.length > 0) {
+        const placeholders = ids.map(() => "?").join(",");
+        db.prepare(`DELETE FROM schedule_blocks WHERE id IN (${placeholders})`).run(...ids);
+        return res.json({ success: true, deleted: ids.length });
+      }
+
+      // If explicit dates array is provided
+      let targetDates: string[] = [];
+      if (Array.isArray(dates) && dates.length > 0) {
+        targetDates = Array.from(new Set(dates)).sort();
+      } else if (start_date && end_date) {
+        const start = new Date(start_date + "T00:00:00");
+        const end = new Date(end_date + "T00:00:00");
+        if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+          return res.status(400).json({ error: "유효하지 않은 날짜 형식입니다." });
+        }
+        if (start > end) {
+          return res.status(400).json({ error: "종료일은 시작일보다 빠를 수 없습니다." });
+        }
+
+        const allowedDaysOfWeek: number[] | null = Array.isArray(days_of_week) && days_of_week.length > 0
+          ? days_of_week.map(Number)
+          : null;
+
+        const cur = new Date(start);
+        while (cur <= end) {
+          const dayOfWeek = cur.getDay();
+          if (!allowedDaysOfWeek || allowedDaysOfWeek.includes(dayOfWeek)) {
+            const y = cur.getFullYear();
+            const m = String(cur.getMonth() + 1).padStart(2, "0");
+            const d = String(cur.getDate()).padStart(2, "0");
+            targetDates.push(`${y}-${m}-${d}`);
+          }
+          cur.setDate(cur.getDate() + 1);
+        }
+      }
+
+      if (targetDates.length > 0) {
+        let totalDeleted = 0;
+        db.transaction(() => {
+          for (const curDateStr of targetDates) {
+            if (Array.isArray(block_times) && block_times.length > 0) {
+              // 1. Delete specific time slot blocks matching the requested block_times
+              for (const timeVal of block_times) {
+                const res1 = db.prepare("DELETE FROM schedule_blocks WHERE block_date = ? AND block_time = ?").run(curDateStr, timeVal);
+                totalDeleted += res1.changes;
+              }
+
+              // 2. If a whole day block existed, delete it and recreate blocks for remaining unselected slots
+              const dayBlocked = db.prepare("SELECT * FROM schedule_blocks WHERE block_date = ? AND block_time IS NULL").get(curDateStr) as any;
+              if (dayBlocked) {
+                db.prepare("DELETE FROM schedule_blocks WHERE id = ?").run(dayBlocked.id);
+                totalDeleted++;
+
+                // Saturday operates: 09:00, 10:30, 14:00, 15:30 (19:00 is closed)
+                const dateObj = new Date(curDateStr + "T00:00:00");
+                const isSaturday = dateObj.getDay() === 6;
+                const standardSlots = isSaturday 
+                  ? ["09:00", "10:30", "14:00", "15:30"] 
+                  : ["09:00", "10:30", "14:00", "15:30", "19:00"];
+
+                for (const slot of standardSlots) {
+                  if (!block_times.includes(slot)) {
+                    db.prepare("INSERT INTO schedule_blocks (block_date, block_time, reason) VALUES (?, ?, ?)").run(curDateStr, slot, dayBlocked.reason || "예약 마감");
+                  }
+                }
+              }
+            } else {
+              // Delete all blocks for this date (both whole-day and slot blocks)
+              const res2 = db.prepare("DELETE FROM schedule_blocks WHERE block_date = ?").run(curDateStr);
+              totalDeleted += res2.changes;
+            }
+          }
+        })();
+        return res.json({ success: true, deleted: totalDeleted, days: targetDates.length });
+      }
+
+      res.status(400).json({ error: "삭제할 대상 ID 또는 기간/날짜를 지정해 주세요." });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.post("/api/schedule-blocks/toggle", (req, res) => {
+    try {
+      const { block_date, block_time, reason } = req.body;
+      let existing: any = null;
+      if (block_time) {
+        existing = db.prepare("SELECT * FROM schedule_blocks WHERE block_date = ? AND block_time = ?").get(block_date, block_time);
+        
+        // If whole day block existed and we want to unblock this specific time slot
+        if (!existing) {
+          const wholeDay = db.prepare("SELECT * FROM schedule_blocks WHERE block_date = ? AND block_time IS NULL").get(block_date) as any;
+          if (wholeDay) {
+            // Remove whole day block and add blocks for all other slots EXCEPT this one
+            db.transaction(() => {
+              db.prepare("DELETE FROM schedule_blocks WHERE id = ?").run(wholeDay.id);
+              const allSlots = ["09:00", "10:30", "14:00", "15:30", "19:00"];
+              for (const slot of allSlots) {
+                if (slot !== block_time) {
+                  db.prepare("INSERT INTO schedule_blocks (block_date, block_time, reason) VALUES (?, ?, ?)").run(block_date, slot, wholeDay.reason || "예약 마감");
+                }
+              }
+            })();
+            return res.json({ success: true, action: "unblocked", id: wholeDay.id });
+          }
+        }
+      } else {
+        existing = db.prepare("SELECT * FROM schedule_blocks WHERE block_date = ? AND block_time IS NULL").get(block_date);
+        // Also if individual slot blocks existed and toggle whole day is requested, clear all slot blocks
+        if (!existing) {
+          const individualSlots = db.prepare("SELECT count(*) as cnt FROM schedule_blocks WHERE block_date = ?").get(block_date) as any;
+          if (individualSlots && individualSlots.cnt > 0) {
+            db.prepare("DELETE FROM schedule_blocks WHERE block_date = ?").run(block_date);
+            return res.json({ success: true, action: "unblocked", cleared_count: individualSlots.cnt });
+          }
+        }
+      }
+
+      if (existing) {
+        db.prepare("DELETE FROM schedule_blocks WHERE id = ?").run(existing.id);
+        res.json({ success: true, action: "unblocked", id: existing.id });
+      } else {
+        const info = db.prepare(`
+          INSERT INTO schedule_blocks (block_date, block_time, reason)
+          VALUES (?, ?, ?)
+        `).run(block_date, block_time || null, reason || "예약 마감");
+        res.json({ success: true, action: "blocked", id: info.lastInsertRowid });
+      }
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // Explicit Unblock endpoint for single slot, entire day, or by ID
+  app.post("/api/schedule-blocks/unblock", (req, res) => {
+    try {
+      const { block_date, block_time, id, unblock_all_day } = req.body;
+
+      // 1. If explicit ID is provided and no specific slot splitting requested
+      if (id && !block_date && !block_time) {
+        db.prepare("DELETE FROM schedule_blocks WHERE id = ?").run(id);
+        return res.json({ success: true, action: "unblocked_by_id" });
+      }
+
+      if (!block_date) {
+        if (id) {
+          db.prepare("DELETE FROM schedule_blocks WHERE id = ?").run(id);
+          return res.json({ success: true, action: "unblocked_by_id" });
+        }
+        return res.status(400).json({ error: "block_date가 필요합니다." });
+      }
+
+      // 2. If unblock_all_day or block_time is null/empty: unblock the whole day (remove ALL blocks on this date)
+      if (unblock_all_day || !block_time) {
+        const result = db.prepare("DELETE FROM schedule_blocks WHERE block_date = ?").run(block_date);
+        return res.json({ success: true, action: "unblocked_all", deleted: result.changes });
+      }
+
+      // 3. Unblock a specific slot (e.g. "09:00", "14:00") on block_date
+      let deleted = 0;
+      db.transaction(() => {
+        // A. Delete any direct slot block on that date and time
+        const res1 = db.prepare("DELETE FROM schedule_blocks WHERE block_date = ? AND block_time = ?").run(block_date, block_time);
+        deleted += res1.changes;
+
+        // B. If a whole-day block (block_time IS NULL) exists for this date, remove it and insert blocks for the remaining 4 slots
+        const wholeDay = db.prepare("SELECT * FROM schedule_blocks WHERE block_date = ? AND block_time IS NULL").get(block_date) as any;
+        if (wholeDay) {
+          db.prepare("DELETE FROM schedule_blocks WHERE id = ?").run(wholeDay.id);
+          deleted++;
+          const allSlots = ["09:00", "10:30", "14:00", "15:30", "19:00"];
+          for (const slot of allSlots) {
+            if (slot !== block_time) {
+              db.prepare("INSERT INTO schedule_blocks (block_date, block_time, reason) VALUES (?, ?, ?)").run(
+                block_date,
+                slot,
+                wholeDay.reason || "예약 마감"
+              );
+            }
+          }
+        }
+      })();
+
+      res.json({ success: true, action: "unblocked_slot", deleted });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.delete("/api/schedule-blocks/:id", (req, res) => {
+    try {
+      db.prepare("DELETE FROM schedule_blocks WHERE id = ?").run(req.params.id);
       res.json({ success: true });
     } catch (err: any) {
       res.status(500).json({ error: err.message });
