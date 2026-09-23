@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Heart, User, Users, BookOpen, CheckCircle2, X, Clock, ShieldCheck, Calendar, ArrowRight, Sparkles } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { Program } from '../types';
 import { cn } from '../lib/utils';
 import WeeklyScheduleCalendar from '../components/WeeklyScheduleCalendar';
@@ -179,8 +179,12 @@ const categories = [
 ];
 
 export default function Programs() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const categoryFromUrl = searchParams.get('category');
+  const programFromUrl = searchParams.get('program');
+
   const [programs, setPrograms] = useState<Program[]>([]);
-  const [activeCategory, setActiveCategory] = useState('all');
+  const [activeCategory, setActiveCategory] = useState(categoryFromUrl || 'all');
   const [loading, setLoading] = useState(true);
   const [selectedProgram, setSelectedProgram] = useState<Program | null>(null);
 
@@ -192,6 +196,53 @@ export default function Programs() {
         setLoading(false);
       });
   }, []);
+
+  // Sync activeCategory with URL parameter changes
+  useEffect(() => {
+    if (categoryFromUrl) {
+      setActiveCategory(categoryFromUrl);
+    } else {
+      setActiveCategory('all');
+    }
+  }, [categoryFromUrl]);
+
+  // Sync selectedProgram with URL parameter on load or URL change
+  useEffect(() => {
+    if (programs.length > 0 && programFromUrl) {
+      const found = programs.find(p => p.title === programFromUrl);
+      if (found) {
+        setSelectedProgram(found);
+      }
+    }
+  }, [programs, programFromUrl]);
+
+  const handleCategorySelect = (catId: string) => {
+    setActiveCategory(catId);
+    const newParams = new URLSearchParams(searchParams);
+    if (catId === 'all') {
+      newParams.delete('category');
+    } else {
+      newParams.set('category', catId);
+    }
+    setSearchParams(newParams);
+  };
+
+  const handleSelectProgram = (program: Program) => {
+    setSelectedProgram(program);
+    const newParams = new URLSearchParams(searchParams);
+    newParams.set('program', program.title);
+    if (program.category) {
+      newParams.set('category', program.category);
+    }
+    setSearchParams(newParams);
+  };
+
+  const handleCloseProgram = () => {
+    setSelectedProgram(null);
+    const newParams = new URLSearchParams(searchParams);
+    newParams.delete('program');
+    setSearchParams(newParams);
+  };
 
   const filteredPrograms = activeCategory === 'all' 
     ? programs 
@@ -228,7 +279,7 @@ export default function Programs() {
                     description: "우울, 불안, 스트레스 등 개인이 마주한 심리적 어려움을 심층적으로 다루고 성장을 지원합니다.",
                     tags: "#청소년 #성인 #심리성장"
                   };
-                  setSelectedProgram(target);
+                  handleSelectProgram(target);
                 }}
                 className="bg-brand-sage text-white px-7 py-3.5 rounded-xl font-bold hover:bg-brand-sage/90 transition-all shadow-sm flex items-center gap-2 cursor-pointer"
               >
@@ -261,9 +312,9 @@ export default function Programs() {
           {categories.map((cat) => (
             <button
               key={cat.id}
-              onClick={() => setActiveCategory(cat.id)}
+              onClick={() => handleCategorySelect(cat.id)}
               className={cn(
-                "flex items-center gap-2 px-6 py-3 rounded-full font-bold text-sm transition-all",
+                "flex items-center gap-2 px-6 py-3 rounded-full font-bold text-sm transition-all cursor-pointer",
                 activeCategory === cat.id 
                   ? "bg-brand-sage text-white shadow-md" 
                   : "bg-white text-brand-brown/70 hover:bg-brand-green/30 border border-brand-green/30"
@@ -313,8 +364,8 @@ export default function Programs() {
                   </div>
                   
                   <button 
-                    onClick={() => setSelectedProgram(program)}
-                    className="w-full py-3.5 bg-brand-beige/50 text-brand-sage font-bold rounded-xl border border-brand-sage/40 hover:bg-brand-sage hover:text-white transition-all flex items-center justify-center gap-2 shadow-sm text-sm"
+                    onClick={() => handleSelectProgram(program)}
+                    className="w-full py-3.5 bg-brand-beige/50 text-brand-sage font-bold rounded-xl border border-brand-sage/40 hover:bg-brand-sage hover:text-white transition-all flex items-center justify-center gap-2 shadow-sm text-sm cursor-pointer"
                   >
                     상세보기 <CheckCircle2 className="w-4 h-4" />
                   </button>
@@ -356,7 +407,7 @@ export default function Programs() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              onClick={() => setSelectedProgram(null)}
+              onClick={handleCloseProgram}
               className="fixed inset-0 bg-black/50 backdrop-blur-sm"
             />
 
@@ -378,8 +429,9 @@ export default function Programs() {
                   </h2>
                 </div>
                 <button 
-                  onClick={() => setSelectedProgram(null)}
-                  className="p-2 rounded-full hover:bg-white text-brand-brown/60 hover:text-brand-brown transition-colors"
+                  onClick={handleCloseProgram}
+                  className="p-2 rounded-full hover:bg-white text-brand-brown/60 hover:text-brand-brown transition-colors cursor-pointer"
+                  aria-label="프로그램 상세 닫기"
                 >
                   <X className="w-6 h-6" />
                 </button>
@@ -503,14 +555,14 @@ export default function Programs() {
                 </p>
                 <div className="flex flex-wrap gap-2.5 items-center">
                   <button 
-                    onClick={() => setSelectedProgram(null)}
+                    onClick={handleCloseProgram}
                     className="px-4 py-2.5 rounded-xl border border-brand-brown/20 text-brand-brown font-medium hover:bg-white text-sm cursor-pointer"
                   >
                     닫기
                   </button>
                   <a
                     href="#weekly-schedule"
-                    onClick={() => setSelectedProgram(null)}
+                    onClick={handleCloseProgram}
                     className="px-4 py-2.5 rounded-xl border border-brand-sage/40 text-brand-sage hover:bg-brand-sage/10 transition-all text-sm font-semibold flex items-center gap-1.5 cursor-pointer"
                   >
                     <Clock className="w-4 h-4" />

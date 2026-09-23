@@ -435,6 +435,16 @@ export default function SitemapModal({ isOpen, onClose }: SitemapModalProps) {
                   <li>
                     <button
                       type="button"
+                      onClick={() => handleNavigate('/reservation/status')}
+                      className="w-full text-left py-1 px-2 rounded-lg hover:bg-brand-green/20 text-brand-brown/85 font-medium flex items-center justify-between group cursor-pointer"
+                    >
+                      <span className="font-bold text-brand-sage">예약 상태 조회 (휴대폰 번호)</span>
+                      <ChevronRight className="w-3.5 h-3.5 text-brand-brown/40 group-hover:text-brand-sage group-hover:translate-x-0.5 transition-all" />
+                    </button>
+                  </li>
+                  <li>
+                    <button
+                      type="button"
                       onClick={() => handleNavigate('/reservation')}
                       className="w-full text-left py-1 px-2 rounded-lg hover:bg-brand-green/20 text-brand-brown/85 font-medium flex items-center justify-between group cursor-pointer"
                     >

@@ -1,123 +1,128 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Link } from 'react-router-dom';
 import { 
   HelpCircle, ChevronDown, Search, ShieldCheck, 
   Calendar, CreditCard, Clock, Phone, MapPin, 
   Sparkles, CheckCircle2, MessageSquare, ArrowRight,
-  RefreshCw, FileText
+  RefreshCw, FileText, ChevronUp, AlertCircle, Award,
+  Users, User, Heart, DollarSign
 } from 'lucide-react';
+import { useHighContrast } from '../context/HighContrastContext';
+import { cn } from '../lib/utils';
+
+export type FAQCategory = 'ALL' | 'PROCESS' | 'FEE' | 'PRIVACY' | 'RESERVATION' | 'REMOTE';
 
 export interface FAQItem {
   id: string;
-  category: 'ALL' | 'PRIVACY' | 'RESERVATION' | 'PROCESS' | 'VISIT';
+  category: FAQCategory;
   categoryLabel: string;
   question: string;
   answer: string;
   highlights?: string[];
   badge?: string;
+  feeInfo?: {
+    item: string;
+    price: string;
+    duration: string;
+  };
 }
 
 export const FAQ_DATA: FAQItem[] = [
   {
-    id: 'faq-privacy-1',
-    category: 'PRIVACY',
-    categoryLabel: '비밀보장 & 기록',
-    question: '상담 받은 사실이나 내용이 병원 기록이나 건강보험공단, 직장에 남나요?',
-    badge: '가장 많이 묻는 질문',
-    answer: '전혀 남지 않습니다. 행복바람심리상담연구소는 의료기관(정신건강의학과)이 아닌 전문 사설 심리상담기관입니다.\n\n따라서 국민건강보험공단 전산망이나 의료보험 진료기록(정신과 F코드 등)이 일절 생성되거나 공유되지 않습니다. 한국상담학회 윤리강령 및 관련 법령에 의거하여 내담자의 신상정보와 상담 내용은 100% 철저히 비밀이 보장됩니다.\n\n※ 단, 본인 또는 타인의 생명·신체에 중대한 위해를 가할 우려가 있는 법률상 필수 예외 상황에만 제한적으로 적용됩니다.',
-    highlights: ['의료기록/F코드 일절 미생성', '건강보험공단 전산 등록 없음', '100% 철저한 비밀보장']
-  },
-  {
-    id: 'faq-reservation-1',
-    category: 'RESERVATION',
-    categoryLabel: '예약 & 일정',
-    question: '예약 일정 변경이나 취소는 언제까지 가능한가요?',
-    badge: '필독',
-    answer: '행복바람심리상담연구소는 1일 5회 한정 1:1 심층 상담제로 운영되어, 해당 시간대를 오직 한 분의 내담자만을 위해 비워둡니다.\n\n일정 변경 및 취소는 최소 24시간 전(전날)까지 대표전화(052-254-0230) 또는 카카오 알림톡/문자로 연락 부탁드립니다. 당일 직전 취소나 무단 불참(노쇼)은 다른 위기 내담자의 소중한 상담 기회를 제한하게 되므로 시간 엄수를 부탁드립니다.',
-    highlights: ['최소 24시간 전 사전 연락', '1일 5회 한정 1:1 심층상담제 운영']
-  },
-  {
     id: 'faq-process-1',
     category: 'PROCESS',
-    categoryLabel: '상담 절차 & 비용',
-    question: '상담은 보통 몇 번 정도 받아야 효과가 있나요?',
-    answer: '내담자께서 겪고 계신 심리적 어려움의 깊이와 세부 목표에 따라 맞춤형으로 결정됩니다.\n\n• 초기 1~2회기: 현재 겪는 주 호소 문제 탐색, 심리적 기저 요인 파악 및 목표 수립\n• 단기 상담 (4~8회기): 스트레스 대처 기술 습득, 특정 갈등 해결 및 정서 안정\n• 심층 상담 (10회기 이상): 깊은 트라우마 치유, 성격적 패턴 개선 및 지속 가능한 자존감 회복\n\n첫 회기(초기상담) 진행 후 박미경 상담 소장님과 함께 내담자의 페이스에 맞는 최적의 회기를 자율적으로 상의하여 결정합니다.',
-    highlights: ['초기 1~2회기 탐색 후 회기 자율 결정', '단기 집중부터 심층 치유까지 맞춤형']
+    categoryLabel: '상담 절차 & 진행',
+    question: '상담은 신청부터 종결까지 어떤 절차(프로세스)로 진행되나요?',
+    badge: '필독 안내',
+    answer: '행복바람심리상담연구소의 모든 상담은 전문적이고 체계적인 4단계 프로세스로 이루어집니다.\n\n1단계 [상담 접수 및 사전 예약]: 온라인 예약 폼 또는 전화(052-254-0230)를 통해 호소 문제와 희망 일정을 접수합니다.\n2단계 [초기 상담 & 심층 평가 (1~2회기)]: 현재 겪고 계신 심리적 어려움의 배경을 파악하고, 필요 시 간이/종합심리검사를 병행하여 구체적인 치유 목표를 함께 세웁니다.\n3단계 [정기 심층 상담 (주 1회)]: 개인 성향과 문제 유형에 맞춘 맞춤형 심리치료(인지행동, 게슈탈트, 정서중심 등)를 진행합니다.\n4단계 [상담 종결 및 사후 관리]: 내면의 자아 탄력성과 대처 능력이 확립되었을 때 상의 하에 종결하며, 일상 적응 상태를 점검합니다.',
+    highlights: ['사전 예약제 접수', '1~2회기 초기 면담 및 목표 설정', '주 1회 정기 심층 상담', '상호 합의를 통한 건강한 종결']
   },
   {
-    id: 'faq-visit-1',
-    category: 'VISIT',
-    categoryLabel: '방문 & 비대면',
-    question: '첫 상담을 방문할 때 무엇을 준비해야 하나요?',
-    answer: '특별한 서류나 사전 준비물은 전혀 필요하지 않습니다. 솔직하고 편안한 마음으로 방문해 주시면 됩니다.\n\n상담소에 도착하시면 따뜻한 차와 함께 초기 접수 면담지를 간단히 작성하시게 됩니다. 보다 여유로운 상담 진행을 위해 예약 시간 5~10분 전 도착해 주시기를 권장합니다.',
-    highlights: ['별도 서류 불필요', '편안한 복장과 마음', '예약 5~10분 전 도착 권장']
+    id: 'faq-fee-1',
+    category: 'FEE',
+    categoryLabel: '상담 비용 & 수수료',
+    question: '상담 프로그램별 공식 비용과 회기당 소요 시간은 얼마인가요?',
+    badge: '공식 비용표',
+    answer: '행복바람심리상담연구소는 투명하고 정직한 정찰제 비용 정책을 준수합니다.\n\n• 개인 심리상담 (청소년 및 성인): 1회기 50분 / 100,000원\n• 부부 및 가족상담: 1회기 80분 / 180,000원\n• 아동 놀이·미술상담: 1회기 50분 (아동 상담 40분 + 부모 양육 피드백 10분) / 90,000원\n• 종합심리검사 (Full Battery): 지능·성격·정서 통합 정밀 검사 및 심층 해석 상담 / 별도 문의 (검사 구성에 따라 산정)\n\n※ 모든 상담은 공인 1급 박사 상담 소장님이 1:1로 직접 전담합니다.',
+    highlights: ['개인상담 50분 100,000원', '부부·가족 80분 180,000원', '놀이·미술 50분 90,000원', '정찰제 운영']
+  },
+  {
+    id: 'faq-fee-2',
+    category: 'FEE',
+    categoryLabel: '상담 비용 & 수수료',
+    question: '결제 수단(카드, 울산페이, 현금영수증)과 지원 바우처 사용이 가능한가요?',
+    answer: '네, 다양한 결제 수단과 지자체 지원 제도를 이용하실 수 있습니다.\n\n1. 결제 수단: 모든 신용카드, 체크카드, 울산페이(지역화폐 결제 시 캐시백 혜택), 무통장 계좌이체가 가능합니다. 현금 및 계좌이체 시 소득공제용 현금영수증을 100% 의무 발행해 드립니다.\n2. 정부 지원 바우처: 울산시 및 보건복지부 발달재활서비스, 아동·청소년 심리지원 바우처, 청년마음건강지원사업 등 연계가 가능합니다. 바우처 예산 쿼터 및 등록 시기에 따라 차이가 있을 수 있으므로 내원 전 유선(052-254-0230)으로 문의 주시면 신속히 확인해 드립니다.',
+    highlights: ['울산페이(지역화폐) 결제 가능', '현금영수증 100% 의무 발행', '정부·지자체 심리지원 바우처 연계 지원']
   },
   {
     id: 'faq-process-2',
     category: 'PROCESS',
-    categoryLabel: '상담 절차 & 비용',
-    question: '결제 수단(카드, 울산페이, 현금영수증)과 정부 바우처 사용이 가능한가요?',
-    answer: '신용카드, 체크카드, 울산페이(지역화폐), 계좌이체(현금영수증 100% 발행) 모두 결제 가능합니다.\n\n정부·지자체 발급 바우처(발달재활서비스, 아동·청소년 심리지원, 청년마음건강지원사업 등)의 경우 지원 연도 및 지자체 배정 쿼터에 따라 차이가 있을 수 있으므로, 방문 전 유선(052-254-0230)으로 문의해 주시면 신속하게 적용 여부를 확인해 드립니다.',
-    highlights: ['신용/체크카드 & 울산페이 가능', '현금영수증 100% 발행', '바우처 사용 여부 유선 확인']
+    categoryLabel: '상담 절차 & 진행',
+    question: '상담은 보통 몇 회기 정도 받아야 효과를 체감할 수 있나요?',
+    answer: '내담자께서 마주한 심리적 어려움의 깊이와 목표에 따라 유연하게 결정됩니다.\n\n• 단기 상담 (4~8회기): 특정 상황적 스트레스, 긴급한 의사결정, 시험 및 직장 번아웃 완화에 적합합니다.\n• 중기 상담 (10~15회기): 만성적인 대인관계 갈등, 우울·불안의 기저 패턴 완화, 부부 갈등의 구조적 개선에 효과적입니다.\n• 심층 상담 (15회기 이상): 오랜 유년기 결핍, 복합 트라우마 치유, 성격 구조적 변화와 진정한 자아 성장을 목표로 합니다.\n\n초기 상담(1회기) 진행 후 소장님과 내담자의 상황에 가장 최적화된 회기 계획을 자율적으로 상의하여 결정합니다.',
+    highlights: ['단기(4~8회기)부터 심층(15회기+)까지 맞춤형', '초기 상담 후 자율적 상의 결정']
   },
   {
-    id: 'faq-visit-2',
-    category: 'VISIT',
-    categoryLabel: '방문 & 비대면',
-    question: '거리가 멀거나 방문이 힘든데 비대면(화상/전화) 상담도 가능한가요?',
-    badge: '전국/해외 가능',
-    answer: '네, 가능합니다. 해외 거주자, 타 시·도 거주자, 또는 거동이나 사정으로 센터 방문이 어려우신 분들을 위해 비대면 전문 심리상담을 운영하고 있습니다.\n\n• 화상 상담: Zoom(줌) 또는 Google Meet을 통한 안전한 1:1 비대면 면담\n• 전화 상담: 유선 전화를 통한 심층 정서 상담\n\n대면 상담과 동일하게 1일 5회 사전 예약제로 운영되며, 예약 신청 시 [비대면 희망] 메모를 남겨주시면 안전한 접속 링크를 안내해 드립니다.',
-    highlights: ['Zoom 화상 또는 유선 전화 상담', '대면 상담과 동일한 집중도']
+    id: 'faq-reservation-1',
+    category: 'RESERVATION',
+    categoryLabel: '예약 & 취소 규정',
+    question: '예약 변경이나 취소, 환불 규정은 어떻게 되나요?',
+    badge: '중요 규정',
+    answer: '행복바람은 1일 5회 한정 1:1 심층 상담제로 운영되어, 해당 시간대를 오직 한 분의 내담자만을 위해 비워둡니다.\n\n• 예약 시간 24시간 전(전날)까지 취소/변경 시: 100% 무료 일정 변경 및 수수료 없는 전액 환불\n• 당일 직전 취소 또는 노쇼(무단 불참) 시: 상담실 공간 확보 및 다른 위기 내담자의 상담 기회 제한으로 인해 일정 위약 규정이 적용될 수 있습니다.\n\n일정 변경이 필요하신 경우 최소 하루 전 유선(052-254-0230) 또는 카카오 채널로 연락 부탁드립니다.',
+    highlights: ['24시간 전 취소 시 100% 무료 변경 & 전액 환불', '1일 5회 정원제 집중 관리']
   },
   {
-    id: 'faq-process-3',
-    category: 'PROCESS',
-    categoryLabel: '상담 절차 & 비용',
-    question: '부부/커플 상담이나 가족 상담은 둘이 꼭 같이 와야 하나요?',
-    answer: '두 분이 함께 참여하시는 것이 관계의 상호작용 패턴을 입체적으로 관찰하고 빠른 화해와 합의점을 찾는 데 가장 효과적입니다.\n\n그러나 만약 배우자나 상대방이 상담 참여를 주저하거나 강하게 거부하는 경우, 우선 1인 개인 상담으로 시작하실 수 있습니다. 상담을 통해 상대방의 심리적 저항 요인을 파악하고, 상대를 자연스럽게 상담으로 초대하는 전략적 접근을 소장님과 함께 준비하실 수 있습니다.',
-    highlights: ['동반 참석 권장', '상대방 거부 시 1인 개인상담으로 선행 가능']
-  },
-  {
-    id: 'faq-visit-3',
-    category: 'VISIT',
-    categoryLabel: '방문 & 비대면',
-    question: '아동/청소년 상담 진행 시 부모 상담도 함께 포함되나요?',
-    answer: '네, 기본으로 포함되어 진행됩니다.\n\n아동과 청소년의 정서적 안정과 행동 변화는 가정 환경 및 주양육자의 양육 태도와 직결되어 있습니다. 따라서 놀이/미술치료 및 청소년 심리상담은 자녀 상담(40분) 진행 후, 매 회기 부모님과의 10분 피드백 및 가정 내 양육 코칭 상담이 필수적으로 결합되어 진행됩니다.',
-    highlights: ['자녀 상담 40분 + 부모 피드백 10분 결합', '가정 내 양육 코칭 병행']
-  },
-  {
-    id: 'faq-visit-4',
-    category: 'VISIT',
-    categoryLabel: '방문 & 비대면',
-    question: '주차 시설과 센터 위치, 대중교통 이용 방법을 알고 싶습니다.',
-    answer: '센터가 입주한 상가 전용 무료 지상 주차장을 상시 무료로 이용하실 수 있습니다.\n\n• 주소: 울산광역시 울주군 삼남읍 도호1길 23 상가 408호\n• 자차 이용 시: 네비게이션에 [행복바람심리상담연구소] 또는 도로명 주소를 입력하시면 바로 안내됩니다.\n• KTX 이용 시: 울산역(통도사역)에서 차량으로 약 5~7분 거리에 위치하여 인근 지역(양산, 부산, 밀양)에서도 편리하게 방문하실 수 있습니다.',
-    highlights: ['상가 전용 무료 주차장 완비', '울산역 인근 (차량 약 5~7분)']
+    id: 'faq-privacy-1',
+    category: 'PRIVACY',
+    categoryLabel: '비밀보장 & 기록',
+    question: '상담 받은 기록이 병원 진료 기록이나 건강보험공단, 회사, 학교에 남나요?',
+    badge: '가장 많이 묻는 질문',
+    answer: '전혀 남지 않습니다. 행복바람심리상담연구소는 의료기관(정신건강의학과)이 아닌 전문 심리상담기관입니다.\n\n따라서 국민건강보험공단 전산망이나 의료보험 전산 기록(정신과 질병코드 F코드)이 일절 생성되거나 공유되지 않습니다. 한국상담학회 및 한국상담심리학회 윤리강령에 의거하여 내담자의 신상정보와 상담 내용은 100% 철저히 비밀이 보장됩니다.\n\n※ 단, 본인 또는 타인의 생명에 중대한 위해를 가할 우려가 있는 법률상 필수 예외 상황에만 극히 제한적으로 적용됩니다.',
+    highlights: ['의료기록 / F코드 일절 미생성', '건강보험공단 전산 미등록', '100% 철저한 비밀보장']
   },
   {
     id: 'faq-privacy-2',
     category: 'PRIVACY',
-    categoryLabel: '비밀보장 & 기록',
-    question: '상담을 진행해주시는 상담사님의 전문성과 자격은 공인된 것인가요?',
+    categoryLabel: '비밀보장 & 자격',
+    question: '상담을 진행해주시는 상담사님의 공인 자격과 전문성은 어떠한가요?',
     badge: '전문성 보증',
-    answer: '행복바람심리상담연구소의 모든 상담은 공인된 최고 등급 자격을 갖춘 박미경 상담 소장님이 1:1로 직접 전담합니다.\n\n• 교육학 박사 (상담 심리 및 교육 심리 전공)\n• 한국상담학회 슈퍼바이저 / 전문상담사 1급 (No. 403)\n• 여성가족부 청소년상담사 1급 국가공인자격\n• 한국상담심리학회 정회원 & 한국부부가족상담학회 정회원\n\n민간 자격증이나 초보 상담사가 아닌, 학회 공인 슈퍼바이저이자 박사 학위 전문가가 책임감을 갖고 깊이 있는 상담을 제공합니다.',
-    highlights: ['교육학 박사 (상담심리 전공)', '한국상담학회 수퍼바이저/1급', '여성가족부 청소년상담사 1급']
+    answer: '행복바람심리상담연구소의 모든 상담은 학회 및 국가 공인 최고 등급 자격을 보유한 박미경 소장님이 1:1로 직접 책임 전담합니다.\n\n• 학력: 교육학 박사 (상담 심리 및 교육 심리 전공)\n• 학회 자격: (사)한국상담학회 슈퍼바이저 / 전문상담사 1급 (No. 403)\n• 국가 자격: 여성가족부 청소년상담사 1급 국가공인자격\n• 정회원: 한국상담심리학회 정회원, 한국부부가족상담학회 정회원\n\n민간 등록 초보 상담사가 아닌, 학회 공인 슈퍼바이저이자 박사 학위 전문가가 깊은 경청과 임상적 조력을 제공합니다.',
+    highlights: ['교육학 박사 (상담심리 전공)', '한국상담학회 수퍼바이저 / 1급 전문상담사', '청소년상담사 1급 국가공인자격']
+  },
+  {
+    id: 'faq-remote-1',
+    category: 'REMOTE',
+    categoryLabel: '방문 & 비대면',
+    question: '거리가 멀거나 직접 방문이 어려운 경우 비대면(화상/전화) 상담도 가능한가요?',
+    badge: '전국/해외 가능',
+    answer: '네, 전국 및 해외 거주자분들을 위해 비대면 심층 상담을 활발히 운영하고 있습니다.\n\n• 화상 상담: Zoom(줌) 또는 Google Meet을 통한 1:1 대면과 동일한 고화질 비대면 세션\n• 전화 상담: 유선 전화를 통한 심층 정서 상담\n\n대면 상담과 동일하게 1일 5회 사전 예약제로 운영되며, 예약 신청 시 [비대면 희망]을 선택해 주시면 안전한 접속 링크와 안내 문자를 발송해 드립니다.',
+    highlights: ['Zoom 화상 및 유선 전화 상담', '대면과 동일한 1일 5회 집중 케어', '전국 및 해외 실시간 진행']
+  },
+  {
+    id: 'faq-process-3',
+    category: 'PROCESS',
+    categoryLabel: '상담 절차 & 진행',
+    question: '부부나 가족 상담의 경우 배우자가 상담을 거부하는데 혼자 방문해도 되나요?',
+    answer: '네, 배우자가 상담을 망설이거나 거부할 때에는 1인 개인 상담으로 먼저 시작하시는 것을 적극 권장합니다.\n\n부부 갈등은 상호작용의 고리이므로, 한 사람의 변화와 감정 대처 방식만 달라져도 악순환의 고리가 끊어지기 시작합니다. 1인 상담을 통해 배우자의 저항 원인과 상처를 객관적으로 분석하고, 배우자가 방어심 없이 편안하게 상담실로 찾아올 수 있도록 초대하는 전략적 대화법을 소장님과 함께 준비할 수 있습니다.',
+    highlights: ['1인 선행 개인상담 가능', '배우자 심리적 저항 원인 분석', '자연스러운 동반 상담 초대 코칭']
   },
   {
     id: 'faq-process-4',
     category: 'PROCESS',
-    categoryLabel: '상담 절차 & 비용',
-    question: '종합심리검사(Full Battery)와 무료 간이 자가진단은 어떻게 다른가요?',
-    answer: '홈페이지에서 제공하는 [간이 자가진단]은 우울, 불안, 스트레스 지수를 간편하게 점검하여 나에게 필요한 상담 유형을 파악하는 선별 스크리닝 도구입니다.\n\n반면 [종합심리검사(Full Battery)]는 지능(K-WAIS/WISC), 인지 기능, 무의식적 성격 구조, 정서 상태(MMPI-2, TCI, Rorschach, SCT, HTP/KFD 등)를 포괄하여 공인 임상심리 전문가가 심층 판독하는 종합 정신건강 정밀 진단 검사입니다. 학교, 법원, 병원 등 공식 제출이 가능한 종합 심리보고서가 발급됩니다.',
-    highlights: ['홈페이지 자가진단: 간편 스크리닝 및 추천', '종합심리검사: 지능·성격·정서 종합 정밀 판독']
+    categoryLabel: '상담 절차 & 진행',
+    question: '첫 방문 시 무엇을 준비해야 하며, 가족이나 보호자가 대기할 공간이 있나요?',
+    answer: '특별한 서류나 준비물은 전혀 필요하지 않습니다. 편안한 마음과 복장으로 내원해 주시면 됩니다.\n\n센터 내부에는 아늑한 웰컴 티 라운지와 개별 대기 공간이 마련되어 있어, 보호자나 동반 가족분들이 편안하게 머무르실 수 있습니다. 또한 상가 전용 무료 지상 주차장을 완비하고 있어 주차 걱정 없이 방문하실 수 있습니다.',
+    highlights: ['사전 준비 서류 없음', '아늑한 독립 대기 라운지 & 웰컴 티', '상가 전용 무료 주차장 완비']
   }
 ];
 
 interface FAQProps {
-  initialCategory?: 'ALL' | 'PRIVACY' | 'RESERVATION' | 'PROCESS' | 'VISIT';
+  initialCategory?: FAQCategory;
   showHeader?: boolean;
   className?: string;
   limit?: number;
+  highlightedIds?: string[];
 }
 
 export default function FAQ({
@@ -125,23 +130,29 @@ export default function FAQ({
   showHeader = true,
   className = '',
   limit,
+  highlightedIds
 }: FAQProps) {
-  const [selectedCategory, setSelectedCategory] = useState<'ALL' | 'PRIVACY' | 'RESERVATION' | 'PROCESS' | 'VISIT'>(initialCategory);
+  const { isHighContrast } = useHighContrast();
+  const [selectedCategory, setSelectedCategory] = useState<FAQCategory>(initialCategory);
   const [searchQuery, setSearchQuery] = useState('');
   const [openIds, setOpenIds] = useState<Record<string, boolean>>({
-    'faq-privacy-1': true, // Open the most asked question by default
-    'faq-reservation-1': true,
+    'faq-process-1': true, // Default open Process question
+    'faq-fee-1': true,     // Default open Fee question
   });
+
+  // Ref array for managing focus across accordion headers (W3C APG Accordion Pattern)
+  const headerButtonRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
   const categories = [
     { key: 'ALL', label: '전체 질문' },
-    { key: 'PRIVACY', label: '비밀보장 & 기록' },
-    { key: 'RESERVATION', label: '예약 & 일정' },
-    { key: 'PROCESS', label: '상담 절차 & 비용' },
-    { key: 'VISIT', label: '방문 & 비대면' },
+    { key: 'PROCESS', label: '상담 절차 & 진행' },
+    { key: 'FEE', label: '상담 비용 & 결제' },
+    { key: 'PRIVACY', label: '비밀보장 & 자격' },
+    { key: 'RESERVATION', label: '예약 & 취소 규정' },
+    { key: 'REMOTE', label: '방문 & 비대면' },
   ] as const;
 
-  // Toggle open accordion
+  // Toggle open accordion item
   const toggleItem = (id: string) => {
     setOpenIds(prev => ({
       ...prev,
@@ -158,9 +169,12 @@ export default function FAQ({
     setOpenIds(newState);
   };
 
-  // Filtered FAQs based on category & search
+  // Filtered FAQs based on category & search query
   const filteredFAQs = useMemo(() => {
     return FAQ_DATA.filter(item => {
+      if (highlightedIds && !highlightedIds.includes(item.id)) {
+        return false;
+      }
       // Category filter
       if (selectedCategory !== 'ALL' && item.category !== selectedCategory) {
         return false;
@@ -176,41 +190,168 @@ export default function FAQ({
       }
       return true;
     }).slice(0, limit || FAQ_DATA.length);
-  }, [selectedCategory, searchQuery, limit]);
+  }, [selectedCategory, searchQuery, limit, highlightedIds]);
+
+  // Keep button refs array length in sync
+  useEffect(() => {
+    headerButtonRefs.current = headerButtonRefs.current.slice(0, filteredFAQs.length);
+  }, [filteredFAQs.length]);
+
+  // Accessible Keyboard Navigation for Accordions (W3C APG Pattern)
+  const handleAccordionKeyDown = (e: React.KeyboardEvent, index: number) => {
+    const total = filteredFAQs.length;
+    if (total === 0) return;
+
+    let targetIndex = -1;
+
+    switch (e.key) {
+      case 'ArrowDown':
+        e.preventDefault();
+        targetIndex = (index + 1) % total;
+        break;
+      case 'ArrowUp':
+        e.preventDefault();
+        targetIndex = (index - 1 + total) % total;
+        break;
+      case 'Home':
+        e.preventDefault();
+        targetIndex = 0;
+        break;
+      case 'End':
+        e.preventDefault();
+        targetIndex = total - 1;
+        break;
+      default:
+        return;
+    }
+
+    if (targetIndex >= 0 && headerButtonRefs.current[targetIndex]) {
+      headerButtonRefs.current[targetIndex]?.focus();
+    }
+  };
+
+  // Screen reader announcement status
+  const searchStatus = searchQuery.trim()
+    ? `검색어 "${searchQuery}"에 대해 총 ${filteredFAQs.length}개의 자주 묻는 질문이 검색되었습니다.`
+    : `총 ${filteredFAQs.length}개의 질문이 표시됩니다.`;
 
   return (
-    <section id="faq" className={`w-full ${className}`}>
+    <section 
+      id="faq-accordion-section" 
+      aria-label="자주 묻는 질문 (FAQ) 아코디언 안내"
+      className={cn("w-full transition-colors", className)}
+    >
+      {/* Live Region for Screen Readers */}
+      <div aria-live="polite" className="sr-only">
+        {searchStatus}
+      </div>
+
       {showHeader && (
         <div className="text-center mb-10 sm:mb-12">
-          <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-brand-sage/10 text-brand-sage font-bold text-xs tracking-wider uppercase mb-3 border border-brand-sage/20">
+          <div className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-brand-sage/10 text-brand-sage font-bold text-xs tracking-wider uppercase mb-3.5 border border-brand-sage/20">
             <HelpCircle className="w-3.5 h-3.5" />
             <span>Frequently Asked Questions</span>
           </div>
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-serif font-bold text-brand-brown mb-3">
-            자주 묻는 질문 (FAQ)
+            상담 절차 및 비용 <span className="text-brand-sage">자주 묻는 질문</span>
           </h2>
-          <p className="text-sm sm:text-base text-brand-brown/70 max-w-2xl mx-auto leading-relaxed">
-            상담 신청 전 내담자분들께서 가장 자주 궁금해하시는 질문들을 정리했습니다.<br className="hidden sm:inline" />
-            궁금하신 사항을 검색하시거나 카테고리별로 편리하게 확인해 보세요.
+          <p className="text-sm sm:text-base text-brand-brown/70 max-w-2xl mx-auto leading-relaxed font-serif">
+            첫 상담을 준비하시는 분들을 위해 진행 단계, 공식 비용, 비밀보장 원칙 등
+            가장 많이 궁금해하시는 사항을 빠르고 정확하게 안내해 드립니다.
           </p>
         </div>
       )}
 
-      {/* Search Input Bar */}
+      {/* Quick Summary Cards: 2 Key Pillars (Process & Fee Quick Glance) */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+        {/* Process Quick Pillar */}
+        <div className={cn(
+          "p-5 rounded-2xl border transition-all flex items-start gap-4",
+          isHighContrast
+            ? "bg-black text-white border-white/60"
+            : "bg-white border-brand-green/30 shadow-xs"
+        )}>
+          <div className="w-11 h-11 rounded-xl bg-brand-sage/10 text-brand-sage flex items-center justify-center shrink-0 border border-brand-sage/20">
+            <Clock className="w-5 h-5" />
+          </div>
+          <div className="space-y-1 flex-1 text-xs sm:text-sm">
+            <div className="flex items-center justify-between">
+              <span className="font-bold text-brand-brown">상담 진행 절차 핵심</span>
+              <button
+                type="button"
+                onClick={() => setSelectedCategory('PROCESS')}
+                className="text-[11px] text-brand-sage font-bold hover:underline cursor-pointer"
+              >
+                절차 질문 모아보기 →
+              </button>
+            </div>
+            <p className="text-brand-brown/70 leading-relaxed font-serif text-xs">
+              <strong>예약 접수 → 1회기 초기 면담 → 주 1회 정기 심층 상담 → 합의 종결</strong>의 4단계로 진행되며, 1일 5회 정원제로 운영됩니다.
+            </p>
+          </div>
+        </div>
+
+        {/* Fee Quick Pillar */}
+        <div className={cn(
+          "p-5 rounded-2xl border transition-all flex items-start gap-4",
+          isHighContrast
+            ? "bg-black text-white border-white/60"
+            : "bg-white border-brand-green/30 shadow-xs"
+        )}>
+          <div className="w-11 h-11 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center shrink-0 border border-amber-200">
+            <CreditCard className="w-5 h-5" />
+          </div>
+          <div className="space-y-1 flex-1 text-xs sm:text-sm">
+            <div className="flex items-center justify-between">
+              <span className="font-bold text-brand-brown">상담 비용 & 혜택 핵심</span>
+              <button
+                type="button"
+                onClick={() => setSelectedCategory('FEE')}
+                className="text-[11px] text-brand-sage font-bold hover:underline cursor-pointer"
+              >
+                비용 질문 모아보기 →
+              </button>
+            </div>
+            <p className="text-brand-brown/70 leading-relaxed font-serif text-xs">
+              개인 10만원(50분), 부부 18만원(80분), 아동 9만원(50분) 정찰제이며, <strong>울산페이·카드·현금영수증 100%</strong> 지원됩니다.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Accessible Search Input Bar */}
       <div className="max-w-2xl mx-auto mb-8">
         <div className="relative">
-          <Search className="w-5 h-5 text-brand-sage absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none" />
+          <label htmlFor="faq-search-input" className="sr-only">
+            자주 묻는 질문 키워드 검색
+          </label>
+          <Search 
+            aria-hidden="true" 
+            className="w-5 h-5 text-brand-sage absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none" 
+          />
           <input
-            type="text"
+            id="faq-search-input"
+            type="search"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="궁금한 키워드를 입력해 보세요 (예: 기록, 비용, 바우처, 취소, 주차, 비대면)"
-            className="w-full pl-12 pr-10 py-3.5 bg-white rounded-2xl border border-brand-green/30 focus:border-brand-sage focus:ring-2 focus:ring-brand-sage/20 shadow-xs text-sm text-brand-brown placeholder:text-brand-brown/40 transition-all outline-hidden"
+            placeholder="궁금한 키워드를 입력해 보세요 (예: 비용, 절차, 울산페이, 비밀보장, 시간, 취소)"
+            aria-describedby="faq-search-desc"
+            className={cn(
+              "w-full pl-12 pr-12 py-3.5 rounded-2xl border transition-all shadow-xs text-sm text-brand-brown placeholder:text-brand-brown/40 outline-hidden",
+              isHighContrast
+                ? "bg-white text-black border-2 border-black focus:ring-4 focus:ring-black"
+                : "bg-white border-brand-green/30 focus:border-brand-sage focus:ring-2 focus:ring-brand-sage/20"
+            )}
           />
+          <span id="faq-search-desc" className="sr-only">
+            원하는 키워드를 입력하면 질문과 답변 목록이 실시간으로 필터링됩니다.
+          </span>
           {searchQuery && (
             <button
+              type="button"
               onClick={() => setSearchQuery('')}
-              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs text-brand-brown/40 hover:text-brand-brown bg-brand-beige/50 hover:bg-brand-beige px-2 py-1 rounded-lg transition-colors cursor-pointer"
+              aria-label="검색어 초기화"
+              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs text-brand-brown/50 hover:text-brand-brown bg-brand-beige/60 hover:bg-brand-beige px-2.5 py-1 rounded-lg transition-colors cursor-pointer"
             >
               초기화
             </button>
@@ -220,133 +361,196 @@ export default function FAQ({
 
       {/* Category Tabs & Quick Expand Controls */}
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-6 pb-2 border-b border-brand-green/20">
-        <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
-          {categories.map((cat) => (
-            <button
-              key={cat.key}
-              onClick={() => setSelectedCategory(cat.key)}
-              className={`px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-semibold transition-all cursor-pointer ${
-                selectedCategory === cat.key
-                  ? 'bg-brand-sage text-white shadow-xs'
-                  : 'bg-white hover:bg-brand-green/20 text-brand-brown/70 hover:text-brand-brown border border-brand-green/30'
-              }`}
-            >
-              {cat.label}
-            </button>
-          ))}
+        <div 
+          role="tablist" 
+          aria-label="자주 묻는 질문 카테고리 선택"
+          className="flex flex-wrap items-center gap-1.5 sm:gap-2"
+        >
+          {categories.map((cat) => {
+            const isSelected = selectedCategory === cat.key;
+            return (
+              <button
+                key={cat.key}
+                role="tab"
+                id={`tab-${cat.key}`}
+                aria-selected={isSelected}
+                aria-controls="faq-accordion-container"
+                onClick={() => setSelectedCategory(cat.key)}
+                className={cn(
+                  "px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-semibold transition-all cursor-pointer border",
+                  isSelected
+                    ? isHighContrast
+                      ? "bg-black text-white border-white ring-2 ring-white"
+                      : "bg-brand-sage text-white border-brand-sage shadow-xs"
+                    : isHighContrast
+                      ? "bg-white text-black border-black hover:bg-gray-200"
+                      : "bg-white hover:bg-brand-green/20 text-brand-brown/75 hover:text-brand-brown border-brand-green/30"
+                )}
+              >
+                {cat.label}
+              </button>
+            );
+          })}
         </div>
 
-        <div className="flex items-center gap-2 self-end sm:self-center text-xs text-brand-brown/60">
-          <span>검색결과: <strong className="text-brand-brown">{filteredFAQs.length}</strong>건</span>
-          <span className="text-brand-green/40">|</span>
+        {/* Counter and Expand/Collapse All Buttons */}
+        <div className="flex items-center gap-2 self-end sm:self-center text-xs text-brand-brown/65">
+          <span>
+            표시 항목: <strong className="text-brand-brown font-bold">{filteredFAQs.length}</strong>건
+          </span>
+          <span className="text-brand-green/40" aria-hidden="true">|</span>
           <button
+            type="button"
             onClick={() => toggleAll(true)}
-            className="hover:text-brand-sage transition-colors underline-offset-2 hover:underline cursor-pointer"
+            aria-label="모든 질문 답변 펼치기"
+            className="hover:text-brand-sage font-medium transition-colors underline-offset-2 hover:underline cursor-pointer"
           >
             모두 펼치기
           </button>
-          <span className="text-brand-green/40">|</span>
+          <span className="text-brand-green/40" aria-hidden="true">|</span>
           <button
+            type="button"
             onClick={() => toggleAll(false)}
-            className="hover:text-brand-sage transition-colors underline-offset-2 hover:underline cursor-pointer"
+            aria-label="모든 질문 답변 접기"
+            className="hover:text-brand-sage font-medium transition-colors underline-offset-2 hover:underline cursor-pointer"
           >
             모두 접기
           </button>
         </div>
       </div>
 
-      {/* FAQ Accordion List */}
-      <div className="space-y-3.5">
+      {/* Accordion List Container */}
+      <div id="faq-accordion-container" className="space-y-3.5">
         {filteredFAQs.length === 0 ? (
           <div className="bg-white rounded-3xl p-10 text-center border border-brand-green/20 space-y-3">
             <div className="w-12 h-12 rounded-full bg-brand-beige/50 flex items-center justify-center mx-auto text-brand-brown/40">
               <HelpCircle className="w-6 h-6" />
             </div>
-            <h4 className="font-bold text-base text-brand-brown">검색 결과가 없습니다</h4>
-            <p className="text-xs sm:text-sm text-brand-brown/60 max-w-md mx-auto">
-              '{searchQuery}'에 해당하는 질문을 찾지 못했습니다. 다른 단어로 검색하시거나 연구소 유선 전화(052-254-0230)로 문의해 주시면 친절히 답변해 드리겠습니다.
+            <h3 className="font-bold text-base text-brand-brown">일치하는 질문을 찾지 못했습니다</h3>
+            <p className="text-xs sm:text-sm text-brand-brown/65 max-w-md mx-auto leading-relaxed">
+              '{searchQuery}' 관련 질문을 찾을 수 없습니다. 다른 단어로 검색하시거나 상담소 전화(052-254-0230)로 문의하시면 바로 안내해 드립니다.
             </p>
             <button
+              type="button"
               onClick={() => {
                 setSearchQuery('');
                 setSelectedCategory('ALL');
               }}
-              className="mt-2 px-4 py-2 bg-brand-sage text-white text-xs font-bold rounded-xl shadow-xs hover:bg-brand-sage/90 transition-colors"
+              className="mt-2 px-5 py-2.5 bg-brand-sage text-white text-xs font-bold rounded-xl shadow-xs hover:bg-brand-sage/90 transition-colors cursor-pointer"
             >
-              전체 질문 보기
+              전체 질문으로 돌아가기
             </button>
           </div>
         ) : (
           filteredFAQs.map((faq, idx) => {
             const isOpen = !!openIds[faq.id];
+            const headerId = `faq-header-${faq.id}`;
+            const panelId = `faq-panel-${faq.id}`;
+
             return (
-              <motion.div
+              <div
                 key={faq.id}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.2, delay: Math.min(idx * 0.03, 0.3) }}
-                className={`bg-white rounded-2xl border transition-all duration-200 overflow-hidden shadow-2xs ${
+                className={cn(
+                  "bg-white rounded-2xl border transition-all duration-200 overflow-hidden shadow-2xs",
                   isOpen 
-                    ? 'border-brand-sage shadow-md ring-1 ring-brand-sage/20' 
-                    : 'border-brand-green/25 hover:border-brand-sage/50'
-                }`}
+                    ? isHighContrast
+                      ? "border-2 border-black ring-2 ring-black"
+                      : "border-brand-sage shadow-md ring-1 ring-brand-sage/25" 
+                    : isHighContrast
+                      ? "border-2 border-gray-600 hover:border-black"
+                      : "border-brand-green/25 hover:border-brand-sage/50"
+                )}
               >
-                {/* Question Header Bar */}
-                <button
-                  type="button"
-                  onClick={() => toggleItem(faq.id)}
-                  className="w-full px-5 sm:px-6 py-4.5 flex items-start justify-between gap-4 text-left transition-colors cursor-pointer group"
-                  aria-expanded={isOpen}
-                >
-                  <div className="flex items-start gap-3 sm:gap-4 flex-1">
-                    <span className="w-7 h-7 rounded-xl bg-brand-sage/10 text-brand-sage font-serif font-bold text-sm flex items-center justify-center shrink-0 mt-0.5 border border-brand-sage/20 group-hover:bg-brand-sage group-hover:text-white transition-colors">
-                      Q
-                    </span>
-                    <div className="space-y-1 flex-1">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-[11px] font-semibold text-brand-sage bg-brand-sage/10 px-2 py-0.5 rounded-md">
-                          {faq.categoryLabel}
-                        </span>
-                        {faq.badge && (
-                          <span className="text-[10px] font-bold text-amber-800 bg-amber-100 border border-amber-200 px-2 py-0.5 rounded-full">
-                            ★ {faq.badge}
-                          </span>
+                {/* Accordion Trigger Header */}
+                <h3 className="text-base font-normal m-0 p-0">
+                  <button
+                    type="button"
+                    id={headerId}
+                    ref={(el) => { headerButtonRefs.current[idx] = el; }}
+                    onClick={() => toggleItem(faq.id)}
+                    onKeyDown={(e) => handleAccordionKeyDown(e, idx)}
+                    aria-expanded={isOpen}
+                    aria-controls={panelId}
+                    className="w-full px-5 sm:px-6 py-4.5 flex items-start justify-between gap-4 text-left transition-colors cursor-pointer group focus:outline-hidden focus-visible:ring-2 focus-visible:ring-brand-sage"
+                  >
+                    <div className="flex items-start gap-3.5 sm:gap-4 flex-1">
+                      {/* Q Icon Badge */}
+                      <span 
+                        aria-hidden="true"
+                        className={cn(
+                          "w-7 h-7 rounded-xl font-serif font-bold text-sm flex items-center justify-center shrink-0 mt-0.5 border transition-colors",
+                          isOpen
+                            ? "bg-brand-sage text-white border-brand-sage"
+                            : "bg-brand-sage/10 text-brand-sage border-brand-sage/20 group-hover:bg-brand-sage group-hover:text-white"
                         )}
+                      >
+                        Q
+                      </span>
+
+                      <div className="space-y-1.5 flex-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-[11px] font-semibold text-brand-sage bg-brand-sage/10 px-2 py-0.5 rounded-md">
+                            {faq.categoryLabel}
+                          </span>
+                          {faq.badge && (
+                            <span className="text-[10px] font-bold text-amber-800 bg-amber-100 border border-amber-200 px-2 py-0.5 rounded-full flex items-center gap-1">
+                              <Sparkles className="w-2.5 h-2.5" />
+                              <span>{faq.badge}</span>
+                            </span>
+                          )}
+                        </div>
+
+                        <span className="block text-sm sm:text-base font-bold text-brand-brown group-hover:text-brand-sage transition-colors leading-snug">
+                          {faq.question}
+                        </span>
                       </div>
-                      <h3 className="text-sm sm:text-base font-bold text-brand-brown group-hover:text-brand-sage transition-colors leading-snug">
-                        {faq.question}
-                      </h3>
                     </div>
-                  </div>
 
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 transition-transform duration-200 ${
-                    isOpen ? 'rotate-180 bg-brand-sage text-white' : 'bg-brand-beige/50 text-brand-brown/60 group-hover:bg-brand-green/30'
-                  }`}>
-                    <ChevronDown className="w-4 h-4" />
-                  </div>
-                </button>
+                    {/* Chevron Indicator */}
+                    <div 
+                      aria-hidden="true"
+                      className={cn(
+                        "w-8 h-8 rounded-full flex items-center justify-center shrink-0 transition-transform duration-200",
+                        isOpen 
+                          ? "rotate-180 bg-brand-sage text-white" 
+                          : "bg-brand-beige/50 text-brand-brown/60 group-hover:bg-brand-green/30"
+                      )}
+                    >
+                      <ChevronDown className="w-4 h-4" />
+                    </div>
+                  </button>
+                </h3>
 
-                {/* Collapsible Answer Body */}
+                {/* Accordion Region Panel */}
                 <AnimatePresence initial={false}>
                   {isOpen && (
                     <motion.div
-                      key="content"
+                      id={panelId}
+                      role="region"
+                      aria-labelledby={headerId}
                       initial={{ height: 0, opacity: 0 }}
                       animate={{ height: 'auto', opacity: 1 }}
                       exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.25, ease: 'easeOut' }}
+                      transition={{ duration: 0.22, ease: 'easeOut' }}
                     >
-                      <div className="px-5 sm:px-6 pb-5 pt-1 border-t border-brand-green/15 bg-brand-beige/10">
-                        <div className="flex items-start gap-3 sm:gap-4 pt-3">
-                          <span className="w-7 h-7 rounded-xl bg-emerald-100 text-emerald-800 font-serif font-bold text-sm flex items-center justify-center shrink-0 mt-0.5 border border-emerald-200">
+                      <div className="px-5 sm:px-6 pb-6 pt-1 border-t border-brand-green/15 bg-brand-beige/10">
+                        <div className="flex items-start gap-3.5 sm:gap-4 pt-3.5">
+                          {/* A Icon Badge */}
+                          <span 
+                            aria-hidden="true"
+                            className="w-7 h-7 rounded-xl bg-emerald-100 text-emerald-800 font-serif font-bold text-sm flex items-center justify-center shrink-0 mt-0.5 border border-emerald-200"
+                          >
                             A
                           </span>
-                          <div className="space-y-3 flex-1 text-xs sm:text-sm text-brand-brown/85 leading-relaxed whitespace-pre-line">
-                            {faq.answer}
 
-                            {/* Core Highlights Pills */}
+                          <div className="space-y-3.5 flex-1 text-xs sm:text-sm text-brand-brown/85 leading-relaxed font-serif">
+                            <p className="whitespace-pre-line leading-relaxed">
+                              {faq.answer}
+                            </p>
+
+                            {/* Key Highlight Badges */}
                             {faq.highlights && faq.highlights.length > 0 && (
-                              <div className="pt-2 flex flex-wrap items-center gap-1.5">
+                              <div className="pt-2 flex flex-wrap items-center gap-1.5 font-sans">
                                 {faq.highlights.map((highlight, hIdx) => (
                                   <span 
                                     key={hIdx}
@@ -364,24 +568,24 @@ export default function FAQ({
                     </motion.div>
                   )}
                 </AnimatePresence>
-              </motion.div>
+              </div>
             );
           })
         )}
       </div>
 
-      {/* Still Have Questions? Direct Inquiry Callout Box */}
-      <div className="mt-12 bg-gradient-to-br from-white via-brand-beige/30 to-brand-green/20 rounded-3xl p-6 sm:p-8 border border-brand-green/30 shadow-sm flex flex-col md:flex-row items-center justify-between gap-6">
+      {/* Direct Assistance CTA Box */}
+      <div className="mt-12 bg-gradient-to-br from-white via-brand-beige/40 to-brand-green/20 rounded-3xl p-6 sm:p-8 border border-brand-green/30 shadow-xs flex flex-col md:flex-row items-center justify-between gap-6">
         <div className="space-y-2 text-center md:text-left">
-          <div className="inline-flex items-center gap-1.5 text-xs font-bold text-brand-sage bg-white px-2.5 py-1 rounded-full border border-brand-green/20 shadow-2xs">
+          <div className="inline-flex items-center gap-1.5 text-xs font-bold text-brand-sage bg-white px-3 py-1 rounded-full border border-brand-green/20 shadow-2xs">
             <Sparkles className="w-3.5 h-3.5 text-brand-sage" />
-            <span>친절한 1:1 상담 연결</span>
+            <span>친절한 1:1 안내 상담</span>
           </div>
           <h3 className="text-lg sm:text-xl font-serif font-bold text-brand-brown">
-            찾으시는 질문의 답변이 없거나 추가 상담이 필요하신가요?
+            더 자세한 일정이나 개별 비용 견적이 궁금하신가요?
           </h3>
-          <p className="text-xs sm:text-sm text-brand-brown/70 leading-relaxed max-w-xl">
-            고민하지 마시고 편안한 마음으로 문의해 주세요. 전문 상담 소장님이 내담자의 상황에 맞춰 따뜻하고 친절하게 안내해 드립니다.
+          <p className="text-xs sm:text-sm text-brand-brown/70 leading-relaxed max-w-xl font-serif">
+            편안한 마음으로 문의해 주세요. 내담자의 상황에 맞춰 가장 효과적인 상담 방향과 비용을 따뜻하게 안내해 드립니다.
           </p>
         </div>
 
@@ -391,14 +595,14 @@ export default function FAQ({
             className="w-full sm:w-auto px-5 py-3 bg-white hover:bg-brand-beige/40 text-brand-brown font-bold text-xs sm:text-sm rounded-xl border border-brand-green/30 transition-all flex items-center justify-center gap-2 shadow-xs group"
           >
             <Phone className="w-4 h-4 text-brand-sage group-hover:scale-110 transition-transform" />
-            <span>052-254-0230 (전화 문의)</span>
+            <span>052-254-0230 (전화 연결)</span>
           </a>
 
           <Link
             to="/reservation"
             className="w-full sm:w-auto px-6 py-3 bg-brand-sage hover:bg-brand-sage/90 text-white font-bold text-xs sm:text-sm rounded-xl transition-all shadow-xs flex items-center justify-center gap-2"
           >
-            <span>온라인 예약 신청</span>
+            <span>온라인 상담 예약</span>
             <ArrowRight className="w-4 h-4" />
           </Link>
         </div>

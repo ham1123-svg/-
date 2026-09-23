@@ -143,7 +143,9 @@ async function startServer() {
   app.use(express.urlencoded({ extended: true, limit: "30mb" }));
 
   // Static images route with aggressive cache control for global high-speed delivery
-  const publicImagesPath = path.join(process.cwd(), "public", "images");
+  const publicImagesPath = fs.existsSync(path.join(process.cwd(), "public", "images"))
+    ? path.join(process.cwd(), "public", "images")
+    : path.join(__dirname, "images");
   if (fs.existsSync(publicImagesPath)) {
     app.use("/images", express.static(publicImagesPath, {
       maxAge: "7d",
@@ -428,6 +430,162 @@ async function startServer() {
         message: "예약 신청이 정상 접수되었습니다. 관리자 확인 후 예약이 확정되며 카카오톡 알림톡이 발송됩니다.",
         notification: notificationResult
       });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // Dedicated endpoint: Quick Reservation / Callback request (성함과 연락처만으로 간편 콜백 예약)
+  app.post("/api/quick-reservations", async (req, res) => {
+    try {
+      const { name, phone, preferred_time, notes } = req.body;
+
+      if (!name || !name.trim()) {
+        return res.status(400).json({ error: "성함을 입력해 주세요." });
+      }
+
+      if (!phone || !phone.trim()) {
+        return res.status(400).json({ error: "연락처(전화번호)를 입력해 주세요." });
+      }
+
+      const cleanPhone = phone.trim();
+      const cleanName = name.trim();
+      const todayStr = new Date().toISOString().split('T')[0];
+      const callbackSlot = preferred_time?.trim() || '빠른 시간 내';
+      const adminNoteText = notes 
+        ? `[간편 전화상담(콜백) 요청] 희망시간: ${callbackSlot} / 메모: ${notes.trim()}`
+        : `[간편 전화상담(콜백) 요청] 희망시간: ${callbackSlot}`;
+
+      const info = db.prepare(`
+        INSERT INTO reservations (name, phone, program_id, preferred_date, preferred_time, status, admin_notes)
+        VALUES (?, ?, NULL, ?, ?, 'pending', ?)
+      `).run(cleanName, cleanPhone, todayStr, callbackSlot, adminNoteText);
+
+      const reservationId = Number(info.lastInsertRowid);
+
+      // Attempt receipt notification log
+      let notificationResult = null;
+      try {
+        notificationResult = await sendReservationNotification({
+          reservationId,
+          recipientName: cleanName,
+          recipientPhone: cleanPhone,
+          programTitle: "간편 전화상담(콜백) 요청",
+          preferredDate: todayStr,
+          preferredTime: callbackSlot,
+          type: 'RECEIVED'
+        });
+
+        db.prepare(`
+          INSERT INTO notification_logs 
+          (reservation_id, recipient_name, recipient_phone, channel, template_title, message_content, status) 
+          VALUES (?, ?, ?, ?, ?, ?, ?)
+        `).run(
+          reservationId,
+          cleanName,
+          cleanPhone,
+          notificationResult.channel,
+          notificationResult.templateTitle,
+          notificationResult.content,
+          notificationResult.status
+        );
+      } catch (notifyErr) {
+        console.error("Failed to process receipt notification for quick reservation:", notifyErr);
+      }
+
+      res.json({
+        success: true,
+        id: reservationId,
+        message: "간편 전화상담(콜백) 예약이 정상 접수되었습니다. 전문 상담사가 확인 후 빠르게 연락드리겠습니다.",
+        notification: notificationResult
+      });
+    } catch (err: any) {
+      console.error("Quick reservation error:", err);
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // Dedicated endpoint: Lookup reservations by phone number
+  app.post("/api/reservations/lookup", (req, res) => {
+    try {
+      const { phone, name } = req.body;
+      if (!phone || typeof phone !== 'string') {
+        return res.status(400).json({ error: "조회할 연락처(전화번호)를 입력해 주세요." });
+      }
+
+      const cleanDigits = phone.replace(/[^0-9]/g, '');
+      if (cleanDigits.length < 8) {
+        return res.status(400).json({ error: "전화번호를 8자리 이상 정확히 입력해 주세요." });
+      }
+
+      // Query reservations matching cleaned phone digits
+      const reservations = db.prepare(`
+        SELECT r.*, p.title as program_title, p.category as program_category 
+        FROM reservations r 
+        LEFT JOIN programs p ON r.program_id = p.id 
+        WHERE REPLACE(REPLACE(REPLACE(r.phone, '-', ''), ' ', ''), '.', '') = ?
+        ORDER BY r.id DESC
+      `).all(cleanDigits) as any[];
+
+      // Optional name filtering if user provided name
+      let filtered = reservations;
+      if (name && typeof name === 'string' && name.trim()) {
+        const cleanName = name.trim().toLowerCase();
+        filtered = reservations.filter(r => r.name.toLowerCase().includes(cleanName));
+      }
+
+      // Also get notification logs for each reservation
+      const resultsWithLogs = filtered.map(item => {
+        const logs = db.prepare(`
+          SELECT channel, template_title, status, created_at 
+          FROM notification_logs 
+          WHERE reservation_id = ? 
+          ORDER BY id DESC
+        `).all(item.id);
+        return {
+          ...item,
+          logs
+        };
+      });
+
+      res.json({
+        success: true,
+        count: resultsWithLogs.length,
+        reservations: resultsWithLogs
+      });
+    } catch (err: any) {
+      console.error("Reservation lookup error:", err);
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // Dedicated endpoint: Cancel pending reservation by client with phone verification
+  app.post("/api/reservations/:id/cancel-request", (req, res) => {
+    try {
+      const { id } = req.params;
+      const { phone, reason } = req.body;
+      if (!phone) {
+        return res.status(400).json({ error: "본인 확인을 위한 연락처를 입력해 주세요." });
+      }
+      const cleanDigits = phone.replace(/[^0-9]/g, '');
+      const reservation = db.prepare("SELECT * FROM reservations WHERE id = ?").get(id) as any;
+      if (!reservation) {
+        return res.status(404).json({ error: "예약 내역을 찾을 수 없습니다." });
+      }
+      const resPhoneDigits = reservation.phone.replace(/[^0-9]/g, '');
+      if (resPhoneDigits !== cleanDigits) {
+        return res.status(403).json({ error: "예약 접수 시 입력한 연락처와 일치하지 않습니다." });
+      }
+      if (reservation.status === 'cancelled') {
+        return res.status(400).json({ error: "이미 취소 처리된 예약입니다." });
+      }
+
+      const cancelReason = reason ? `[내담자 취소요청] ${reason}` : '[내담자 온라인 취소요청]';
+      const updatedNotes = reservation.admin_notes ? `${reservation.admin_notes} | ${cancelReason}` : cancelReason;
+
+      db.prepare("UPDATE reservations SET status = 'cancelled', admin_notes = ? WHERE id = ?").run(updatedNotes, id);
+
+      res.json({ success: true, message: "예약 취소 요청이 정상 처리되었습니다." });
     } catch (err: any) {
       res.status(500).json({ error: err.message });
     }
@@ -1303,7 +1461,14 @@ async function startServer() {
   });
 
   app.get("/standalone", (req, res) => {
-    res.sendFile(path.join(rootDir, "standalone.html"));
+    const standalonePath = fs.existsSync(path.join(rootDir, "standalone.html"))
+      ? path.join(rootDir, "standalone.html")
+      : path.join(__dirname, "standalone.html");
+    if (fs.existsSync(standalonePath)) {
+      res.sendFile(standalonePath);
+    } else {
+      res.redirect("/");
+    }
   });
 
   // Vite middleware for development
@@ -1314,7 +1479,9 @@ async function startServer() {
     });
     app.use(vite.middlewares);
   } else {
-    const distPath = path.join(rootDir, "dist");
+    const distPath = fs.existsSync(path.join(__dirname, "index.html"))
+      ? __dirname
+      : path.join(rootDir, "dist");
     app.use(express.static(distPath));
     app.get("*", (req, res) => {
       res.sendFile(path.join(distPath, "index.html"));

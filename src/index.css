@@ -25,3 +25,106 @@
 .glass-morphism {
   @apply bg-white/70 backdrop-blur-md border border-white/20;
 }
+
+/* ==========================================================================
+   High-Contrast Accessibility Mode (고대비 모드)
+   - Preserves warm psychological counseling branding (Brown, Sage, Beige)
+   - Elevates contrast ratios to WCAG AAA standards (> 7:1 for text)
+   - Eliminates washed-out low-opacity typography
+   - Crisp outlines and tactile focus rings for visual clarity
+   ========================================================================== */
+
+html.high-contrast {
+  /* Brand colors recalibrated for maximum contrast while preserving identity */
+  --color-brand-beige: #FAF6EF;
+  --color-brand-green: #CCE8CD;
+  --color-brand-sage: #075549;
+  --color-brand-brown: #1C120C;
+  --color-brand-accent: #B32605;
+  color-scheme: light;
+}
+
+html.high-contrast body {
+  color: #1C120C;
+  text-rendering: optimizeLegibility;
+}
+
+/* Elevate low-opacity text to full solid high-contrast reading values */
+html.high-contrast .text-brand-brown,
+html.high-contrast [class*="text-brand-brown/"],
+html.high-contrast [class*="text-brand-brown"] {
+  color: #1C120C !important;
+}
+
+html.high-contrast .text-brand-sage,
+html.high-contrast [class*="text-brand-sage/"] {
+  color: #075549 !important;
+}
+
+/* Ensure text on dark containers remains pure readable white */
+html.high-contrast [class*="text-white"],
+html.high-contrast [class*="text-white/"] {
+  color: #FFFFFF !important;
+}
+
+html.high-contrast [class*="text-brand-beige/"] {
+  color: #F8F5EE !important;
+}
+
+/* Enhanced font weight for body text to improve readability */
+html.high-contrast p,
+html.high-contrast li,
+html.high-contrast dd,
+html.high-contrast dt {
+  font-weight: 450;
+  letter-spacing: -0.01em;
+}
+
+/* Stronger structural borders for cards, dividers, and boundaries */
+html.high-contrast [class*="border-brand-green/"],
+html.high-contrast [class*="border-brand-brown/"] {
+  border-color: #6E9674 !important;
+}
+
+html.high-contrast .glass-morphism {
+  background-color: #FFFFFF !important;
+  border-color: #6E9674 !important;
+}
+
+/* Enhanced borders on cards and containers */
+html.high-contrast .bg-white {
+  border-color: #6E9674 !important;
+}
+
+/* Form inputs high accessibility */
+html.high-contrast input:not([type="checkbox"]):not([type="radio"]),
+html.high-contrast textarea,
+html.high-contrast select {
+  border: 2px solid #1C120C !important;
+  color: #1C120C !important;
+  background-color: #FFFFFF !important;
+  font-weight: 500;
+}
+
+html.high-contrast input::placeholder,
+html.high-contrast textarea::placeholder {
+  color: #4A352D !important;
+  opacity: 0.9 !important;
+}
+
+/* High-visibility keyboard focus rings */
+html.high-contrast *:focus-visible {
+  outline: 3px solid #075549 !important;
+  outline-offset: 3px !important;
+}
+
+/* Ensure links and buttons have distinct interactive presence */
+html.high-contrast button {
+  font-weight: 600;
+}
+
+/* Tag chips and badges contrast boost */
+html.high-contrast [class*="bg-brand-green/"] {
+  background-color: #CCE8CD !important;
+  border-color: #075549 !important;
+}

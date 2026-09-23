@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { cn } from '../lib/utils';
+import FAQ from '../components/FAQ';
 
 interface ColumnArticle {
   id: number;
@@ -42,25 +43,6 @@ interface ColumnArticle {
   closingNote?: string;
   targetAudience?: string;
 }
-
-const faqs = [
-  {
-    q: "상담 기록이 남아서 불이익을 받지 않을까요?",
-    a: "행복바람심리상담연구소는 의료기관이 아닌 민간 상담기관으로, 국민건강보험공단에 기록이 전송되지 않습니다. 상담 내용은 철저히 비밀보장 원칙을 따르며, 내담자의 동의 없이 외부로 유출되지 않습니다."
-  },
-  {
-    q: "상담은 보통 몇 번 정도 받아야 하나요?",
-    a: "상담 횟수는 개인의 어려움과 목표에 따라 다릅니다. 보통 단기 상담은 10~15회기, 심층적인 변화를 목표로 하는 경우 그 이상의 기간이 소요될 수 있습니다. 초기 상담 후 상담사와 상의하여 결정하게 됩니다."
-  },
-  {
-    q: "예약 없이 방문해도 상담이 가능한가요?",
-    a: "원활한 상담 진행과 내담자의 프라이버시 보호를 위해 모든 상담은 100% 예약제로 운영됩니다. 방문 전 반드시 전화나 온라인 예약을 부탁드립니다."
-  },
-  {
-    q: "아이 상담인데 부모님도 같이 가야 하나요?",
-    a: "아동 및 청소년 상담의 경우, 주 양육자의 협조가 매우 중요합니다. 초기 상담 시에는 부모님과 함께 방문하시는 것을 권장하며, 이후에도 정기적인 부모 상담이 병행됩니다."
-  }
-];
 
 const columns: ColumnArticle[] = [
   {
@@ -226,9 +208,14 @@ const columns: ColumnArticle[] = [
 const categories = ["전체", "아동/청소년", "성인/직장인", "부부/가족"];
 
 export default function Community() {
-  const [openFaq, setOpenFaq] = useState<number | null>(0);
   const [selectedCategory, setSelectedCategory] = useState("전체");
   const [activeArticle, setActiveArticle] = useState<ColumnArticle | null>(null);
+  const [modalProgress, setModalProgress] = useState(0);
+
+  const handleOpenArticle = (article: ColumnArticle) => {
+    setActiveArticle(article);
+    setModalProgress(0);
+  };
 
   const filteredColumns = selectedCategory === "전체" 
     ? columns 
@@ -281,54 +268,11 @@ export default function Community() {
               </div>
               <div>
                 <h2 className="text-xl sm:text-2xl font-serif font-bold text-brand-brown">자주 묻는 질문 (FAQ)</h2>
-                <p className="text-xs text-brand-brown/60">방문 전 가장 많이 질문하시는 내용입니다.</p>
+                <p className="text-xs text-brand-brown/60">방문 전 가장 많이 질문하시는 상담 절차와 비용입니다.</p>
               </div>
             </div>
             
-            <div className="space-y-3.5">
-              {faqs.map((faq, idx) => (
-                <div 
-                  key={idx} 
-                  className={cn(
-                    "border rounded-2xl transition-all overflow-hidden shadow-sm",
-                    openFaq === idx ? "border-brand-sage/50 bg-white ring-1 ring-brand-sage/20" : "border-brand-green/20 bg-white/70 hover:bg-white"
-                  )}
-                >
-                  <button 
-                    onClick={() => setOpenFaq(openFaq === idx ? null : idx)}
-                    className="w-full px-5 py-4 flex justify-between items-center text-left gap-4"
-                  >
-                    <span className="font-bold text-sm sm:text-base text-brand-brown">{faq.q}</span>
-                    <span className="p-1 rounded-lg bg-brand-beige/50 text-brand-sage shrink-0">
-                      {openFaq === idx ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4 text-brand-brown/40" />}
-                    </span>
-                  </button>
-                  {openFaq === idx && (
-                    <div className="px-5 pb-5 text-brand-brown/80 text-xs sm:text-sm leading-relaxed border-t border-brand-beige/60 pt-3">
-                      {faq.a}
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-
-            <div className="mt-8 p-5 rounded-2xl bg-brand-sage/10 border border-brand-sage/20 text-center">
-              <p className="text-xs text-brand-brown/80 mb-3">더 궁금한 점이 있으신가요? 친절히 안내해 드립니다.</p>
-              <div className="flex justify-center gap-3">
-                <a 
-                  href="tel:052-254-0230" 
-                  className="px-4 py-2 bg-brand-brown text-white text-xs font-bold rounded-xl hover:bg-brand-brown/90 transition-all"
-                >
-                  전화 문의: 052-254-0230
-                </a>
-                <Link
-                  to="/reservation"
-                  className="px-4 py-2 bg-white text-brand-brown border border-brand-brown/20 text-xs font-bold rounded-xl hover:bg-brand-beige/40 transition-all"
-                >
-                  온라인 상담 예약
-                </Link>
-              </div>
-            </div>
+            <FAQ showHeader={false} limit={6} />
           </section>
 
           {/* Expert Column Section (7 cols) */}
@@ -368,7 +312,7 @@ export default function Community() {
                 <motion.div 
                   key={column.id}
                   whileHover={{ y: -2 }}
-                  onClick={() => setActiveArticle(column)}
+                  onClick={() => handleOpenArticle(column)}
                   className="bg-white rounded-2xl p-5 border border-brand-green/20 hover:border-brand-sage/40 hover:shadow-md transition-all cursor-pointer flex flex-col sm:flex-row gap-5 group"
                 >
                   <div className="sm:w-36 sm:h-36 w-full h-44 rounded-xl overflow-hidden shrink-0 relative">
@@ -455,15 +399,39 @@ export default function Community() {
                 </div>
                 <button
                   onClick={() => setActiveArticle(null)}
-                  className="p-2 rounded-full hover:bg-white text-brand-brown/60 hover:text-brand-brown transition-all"
+                  className="p-2 rounded-full hover:bg-white text-brand-brown/60 hover:text-brand-brown transition-all cursor-pointer"
                   aria-label="닫기"
                 >
                   <X className="w-5 h-5" />
                 </button>
               </div>
 
+              {/* Modal Reading Progress Bar */}
+              <div 
+                role="progressbar"
+                aria-label="칼럼 읽기 진행률"
+                aria-valuenow={Math.round(modalProgress)}
+                aria-valuemin={0}
+                aria-valuemax={100}
+                className="w-full h-1 bg-brand-green/20 relative overflow-hidden shrink-0"
+              >
+                <div 
+                  className="h-full bg-gradient-to-r from-brand-sage to-brand-accent transition-[width] duration-75 ease-out"
+                  style={{ width: `${modalProgress}%` }}
+                />
+              </div>
+
               {/* Scrollable Content */}
-              <div className="overflow-y-auto p-6 sm:p-10 space-y-8">
+              <div 
+                onScroll={(e) => {
+                  const el = e.currentTarget;
+                  const total = el.scrollHeight - el.clientHeight;
+                  if (total > 0) {
+                    setModalProgress(Math.min(100, Math.max(0, (el.scrollTop / total) * 100)));
+                  }
+                }}
+                className="overflow-y-auto p-6 sm:p-10 space-y-8"
+              >
                 {/* Title & Author Info */}
                 <div>
                   <h1 className="text-2xl sm:text-3xl font-serif font-bold text-brand-brown mb-4 leading-snug">

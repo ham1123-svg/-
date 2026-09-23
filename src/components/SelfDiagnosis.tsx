@@ -6,6 +6,7 @@ import {
   HelpCircle, Check, Calendar, ArrowUpRight, MessageCircle
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import SelfDiagnosisResultsDashboard from './SelfDiagnosisResultsDashboard';
 
 export interface Question {
   id: number;
@@ -137,9 +138,6 @@ export default function SelfDiagnosis() {
   const [answers, setAnswers] = useState<Record<number, number>>({});
   const [currentStep, setCurrentStep] = useState<number>(0);
   const [isCompleted, setIsCompleted] = useState<boolean>(false);
-  const [nickname, setNickname] = useState<string>('');
-  const [isSaved, setIsSaved] = useState<boolean>(false);
-  const [isSaving, setIsSaving] = useState<boolean>(false);
 
   // Reference for scrolling to the result / questionnaire card
   const scrollAnchorRef = useRef<HTMLDivElement>(null);
@@ -164,7 +162,6 @@ export default function SelfDiagnosis() {
     setAnswers({});
     setCurrentStep(0);
     setIsCompleted(false);
-    setIsSaved(false);
     scrollToAnchor(84);
   };
 
@@ -181,6 +178,18 @@ export default function SelfDiagnosis() {
     }
   };
 
+  // Quick fill sample answers for testing / instant preview
+  const handleQuickFillSample = () => {
+    const sampleAnswers: Record<number, number> = {};
+    const sampleValues = [2, 3, 1, 2, 2, 1, 3, 2, 2];
+    selectedCategory.questions.forEach((q, idx) => {
+      sampleAnswers[q.id] = sampleValues[idx % sampleValues.length];
+    });
+    setAnswers(sampleAnswers);
+    setIsCompleted(true);
+    scrollToAnchor(84);
+  };
+
   // Show result with smooth scroll to result view
   const handleShowResult = () => {
     setIsCompleted(true);
@@ -192,8 +201,6 @@ export default function SelfDiagnosis() {
     setAnswers({});
     setCurrentStep(0);
     setIsCompleted(false);
-    setIsSaved(false);
-    setNickname('');
     scrollToAnchor(84);
   };
 
@@ -277,28 +284,6 @@ export default function SelfDiagnosis() {
   };
 
   const result = getResultGrade();
-
-  // Save to database
-  const handleSaveResult = async () => {
-    setIsSaving(true);
-    try {
-      await fetch('/api/self-diagnosis', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          nickname: nickname.trim() || '익명 내담자',
-          test_type: selectedCategory.title,
-          score: totalScore,
-          result: `${result.level} (${scorePercentage}%)`
-        })
-      });
-      setIsSaved(true);
-    } catch (err) {
-      console.error('Failed to save self diagnosis:', err);
-    } finally {
-      setIsSaving(false);
-    }
-  };
 
   return (
     <div className="w-full max-w-4xl mx-auto" id="self-diagnosis-root">
@@ -451,14 +436,26 @@ export default function SelfDiagnosis() {
 
             {/* Bottom Actions */}
             <div className="mt-8 pt-6 border-t border-brand-green/20 flex flex-col sm:flex-row items-center justify-between gap-4">
-              <button
-                type="button"
-                onClick={handleReset}
-                className="flex items-center gap-1.5 text-xs text-brand-brown/60 hover:text-brand-brown font-medium"
-              >
-                <RotateCcw className="w-3.5 h-3.5" />
-                <span>처음부터 다시 작성하기</span>
-              </button>
+              <div className="flex flex-wrap items-center gap-3">
+                <button
+                  type="button"
+                  onClick={handleReset}
+                  className="flex items-center gap-1.5 text-xs text-brand-brown/60 hover:text-brand-brown font-medium transition-colors"
+                >
+                  <RotateCcw className="w-3.5 h-3.5" />
+                  <span>처음부터 다시 작성하기</span>
+                </button>
+                <span className="text-brand-brown/30 text-xs hidden sm:inline">|</span>
+                <button
+                  type="button"
+                  onClick={handleQuickFillSample}
+                  className="flex items-center gap-1.5 text-xs text-brand-sage hover:text-brand-sage/80 font-semibold transition-colors"
+                  title="5대 심리 밸런스 차트 대시보드 즉시 확인"
+                >
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>대시보드 샘플 미리보기</span>
+                </button>
+              </div>
 
               <button
                 type="button"
@@ -477,7 +474,7 @@ export default function SelfDiagnosis() {
             </div>
           </div>
         ) : (
-          /* Result View */
+          /* Results Dashboard View */
           <motion.div
             id="diagnosis-result-view"
             tabIndex={-1}
@@ -486,140 +483,15 @@ export default function SelfDiagnosis() {
             transition={{ duration: 0.4 }}
             className="outline-none"
           >
-            {/* Header Result Banner */}
-            <div className="bg-brand-beige/30 rounded-3xl p-6 sm:p-8 border border-brand-green/30 mb-8 text-center relative overflow-hidden">
-              <span className={`inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full text-xs font-bold border mb-3 ${result.badgeBg}`}>
-                <Activity className="w-3.5 h-3.5" />
-                진단 결과: {result.level} ({scorePercentage}점 / 100점 만점)
-              </span>
-
-              <h3 className="text-xl sm:text-2xl font-serif font-bold text-brand-brown mb-3">
-                {result.headline}
-              </h3>
-              <p className="text-sm text-brand-brown/80 max-w-2xl mx-auto leading-relaxed mb-6">
-                {result.summary}
-              </p>
-
-              {/* Progress Bar Meter */}
-              <div className="max-w-md mx-auto">
-                <div className="flex justify-between text-[11px] font-bold text-brand-brown/60 mb-1.5">
-                  <span>안정 (0~25)</span>
-                  <span>주의 (26~50)</span>
-                  <span>관리권장 (51~75)</span>
-                  <span>심층케어 (76~100)</span>
-                </div>
-                <div className="h-3 bg-brand-green/30 rounded-full overflow-hidden p-0.5 border border-brand-green/40">
-                  <div 
-                    className={`h-full rounded-full transition-all duration-500 ${result.barColor}`}
-                    style={{ width: `${Math.max(scorePercentage, 5)}%` }}
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Counselor Note Box */}
-            <div className="bg-white rounded-2xl p-5 sm:p-6 border border-brand-green/30 mb-8 flex items-start gap-4 shadow-xs">
-              <div className="w-12 h-12 rounded-2xl bg-brand-green/30 text-brand-sage flex items-center justify-center shrink-0">
-                <Heart className="w-6 h-6" />
-              </div>
-              <div>
-                <h4 className="font-serif font-bold text-brand-brown mb-1 text-sm sm:text-base flex items-center gap-2">
-                  <span>박미경 원장의 따뜻한 치유 조언</span>
-                  <span className="text-xs font-normal text-brand-brown/50">행복바람 대표 원장</span>
-                </h4>
-                <p className="text-xs sm:text-sm text-brand-brown/75 leading-relaxed">
-                  "{result.advice}"
-                </p>
-              </div>
-            </div>
-
-            {/* Recommended Program Card (Core Requirement) */}
-            <div className="bg-gradient-to-br from-brand-beige/50 to-brand-green/20 rounded-3xl p-6 sm:p-8 border-2 border-brand-sage/40 shadow-md mb-8">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4 pb-4 border-b border-brand-green/30">
-                <div>
-                  <span className="text-xs font-bold text-brand-sage uppercase tracking-wider flex items-center gap-1">
-                    <Sparkles className="w-3.5 h-3.5" />
-                    맞춤 추천 상담 솔루션
-                  </span>
-                  <h4 className="text-xl sm:text-2xl font-serif font-bold text-brand-brown mt-0.5">
-                    {result.recProgram.title}
-                  </h4>
-                </div>
-                <span className="inline-block self-start sm:self-auto px-3 py-1 bg-brand-sage text-white text-xs font-bold rounded-full shadow-xs">
-                  {result.recProgram.badge}
-                </span>
-              </div>
-
-              <p className="text-sm text-brand-brown/80 mb-5 leading-relaxed">
-                <strong>추천 사유:</strong> {result.recProgram.reason}
-              </p>
-
-              {/* Action Buttons */}
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-                <Link
-                  to={`/reservation?program=${encodeURIComponent(result.recProgram.title)}`}
-                  className="flex-1 py-3.5 px-5 bg-brand-sage hover:bg-brand-sage/90 text-white font-bold rounded-xl text-center text-sm shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2"
-                >
-                  <Calendar className="w-4 h-4" />
-                  <span>추천 프로그램으로 즉시 예약 신청</span>
-                  <ArrowRight className="w-4 h-4" />
-                </Link>
-
-                <Link
-                  to="/programs"
-                  className="py-3.5 px-5 bg-white hover:bg-brand-beige/30 text-brand-brown font-semibold rounded-xl text-center text-sm border border-brand-green/40 transition-all flex items-center justify-center gap-1.5"
-                >
-                  <span>프로그램 상세 정보 보기</span>
-                  <ArrowUpRight className="w-4 h-4 text-brand-sage" />
-                </Link>
-              </div>
-            </div>
-
-            {/* Save Result / Retest Bar */}
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-brand-green/20">
-              <div className="flex items-center gap-2 w-full sm:w-auto">
-                <input
-                  type="text"
-                  value={nickname}
-                  onChange={(e) => setNickname(e.target.value)}
-                  placeholder="결과 보관용 닉네임 (선택)"
-                  disabled={isSaved}
-                  className="px-3.5 py-2 text-xs rounded-xl border border-brand-green/30 bg-brand-beige/10 outline-none focus:border-brand-sage text-brand-brown w-full sm:w-48"
-                />
-                <button
-                  type="button"
-                  onClick={handleSaveResult}
-                  disabled={isSaved || isSaving}
-                  className={`px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shrink-0 ${
-                    isSaved
-                      ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
-                      : 'bg-brand-brown text-white hover:bg-brand-brown/90 shadow-xs'
-                  }`}
-                >
-                  {isSaved ? (
-                    <>
-                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                      <span>저장 완료</span>
-                    </>
-                  ) : (
-                    <>
-                      <span>{isSaving ? '저장 중...' : '결과 저장'}</span>
-                    </>
-                  )}
-                </button>
-              </div>
-
-              <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
-                <button
-                  type="button"
-                  onClick={handleReset}
-                  className="flex items-center gap-1.5 text-xs text-brand-brown/70 hover:text-brand-brown font-semibold px-3 py-2 rounded-xl hover:bg-brand-beige/40 transition-colors"
-                >
-                  <RotateCcw className="w-3.5 h-3.5" />
-                  <span>다시 검사하기</span>
-                </button>
-              </div>
-            </div>
+            <SelfDiagnosisResultsDashboard
+              category={selectedCategory}
+              answers={answers}
+              totalScore={totalScore}
+              maxScore={maxScore}
+              scorePercentage={scorePercentage}
+              result={result}
+              onReset={handleReset}
+            />
           </motion.div>
         )}
       </div>

@@ -7,6 +7,7 @@ import {
 import { Link, useNavigate } from 'react-router-dom';
 import { cn } from '../lib/utils';
 import TestimonialsSection from '../components/TestimonialsSection';
+import FAQ from '../components/FAQ';
 
 const hashtags = [
   { label: "#청소년상담", tag: "청소년" },
@@ -250,7 +251,14 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Testimonials Section */}
+      {/* Frequently Asked Questions Section */}
+      <section className="py-24 bg-brand-beige/25 border-t border-brand-green/20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <FAQ limit={6} />
+        </div>
+      </section>
+
+      {/* 내담자들이 남긴 따뜻한 후기 슬라이드 섹션 */}
       <TestimonialsSection />
     </div>
   );

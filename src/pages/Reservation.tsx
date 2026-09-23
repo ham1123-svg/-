@@ -5,7 +5,7 @@ import {
   MapPin, Phone, Mail, Clock, Send, CheckCircle, 
   CalendarCheck2, PhoneCall, HeartHandshake, Sparkles, ChevronRight, ShieldCheck,
   MessageSquareText, CheckCircle2, RotateCcw, Home as HomeIcon, BellRing, ExternalLink,
-  CalendarDays, Check, HelpCircle
+  CalendarDays, Check, HelpCircle, Search
 } from 'lucide-react';
 import { Program, NotificationResult, ScheduleBlock, Reservation as ReservationType, RESERVATION_TIME_SLOTS, TIME_SLOT_DETAILS } from '../types';
 import WeeklyScheduleCalendar from '../components/WeeklyScheduleCalendar';
@@ -230,6 +230,22 @@ export default function Reservation() {
           <p className="text-brand-brown/70 text-sm sm:text-base max-w-2xl mx-auto">
             방문하시기 편안한 일정을 선택해 주시면 확인 후 친절하게 안내 전화를 드립니다.
           </p>
+
+          {/* Reservation / Lookup Switcher Banner */}
+          <div className="flex justify-center mt-6">
+            <div className="inline-flex items-center p-1 rounded-2xl bg-white border border-brand-green/30 shadow-2xs">
+              <span className="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold bg-brand-sage text-white shadow-2xs">
+                신규 상담 예약하기
+              </span>
+              <Link
+                to="/reservation/status"
+                className="px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold text-brand-brown/75 hover:text-brand-sage hover:bg-brand-green/10 transition-all flex items-center gap-1.5"
+              >
+                <Search className="w-3.5 h-3.5" />
+                <span>이미 예약하셨나요? 상태 조회하기</span>
+              </Link>
+            </div>
+          </div>
         </div>
 
         {/* Step-by-Step Reservation Guide */}
