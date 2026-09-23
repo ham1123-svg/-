@@ -14,6 +14,7 @@ import {
   Briefcase,
   Layers
 } from 'lucide-react';
+import CounselingCenterMap from '../components/CounselingCenterMap';
 
 interface Partner {
   id: string;
@@ -356,6 +357,16 @@ export default function About() {
               제휴 및 EAP 상담 문의
             </a>
           </div>
+        </div>
+      </section>
+
+      {/* Counseling Center Location & Directions Map */}
+      <section className="py-16 sm:py-20 bg-brand-beige/30 border-t border-brand-green/20">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+          <CounselingCenterMap 
+            title="상담소 위치 &amp; 오시는 길"
+            subtitle="울산 KTX/SRT 역세권 인근, 편안하고 조용한 독립 1:1 상담실에서 여러분을 따뜻하게 맞이합니다."
+          />
         </div>
       </section>
     </div>

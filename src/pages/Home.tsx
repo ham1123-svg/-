@@ -8,6 +8,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { cn } from '../lib/utils';
 import TestimonialsSection from '../components/TestimonialsSection';
 import FAQ from '../components/FAQ';
+import CounselingCenterMap from '../components/CounselingCenterMap';
 
 const hashtags = [
   { label: "#청소년상담", tag: "청소년" },
@@ -260,6 +261,16 @@ export default function Home() {
 
       {/* 내담자들이 남긴 따뜻한 후기 슬라이드 섹션 */}
       <TestimonialsSection />
+
+      {/* Counseling Center Location & Directions Map */}
+      <section className="py-20 bg-brand-beige/25 border-t border-brand-green/20">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+          <CounselingCenterMap 
+            title="상담소 위치 &amp; 찾아오시는 길"
+            subtitle="울산 KTX/SRT 역세권 인근, 편안하고 조용한 독립 1:1 상담실에서 여러분을 따뜻하게 맞이합니다."
+          />
+        </div>
+      </section>
     </div>
   );
 }

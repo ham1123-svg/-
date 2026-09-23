@@ -1,3 +1,28 @@
+export interface CounselorExpertise {
+  title: string;
+  description: string;
+  methods: string[];
+}
+
+export interface CounselorCareerItem {
+  period?: string;
+  role: string;
+  organization: string;
+}
+
+export interface CounselorDetailedProfile {
+  greeting?: string;
+  philosophy?: string;
+  clinicalHours?: string;
+  supervisionCount?: string;
+  specialties?: CounselorExpertise[];
+  careers?: CounselorCareerItem[];
+  academicBackground?: string[];
+  certificationsList?: string[];
+  recommendedFor?: string[];
+  sessionProcedure?: Array<{ step: string; title: string; desc: string }>;
+}
+
 export interface Counselor {
   id: number;
   name: string;
@@ -7,6 +32,7 @@ export interface Counselor {
   style: string;
   tags: string;
   image_url: string;
+  detailedProfile?: CounselorDetailedProfile;
 }
 
 export interface Program {
