@@ -28,13 +28,20 @@ export default function Admin() {
   const [loginLoading, setLoginLoading] = useState(false);
   const [showForgotModal, setShowForgotModal] = useState(false);
 
-  // View Mode: 'calendar' (Timetable) or 'table' (List) or 'eap' (B2B EAP Inquiries)
-  const [viewMode, setViewMode] = useState<'calendar' | 'table' | 'eap'>('calendar');
+  // View Mode: 'calendar' (Timetable) or 'table' (List) or 'eap' (B2B EAP Inquiries) or 'qna' (Community Q&A)
+  const [viewMode, setViewMode] = useState<'calendar' | 'table' | 'eap' | 'qna'>('calendar');
   const [programs, setPrograms] = useState<Program[]>([]);
 
   // EAP Inquiries state
   const [eapInquiries, setEapInquiries] = useState<any[]>([]);
   const [eapLoading, setEapLoading] = useState(false);
+
+  // Community Q&A state
+  const [communityQnas, setCommunityQnas] = useState<any[]>([]);
+  const [qnaLoading, setQnaLoading] = useState(false);
+  const [activeReplyItem, setActiveReplyItem] = useState<any | null>(null);
+  const [replyText, setReplyText] = useState('');
+  const [replySubmitting, setReplySubmitting] = useState(false);
 
   // Quick edit reservation modal state
   const [quickEditReservation, setQuickEditReservation] = useState<Reservation | null>(null);
@@ -145,11 +152,68 @@ export default function Admin() {
     }
   };
 
+  const loadCommunityQnas = async () => {
+    setQnaLoading(true);
+    try {
+      const res = await fetch('/api/admin/community/qna');
+      if (res.ok) {
+        const data = await res.json();
+        setCommunityQnas(data);
+      }
+    } catch (err) {
+      console.error('Failed to load community Q&A:', err);
+    } finally {
+      setQnaLoading(false);
+    }
+  };
+
+  const handleSaveReply = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!activeReplyItem?.id || !replyText.trim()) return;
+
+    setReplySubmitting(true);
+    try {
+      const res = await fetch(`/api/community/qna/${activeReplyItem.id}/reply`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reply: replyText.trim() })
+      });
+      if (res.ok) {
+        setActionMessage('답변이 등록되었습니다.');
+        setTimeout(() => setActionMessage(null), 3000);
+        setActiveReplyItem(null);
+        setReplyText('');
+        loadCommunityQnas();
+      } else {
+        alert('답변 저장에 실패했습니다.');
+      }
+    } catch (err) {
+      alert('답변 저장 중 오류가 발생했습니다.');
+    } finally {
+      setReplySubmitting(false);
+    }
+  };
+
+  const handleDeleteQna = async (id: number) => {
+    if (!window.confirm('이 문의글을 삭제하시겠습니까?')) return;
+    try {
+      const res = await fetch(`/api/admin/community/qna/${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        setActionMessage('문의글이 삭제되었습니다.');
+        setTimeout(() => setActionMessage(null), 3000);
+        loadCommunityQnas();
+      }
+    } catch (err) {
+      alert('삭제 중 오류가 발생했습니다.');
+    }
+  };
+
   useEffect(() => {
     if (isAuthenticated) {
       loadReservations();
       loadPrograms();
       loadEapInquiries();
+      loadCommunityQnas();
     }
   }, [isAuthenticated]);
 
@@ -735,6 +799,21 @@ export default function Admin() {
               <Building2 className="w-4 h-4" />
               <span>EAP 제휴 문의 ({eapInquiries.length})</span>
             </button>
+            <button
+              type="button"
+              onClick={() => {
+                setViewMode('qna');
+                loadCommunityQnas();
+              }}
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                viewMode === 'qna'
+                  ? 'bg-brand-sage text-white shadow-xs'
+                  : 'text-brand-brown/70 hover:bg-brand-beige/40'
+              }`}
+            >
+              <HelpCircle className="w-4 h-4" />
+              <span>1:1 비밀상담 문의 ({communityQnas.length})</span>
+            </button>
           </div>
 
           <div className="text-xs text-brand-brown/60 flex items-center gap-1.5">
@@ -1096,6 +1175,209 @@ export default function Admin() {
             )}
           </div>
         )}
+
+        {/* VIEW 4: Community 1:1 Secret Q&A Management */}
+        {viewMode === 'qna' && (
+          <div className="bg-white rounded-3xl border border-brand-green/20 shadow-xs overflow-hidden mb-8">
+            <div className="p-5 bg-brand-beige/30 border-b border-brand-green/20 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <h3 className="font-serif font-bold text-lg text-brand-brown flex items-center gap-2">
+                  <HelpCircle className="w-5 h-5 text-brand-sage" />
+                  <span>1:1 비밀상담 문의 관리 ({communityQnas.length}건)</span>
+                </h3>
+                <p className="text-xs text-brand-brown/65 mt-0.5">
+                  내담자들이 커뮤니티에서 비밀글로 등록한 사전 상담 문의를 검토하고 답변을 작성합니다.
+                </p>
+              </div>
+              <button
+                onClick={loadCommunityQnas}
+                disabled={qnaLoading}
+                className="px-3.5 py-2 bg-white border border-brand-green/30 hover:border-brand-sage text-brand-brown text-xs font-semibold rounded-xl flex items-center gap-1.5 transition-all self-start sm:self-auto cursor-pointer"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 text-brand-sage ${qnaLoading ? 'animate-spin' : ''}`} />
+                <span>목록 새로고침</span>
+              </button>
+            </div>
+
+            {qnaLoading ? (
+              <div className="py-20 text-center text-brand-brown/60 text-sm">
+                <RefreshCw className="w-6 h-6 animate-spin mx-auto mb-2 text-brand-sage" />
+                <span>문의 내역을 불러오는 중입니다...</span>
+              </div>
+            ) : communityQnas.length === 0 ? (
+              <div className="py-20 text-center text-brand-brown/60">
+                <HelpCircle className="w-12 h-12 mx-auto mb-3 text-brand-brown/20" />
+                <p className="font-medium text-sm">등록된 1:1 상담 문의가 없습니다.</p>
+                <p className="text-xs text-brand-brown/40 mt-1">
+                  고객이 커뮤니티 페이지에서 비밀 문의를 작성하면 여기에 실시간으로 표시됩니다.
+                </p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse text-xs sm:text-sm">
+                  <thead>
+                    <tr className="bg-brand-beige/40 border-b border-brand-green/20 text-brand-brown/70 font-bold text-xs">
+                      <th className="py-3.5 px-4">접수일시</th>
+                      <th className="py-3.5 px-4">분야</th>
+                      <th className="py-3.5 px-4">작성자 (연락처)</th>
+                      <th className="py-3.5 px-4">문의 제목</th>
+                      <th className="py-3.5 px-4">문의 내용</th>
+                      <th className="py-3.5 px-4">답변 상태</th>
+                      <th className="py-3.5 px-4 text-center">답변 / 관리</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-brand-green/10">
+                    {communityQnas.map((q) => (
+                      <tr key={q.id} className="hover:bg-brand-beige/20 transition-colors">
+                        <td className="py-3.5 px-4 text-xs text-brand-brown/60 whitespace-nowrap">
+                          {q.created_at ? q.created_at.substring(0, 16) : '-'}
+                        </td>
+                        <td className="py-3.5 px-4 whitespace-nowrap">
+                          <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-brand-sage/10 text-brand-sage">
+                            {q.category}
+                          </span>
+                        </td>
+                        <td className="py-3.5 px-4 whitespace-nowrap">
+                          <span className="font-semibold text-brand-brown">{q.author}</span>
+                          {q.phone && (
+                            <span className="text-xs text-brand-brown/60 block">{q.phone}</span>
+                          )}
+                        </td>
+                        <td className="py-3.5 px-4 font-bold text-brand-brown max-w-[200px] truncate">
+                          {q.title}
+                        </td>
+                        <td className="py-3.5 px-4 text-xs text-brand-brown/80 max-w-[240px] truncate">
+                          {q.content}
+                        </td>
+                        <td className="py-3.5 px-4 whitespace-nowrap">
+                          {q.status === 'answered' ? (
+                            <span className="text-xs px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 font-bold border border-emerald-200 inline-flex items-center gap-1">
+                              <CheckCircle2 className="w-3 h-3" />
+                              <span>답변 완료</span>
+                            </span>
+                          ) : (
+                            <span className="text-xs px-2.5 py-1 rounded-full bg-amber-50 text-amber-700 font-bold border border-amber-200 inline-flex items-center gap-1">
+                              <Clock className="w-3 h-3" />
+                              <span>답변 대기</span>
+                            </span>
+                          )}
+                        </td>
+                        <td className="py-3.5 px-4 whitespace-nowrap text-center">
+                          <div className="flex items-center justify-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setActiveReplyItem(q);
+                                setReplyText(q.reply || '');
+                              }}
+                              className="px-3 py-1.5 bg-brand-sage hover:bg-brand-sage/90 text-white text-xs font-bold rounded-lg transition-all shadow-xs cursor-pointer"
+                            >
+                              {q.status === 'answered' ? '답변 수정' : '답변 작성'}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteQna(q.id)}
+                              className="p-1.5 text-zinc-400 hover:text-rose-600 transition-colors cursor-pointer"
+                              title="삭제"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Modal: Counselor Reply Modal */}
+        <AnimatePresence>
+          {activeReplyItem && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setActiveReplyItem(null)}
+                className="fixed inset-0 bg-brand-brown/60 backdrop-blur-xs"
+              />
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                className="relative w-full max-w-2xl bg-white rounded-3xl shadow-2xl p-6 sm:p-8 z-10 border border-brand-sage/20 my-auto"
+              >
+                <div className="flex items-center justify-between pb-4 border-b border-brand-beige/80 mb-5">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-brand-sage/10 text-brand-sage">
+                      {activeReplyItem.category}
+                    </span>
+                    <h3 className="font-bold font-serif text-lg text-brand-brown">
+                      1:1 비밀상담 문의 답변 작성
+                    </h3>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setActiveReplyItem(null)}
+                    className="p-1.5 rounded-full hover:bg-brand-beige text-brand-brown/60 cursor-pointer"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+
+                <div className="mb-5 p-4 rounded-2xl bg-brand-beige/40 border border-brand-green/20 space-y-2">
+                  <div className="flex items-center justify-between text-xs text-brand-brown/60">
+                    <span>작성자: <strong>{activeReplyItem.author}</strong> ({activeReplyItem.phone || '연락처 미입력'})</span>
+                    <span>{activeReplyItem.created_at ? activeReplyItem.created_at.substring(0, 16) : ''}</span>
+                  </div>
+                  <h4 className="font-bold text-sm text-brand-brown">
+                    {activeReplyItem.title}
+                  </h4>
+                  <p className="text-xs text-brand-brown/80 leading-relaxed whitespace-pre-line bg-white/70 p-3 rounded-xl">
+                    {activeReplyItem.content}
+                  </p>
+                </div>
+
+                <form onSubmit={handleSaveReply} className="space-y-4">
+                  <div>
+                    <label className="block text-xs font-bold text-brand-brown mb-1.5">
+                      상담사 공식 답변 내용 *
+                    </label>
+                    <textarea
+                      required
+                      rows={6}
+                      value={replyText}
+                      onChange={(e) => setReplyText(e.target.value)}
+                      placeholder="내담자의 마음에 공감하며 전문적이고 따뜻한 안내 답변을 작성해 주세요. (고객은 비밀번호 입력 후 이 답변을 확인합니다.)"
+                      className="w-full p-3.5 rounded-xl border border-brand-green/30 text-xs sm:text-sm focus:outline-none focus:border-brand-sage resize-none leading-relaxed"
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-end gap-3 pt-3 border-t border-brand-beige/80">
+                    <button
+                      type="button"
+                      onClick={() => setActiveReplyItem(null)}
+                      className="px-4 py-2.5 rounded-xl border border-brand-brown/20 text-brand-brown text-xs font-bold hover:bg-brand-beige/50 cursor-pointer"
+                    >
+                      취소
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={replySubmitting}
+                      className="px-6 py-2.5 rounded-xl bg-brand-sage text-white text-xs font-bold hover:bg-brand-sage/90 shadow-xs flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                    >
+                      <Check className="w-4 h-4" />
+                      <span>{replySubmitting ? '저장 중...' : '답변 저장 및 게시'}</span>
+                    </button>
+                  </div>
+                </form>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
 
         {/* Operating Guide Box */}
         <div className="mt-8 bg-brand-beige/30 rounded-2xl p-6 border border-brand-green/20">

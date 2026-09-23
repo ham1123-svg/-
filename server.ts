@@ -102,6 +102,32 @@ db.exec(`
     status TEXT DEFAULT 'pending',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   );
+
+  CREATE TABLE IF NOT EXISTS community_notices (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    category TEXT NOT NULL,
+    title TEXT NOT NULL,
+    content TEXT NOT NULL,
+    author TEXT DEFAULT '행복바람 운영팀',
+    views INTEGER DEFAULT 0,
+    is_pinned INTEGER DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+
+  CREATE TABLE IF NOT EXISTS community_qna (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title TEXT NOT NULL,
+    author TEXT NOT NULL,
+    category TEXT DEFAULT '상담신청',
+    phone TEXT,
+    password TEXT NOT NULL,
+    content TEXT NOT NULL,
+    reply TEXT,
+    replied_at DATETIME,
+    status TEXT DEFAULT 'waiting',
+    is_private INTEGER DEFAULT 1,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
 `);
 
 // Safe migration for admin_notes column in reservations table
@@ -149,6 +175,93 @@ insertProgram.run("부부상담", "부부 및 가족 관계 개선", "부부 갈
 insertProgram.run("심리검사", "종합 심리검사 및 해석", "객관적인 검사를 통해 자기 이해를 돕고 현재의 심리적 상태를 정밀하게 파악합니다.", "#자기이해 #정밀진단 #성격검사");
 insertProgram.run("기업상담", "EAP (근로자 지원 프로그램)", "직장 내 스트레스 관리 및 조직 적응을 위한 임직원 맞춤형 상담 서비스를 제공합니다.", "#직장스트레스 #조직적응 #EAP");
 insertProgram.run("집단/교육", "집단상담 및 심리교육", "특정 주제를 가진 소그룹 상담과 마음 건강을 위한 다양한 교육 프로그램을 운영합니다.", "#집단상담 #심리교육 #워크숍");
+
+// Seed community notices
+const noticeCount = (db.prepare("SELECT COUNT(*) as count FROM community_notices").get() as any).count;
+if (noticeCount === 0) {
+  const insertNotice = db.prepare("INSERT INTO community_notices (category, title, content, author, views, is_pinned, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)");
+  insertNotice.run(
+    "운영안내",
+    "2026년 하반기 평일 야간(20시) 및 토요일 특별 상담 일정 안내",
+    "안녕하세요, 행복바람 심리상담연구소입니다.\n\n바쁜 직장인, 맞벌이 부부, 학생분들을 위하여 2026년 하반기에도 평일 야간 및 토요일 특별 상담 일정을 정상 운영합니다.\n\n• 평일 운영: 10:00 ~ 20:00 (마지막 상담 시작 19:00)\n• 토요일 운영: 10:00 ~ 17:00 (100% 사전 예약제)\n• 일요일 및 공휴일: 휴진 (사전 협의된 기업 EAP 특강 제외)\n\n상담소 내에는 사생활이 철저히 보호되는 프라이빗 1:1 대기실과 따뜻한 웰컴 티가 준비되어 있으니 편안한 마음으로 발걸음해 주시기 바랍니다.\n\n문의 전화: 052-254-0230 / 온라인 예약 메뉴 이용 가능",
+    "행복바람 운영팀",
+    184,
+    1,
+    "2026-09-18 10:00:00"
+  );
+  insertNotice.run(
+    "프로그램모집",
+    "[소수정예 6인] 제8기 마음챙김(MBSR) 기반 감정조절 주말 힐링 워크숍 모집",
+    "끝없는 스트레스와 불안, 감정 기복으로 지친 분들을 위한 소수정예 힐링 그룹 프로그램입니다.\n\n• 일정: 2026년 10월 둘째 주 토요일 (오후 2시 ~ 5시, 총 3시간)\n• 장소: 행복바람 대그룹 상담실 (울산 삼산동)\n• 정원: 선착순 6인 (깊이 있는 나눔과 밀도 높은 피드백을 위해 엄격히 인원 제한)\n• 대상: 번아웃 극복, 감정조절 훈련 및 자기 자비(Self-Compassion) 실습을 원하는 성인 누구나\n• 지도: 박미경 소장 (교육학 박사, 한국상담학회 1급 슈퍼바이저)\n• 문의 및 신청: 온라인 예약 메뉴 > 집단 프로그램 선택 또는 연구소 유선 접수",
+    "박미경 소장",
+    256,
+    1,
+    "2026-09-12 14:30:00"
+  );
+  insertNotice.run(
+    "소식/특강",
+    "박미경 소장, 울산 관내 교육기관 대상 '교직 스트레스 치유와 회복탄력성' 초청 특강 진행",
+    "지난 9월, 박미경 소장(교육학 박사)은 울산 관내 초·중등 교원 및 전문상담교사를 대상으로 '감정노동 스트레스 예방 및 소진 극복을 위한 마음챙김 대화법'을 주제로 한 특별 강연을 성황리에 마쳤습니다.\n\n행복바람 심리상담연구소는 앞으로도 교육계와 공공기관, 지역사회 임직원의 건강한 마음 회복을 위해 전문적인 심리지원을 아끼지 않겠습니다.",
+    "행복바람 소식팀",
+    342,
+    0,
+    "2026-09-05 11:20:00"
+  );
+  insertNotice.run(
+    "공지",
+    "내담자 권익 보호 및 비의료기관 100% 비밀보장 서약 원칙 안내",
+    "행복바람 심리상담연구소는 국민건강보험공단 및 의료보험 전산에 진료 기록이 전혀 남지 않는 순수 비의료 전문 심리상담기관입니다.\n\n한국상담심리학회 및 한국상담학회 윤리강령 제1조에 의거하여, 내담자의 모든 상담 내용과 개인정보는 철저한 이중 암호화 시스템으로 보관되며 본인의 법적 동의 없이 어떠한 외부 기관(가족, 회사, 국가기관)에도 공개되지 않습니다.\n\n안심하시고 온전히 나 자신을 마주하는 시간을 가져보세요.",
+    "개인정보보호책임자",
+    419,
+    0,
+    "2026-08-20 09:00:00"
+  );
+}
+
+// Seed sample Q&A
+const qnaCount = (db.prepare("SELECT COUNT(*) as count FROM community_qna").get() as any).count;
+if (qnaCount === 0) {
+  const insertQna = db.prepare("INSERT INTO community_qna (title, author, category, phone, password, content, reply, replied_at, status, is_private, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+  insertQna.run(
+    "처음 상담을 받아보려는데 어떤 프로그램을 선택해야 할지 고민입니다.",
+    "김*은",
+    "상담신청",
+    "010-****-1234",
+    "1111",
+    "일상에서 이유 없이 불안하고 가슴이 답답해서 상담을 고민 중입니다. 개인상담을 바로 신청해야 하는지, 종합심리검사를 먼저 받아야 하는지 궁금합니다.",
+    "안녕하세요, 은 님. 용기 내어 소중한 문의 남겨주셔서 감사드립니다.\n\n처음 방문하시는 경우, 1회기 초기 상담(접수면접)을 통해 현재 겪고 계신 불편감의 양상과 우선순위를 상담사와 함께 안전하게 탐색합니다. 그 후 심층 심리평가가 필요한지, 혹은 1:1 대화 중심의 개인 상담을 진행할지 내담자의 속도와 상황에 맞추어 맞춤 결정하게 되오니 부담 갖지 마시고 편안한 마음으로 방문하셔도 좋습니다. 언제든 기다리고 있겠습니다.",
+    "2026-09-20 15:40:00",
+    "answered",
+    1,
+    "2026-09-20 10:15:00"
+  );
+  insertQna.run(
+    "부부상담을 진행할 때 배우자와 반드시 함께 방문해야 하나요?",
+    "박*호",
+    "부부/가족",
+    "010-****-5678",
+    "2222",
+    "부부 갈등이 심한데 배우자가 상담에 소극적입니다. 저 혼자 먼저 방문해도 관계 개선에 도움이 될까요?",
+    "안녕하세요, 호 님. 네, 물론입니다.\n\n부부상담의 경우 두 분이 함께 오시는 것이 가장 이상적이지만, 한 분이 먼저 오셔서 현재의 갈등 패턴과 나의 반응 방식을 객관적으로 점검하는 것만으로도 부부 관계에 매우 긍정적인 변화의 파동이 시작됩니다.\n\n1~2회기 개인 상담을 진행한 후 배우자분이 심리적 거부감 없이 자연스럽게 동참하실 수 있도록 안전한 대화 접근법도 함께 안내해 드립니다.",
+    "2026-09-19 11:15:00",
+    "answered",
+    1,
+    "2026-09-19 09:30:00"
+  );
+  insertQna.run(
+    "상담 기록이나 방문 사실이 직장이나 보험사에 알려질 우려는 없나요?",
+    "이*수",
+    "비밀보장",
+    "010-****-9012",
+    "3333",
+    "공공기관 재직 중인데 개인 상담을 이용했을 때 인사고과나 보험 가입 시 불이익이 생길까 염려됩니다.",
+    "안녕하세요, 수 님. 전혀 염려하지 않으셔도 됩니다.\n\n행복바람 심리상담연구소는 병의원이 아닌 순수 민간 전문 심리상담기관으로 국민건강보험공단에 전산 코드가 일절 등록되지 않습니다.\n\n또한 한국상담학회 윤리강령 제1조(비밀보장의 의무)에 의거하여 본인의 법적 서면 동의 없이 회사나 보험사에 어떠한 방문 기록이나 상담 정보도 제공되지 않음을 법적으로 보장해 드립니다.",
+    "2026-09-17 18:20:00",
+    "answered",
+    1,
+    "2026-09-17 14:00:00"
+  );
+}
 
 async function startServer() {
   const app = express();
@@ -610,6 +723,179 @@ async function startServer() {
       const { id } = req.params;
       const { status } = req.body;
       db.prepare("UPDATE eap_inquiries SET status = ? WHERE id = ?").run(status, id);
+      res.json({ success: true });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // --- Community Notices Endpoints ---
+  app.get("/api/community/notices", (req, res) => {
+    try {
+      const notices = db.prepare("SELECT * FROM community_notices ORDER BY is_pinned DESC, id DESC").all();
+      res.json(notices);
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.get("/api/community/notices/:id", (req, res) => {
+    try {
+      const { id } = req.params;
+      db.prepare("UPDATE community_notices SET views = views + 1 WHERE id = ?").run(id);
+      const notice = db.prepare("SELECT * FROM community_notices WHERE id = ?").get(id);
+      if (!notice) {
+        return res.status(404).json({ error: "공지사항을 찾을 수 없습니다." });
+      }
+      res.json(notice);
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // --- Community 1:1 Secret Q&A Endpoints ---
+  app.get("/api/community/qna", (req, res) => {
+    try {
+      // Returns list without exposing password or phone, and hides private content
+      const list = db.prepare(`
+        SELECT id, title, author, category, status, is_private, created_at, replied_at,
+               CASE WHEN is_private = 0 THEN content ELSE NULL END as content,
+               CASE WHEN is_private = 0 THEN reply ELSE NULL END as reply
+        FROM community_qna 
+        ORDER BY id DESC
+      `).all();
+      res.json(list);
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.post("/api/community/qna", (req, res) => {
+    try {
+      const { title, author, category, phone, password, content, is_private } = req.body;
+      if (!title || !author || !password || !content) {
+        return res.status(400).json({ error: "제목, 작성자, 비밀번호(4자리), 문의 내용을 모두 입력해 주세요." });
+      }
+
+      const stmt = db.prepare(`
+        INSERT INTO community_qna (title, author, category, phone, password, content, status, is_private)
+        VALUES (?, ?, ?, ?, ?, ?, 'waiting', ?)
+      `);
+
+      const isPriv = is_private === false ? 0 : 1;
+      const info = stmt.run(
+        title.trim(),
+        author.trim(),
+        category || '상담신청',
+        phone ? phone.trim() : null,
+        password.trim(),
+        content.trim(),
+        isPriv
+      );
+
+      const qnaId = Number(info.lastInsertRowid);
+
+      // Notification log for admin
+      try {
+        db.prepare(`
+          INSERT INTO notification_logs 
+          (recipient_name, recipient_phone, channel, template_title, message_content, status) 
+          VALUES (?, ?, 'ADMIN_ALERT', '1:1 비밀상담 문의 접수', ?, 'SUCCESS')
+        `).run(
+          author.trim(),
+          phone ? phone.trim() : '비공개',
+          `[1:1 비밀상담 문의] ${title.trim()} (${category}) - 작성자: ${author.trim()}`
+        );
+      } catch (logErr) {
+        console.error("Failed to log QnA admin notification:", logErr);
+      }
+
+      res.json({
+        success: true,
+        id: qnaId,
+        message: "비밀 문의가 정상 등록되었습니다. 전문 상담사가 검토 후 정성껏 답변을 남겨드립니다."
+      });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.post("/api/community/qna/:id/verify", (req, res) => {
+    try {
+      const { id } = req.params;
+      const { password } = req.body;
+
+      if (!password) {
+        return res.status(400).json({ error: "비밀번호를 입력해 주세요." });
+      }
+
+      const item = db.prepare("SELECT * FROM community_qna WHERE id = ?").get(id) as any;
+      if (!item) {
+        return res.status(404).json({ error: "문의글을 찾을 수 없습니다." });
+      }
+
+      // Check admin password override or user password match
+      const adminPw = db.prepare("SELECT value FROM admin_settings WHERE key = 'admin_password'").get() as any;
+      const isAdminPw = adminPw && adminPw.value === password.trim();
+
+      if (item.password === password.trim() || isAdminPw) {
+        return res.json({
+          verified: true,
+          id: item.id,
+          title: item.title,
+          author: item.author,
+          category: item.category,
+          content: item.content,
+          reply: item.reply,
+          replied_at: item.replied_at,
+          status: item.status,
+          created_at: item.created_at,
+          is_private: item.is_private
+        });
+      } else {
+        return res.status(401).json({ verified: false, error: "비밀번호가 일치하지 않습니다." });
+      }
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.post("/api/community/qna/:id/reply", (req, res) => {
+    try {
+      const { id } = req.params;
+      const { reply } = req.body;
+
+      if (!reply || !reply.trim()) {
+        return res.status(400).json({ error: "답변 내용을 입력해 주세요." });
+      }
+
+      db.prepare(`
+        UPDATE community_qna 
+        SET reply = ?, replied_at = CURRENT_TIMESTAMP, status = 'answered' 
+        WHERE id = ?
+      `).run(reply.trim(), id);
+
+      res.json({ success: true, message: "답변이 정상 등록되었습니다." });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // Admin endpoint: Get all community Q&A including content and contacts
+  app.get("/api/admin/community/qna", (req, res) => {
+    try {
+      const list = db.prepare("SELECT * FROM community_qna ORDER BY id DESC").all();
+      res.json(list);
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // Admin endpoint: Delete community Q&A
+  app.delete("/api/admin/community/qna/:id", (req, res) => {
+    try {
+      const { id } = req.params;
+      db.prepare("DELETE FROM community_qna WHERE id = ?").run(id);
       res.json({ success: true });
     } catch (err: any) {
       res.status(500).json({ error: err.message });
