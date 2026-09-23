@@ -5,8 +5,9 @@ import {
   X, Plus, ShieldCheck, Lock, ArrowRight, Heart, 
   Sparkles, Calendar, MapPin, FileText, CheckCircle2, 
   HelpCircle, Phone, Clock, ExternalLink, ShieldAlert,
-  Users, Activity, MessageSquare, BookOpen, ChevronRight
+  Users, Activity, MessageSquare, BookOpen, ChevronRight, Settings
 } from 'lucide-react';
+import AdminLoginModal from './AdminLoginModal';
 
 interface SitemapModalProps {
   isOpen: boolean;
@@ -16,19 +17,13 @@ interface SitemapModalProps {
 export default function SitemapModal({ isOpen, onClose }: SitemapModalProps) {
   const navigate = useNavigate();
   const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false);
-  const [adminPassword, setAdminPassword] = useState('');
-  const [loginError, setLoginError] = useState('');
-  const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
-      // Clear persistent localStorage to strictly enforce session-based login
       localStorage.removeItem('hbbr_admin_auth');
       const authed = sessionStorage.getItem('hbbr_admin_auth') === 'true';
       setIsAdminLoggedIn(authed);
-      setAdminPassword('');
-      setLoginError('');
-      // Lock body scroll
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = 'unset';
@@ -52,39 +47,13 @@ export default function SitemapModal({ isOpen, onClose }: SitemapModalProps) {
     navigate(path);
   };
 
-  const handleAdminLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!adminPassword.trim()) {
-      setLoginError('관리자 비밀번호를 입력해 주세요.');
-      return;
-    }
-
-    setIsLoggingIn(true);
-    setLoginError('');
-
-    try {
-      const res = await fetch('/api/admin/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ password: adminPassword.trim() })
-      });
-
-      const data = await res.json();
-      if (res.ok && data.success) {
-        sessionStorage.setItem('hbbr_admin_auth', 'true');
-        localStorage.removeItem('hbbr_admin_auth');
-        setIsAdminLoggedIn(true);
-        setAdminPassword('');
-        setLoginError('');
-        onClose();
-        navigate('/admin');
-      } else {
-        setLoginError(data.error || '비밀번호가 일치하지 않습니다. 다시 확인해 주세요.');
-      }
-    } catch (err) {
-      setLoginError('로그인 처리 중 오류가 발생했습니다.');
-    } finally {
-      setIsLoggingIn(false);
+  const handleAdminClick = () => {
+    const isAuthed = sessionStorage.getItem('hbbr_admin_auth') === 'true';
+    if (isAuthed) {
+      onClose();
+      navigate('/admin');
+    } else {
+      setIsLoginModalOpen(true);
     }
   };
 
@@ -92,8 +61,6 @@ export default function SitemapModal({ isOpen, onClose }: SitemapModalProps) {
     sessionStorage.removeItem('hbbr_admin_auth');
     localStorage.removeItem('hbbr_admin_auth');
     setIsAdminLoggedIn(false);
-    setAdminPassword('');
-    setLoginError('');
   };
 
   if (!isOpen) return null;
@@ -150,122 +117,7 @@ export default function SitemapModal({ isOpen, onClose }: SitemapModalProps) {
 
           {/* Scrollable Content */}
           <div className="p-5 sm:p-6 overflow-y-auto space-y-6 text-brand-brown">
-            {/* 1. Admin Management Card (Featured Top Box - Login Enforced) */}
-            <div className="rounded-2xl border-2 border-brand-sage/40 bg-gradient-to-br from-brand-green/25 via-emerald-50/40 to-brand-beige/40 p-5 shadow-xs relative overflow-hidden">
-              <div className="flex flex-col gap-4">
-                <div className="flex items-start gap-3.5">
-                  <div className="w-11 h-11 rounded-2xl bg-brand-sage text-white flex items-center justify-center shrink-0 shadow-sm">
-                    {isAdminLoggedIn ? <ShieldCheck className="w-6 h-6" /> : <Lock className="w-6 h-6" />}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <h3 className="font-bold text-base text-brand-brown flex items-center gap-1.5">
-                        운영자 관리 모드 (Admin Portal)
-                      </h3>
-                      {isAdminLoggedIn ? (
-                        <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 border border-emerald-300 rounded-full text-[11px] font-bold">
-                          ● 로그인 인증됨
-                        </span>
-                      ) : (
-                        <span className="px-2 py-0.5 bg-amber-100 text-amber-900 border border-amber-300 rounded-full text-[11px] font-bold flex items-center gap-1">
-                          <Lock className="w-3 h-3" /> 로그인 필수
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-xs text-brand-brown/75 mt-1 leading-relaxed">
-                      예약 접수 내역 및 개인정보 보호를 위해 **비밀번호 인증 후**에만 관리자 모드에 접근할 수 있습니다.
-                    </p>
-                  </div>
-                </div>
-
-                {/* If Not Logged In: Inline Secure Login Form */}
-                {!isAdminLoggedIn ? (
-                  <form onSubmit={handleAdminLogin} className="mt-1 pt-3 border-t border-brand-green/30">
-                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
-                      <div className="relative flex-1">
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                          <Lock className="w-4 h-4 text-brand-brown/40" />
-                        </div>
-                        <input
-                          type="password"
-                          value={adminPassword}
-                          onChange={(e) => {
-                            setAdminPassword(e.target.value);
-                            if (loginError) setLoginError('');
-                          }}
-                          placeholder="관리자 비밀번호 입력"
-                          className="w-full pl-9 pr-3.5 py-2.5 bg-white border border-brand-green/50 rounded-xl text-xs text-brand-brown placeholder-brand-brown/40 focus:outline-none focus:ring-2 focus:ring-brand-sage focus:border-brand-sage transition-all shadow-2xs"
-                        />
-                      </div>
-                      <button
-                        type="submit"
-                        disabled={isLoggingIn}
-                        className="px-5 py-2.5 bg-brand-sage hover:bg-brand-sage/90 text-white font-bold rounded-xl text-xs shadow-md transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 shrink-0"
-                      >
-                        {isLoggingIn ? (
-                          <span>인증 확인 중...</span>
-                        ) : (
-                          <>
-                            <span>로그인 후 접속</span>
-                            <ArrowRight className="w-3.5 h-3.5" />
-                          </>
-                        )}
-                      </button>
-                    </div>
-
-                    {loginError && (
-                      <p className="text-xs text-red-600 font-medium mt-2 flex items-center gap-1">
-                        <ShieldAlert className="w-3.5 h-3.5 text-red-500 shrink-0" />
-                        <span>{loginError}</span>
-                      </p>
-                    )}
-                  </form>
-                ) : (
-                  /* If Already Logged In: Direct Access & Logout Buttons */
-                  <div className="mt-1 pt-3 border-t border-brand-green/30 flex flex-wrap items-center justify-between gap-2.5">
-                    <span className="text-xs font-semibold text-emerald-800 flex items-center gap-1.5">
-                      <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                      현재 관리자 권한으로 로그인되어 있습니다.
-                    </span>
-                    <div className="flex items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={() => handleNavigate('/admin')}
-                        className="px-4 py-2 bg-brand-sage hover:bg-brand-sage/90 text-white font-bold rounded-xl text-xs shadow-md transition-all flex items-center justify-center gap-1.5 cursor-pointer"
-                      >
-                        <span>관리자 모드 바로가기</span>
-                        <ArrowRight className="w-3.5 h-3.5" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={handleAdminLogout}
-                        className="px-3 py-2 bg-white hover:bg-red-50 text-red-700 border border-red-200 font-bold rounded-xl text-xs transition-all cursor-pointer"
-                      >
-                        로그아웃
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Admin features mini badges */}
-              <div className="mt-3 pt-3 border-t border-brand-green/20 flex flex-wrap items-center gap-2 text-[11px] text-brand-brown/70 font-medium">
-                <span className="inline-flex items-center gap-1 bg-white/80 px-2 py-0.5 rounded-md border border-brand-green/30">
-                  <CheckCircle2 className="w-3 h-3 text-brand-sage" /> 예약 접수 실시간 관리
-                </span>
-                <span className="inline-flex items-center gap-1 bg-white/80 px-2 py-0.5 rounded-md border border-brand-green/30">
-                  <CheckCircle2 className="w-3 h-3 text-brand-sage" /> 주간/월간 마감 설정·해제
-                </span>
-                <span className="inline-flex items-center gap-1 bg-white/80 px-2 py-0.5 rounded-md border border-brand-green/30">
-                  <CheckCircle2 className="w-3 h-3 text-brand-sage" /> 알림톡 자동/수동 발송
-                </span>
-                <span className="inline-flex items-center gap-1 bg-white/80 px-2 py-0.5 rounded-md border border-brand-green/30">
-                  <CheckCircle2 className="w-3 h-3 text-brand-sage" /> 관리자 비밀번호 변경
-                </span>
-              </div>
-            </div>
-
-            {/* 2. Structured Sitemap Grid */}
+            {/* Structured Sitemap Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
               {/* Category 1: 소개 & 상담진 */}
               <div className="bg-brand-beige/25 rounded-2xl p-4 border border-brand-green/25 hover:border-brand-sage/50 transition-colors">
@@ -576,8 +428,25 @@ export default function SitemapModal({ isOpen, onClose }: SitemapModalProps) {
           </div>
 
           {/* Footer Bar */}
-          <div className="px-6 py-3.5 bg-brand-beige/30 border-t border-brand-green/20 flex items-center justify-between text-xs text-brand-brown/60">
-            <span>© 행복바람심리상담연구소 · www.hbbr.kr</span>
+          <div className="px-6 py-3.5 bg-brand-beige/35 border-t border-brand-green/20 flex flex-wrap items-center justify-between gap-3 text-xs text-brand-brown/70">
+            <div className="flex items-center gap-3">
+              <span>© 행복바람심리상담연구소 · www.hbbr.kr</span>
+              <span className="text-brand-brown/30 hidden sm:inline">|</span>
+              {/* 운영자 관리 모드 아이콘 버튼 */}
+              <button
+                type="button"
+                onClick={handleAdminClick}
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/80 hover:bg-brand-sage hover:text-white text-brand-brown border border-brand-green/35 text-[11px] font-semibold transition-all shadow-2xs cursor-pointer group"
+                title="운영자 관리 모드 로그인"
+              >
+                <Settings className="w-3.5 h-3.5 text-brand-sage group-hover:text-white transition-colors" />
+                <span>운영자 관리 모드</span>
+                {isAdminLoggedIn && (
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" title="인증됨" />
+                )}
+              </button>
+            </div>
+
             <button
               type="button"
               onClick={onClose}
@@ -588,6 +457,17 @@ export default function SitemapModal({ isOpen, onClose }: SitemapModalProps) {
           </div>
         </motion.div>
       </div>
+
+      {/* Admin Login Modal */}
+      <AdminLoginModal
+        isOpen={isLoginModalOpen}
+        onClose={() => setIsLoginModalOpen(false)}
+        onSuccess={() => {
+          setIsAdminLoggedIn(true);
+          onClose();
+          navigate('/admin');
+        }}
+      />
     </AnimatePresence>
   );
 }

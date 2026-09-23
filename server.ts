@@ -163,15 +163,49 @@ if (!existingCounselor) {
   const insertCounselor = db.prepare("INSERT INTO counselors (name, title, education, certifications, style, tags, image_url) VALUES (?, ?, ?, ?, ?, ?, ?)");
   insertCounselor.run(
     "박미경", 
-    "상담 소장", 
-    "교육학 박사(상담 심리 및 교육 심리 전공)", 
-    "한국상담학회 슈퍼바이저\n한국상담학회 전문상담사 1급\n여성가족부 청소년상담사 1급\n한국상담심리학회 정회원\n한국부부가족상담학회 정회원", 
-    "개인 상담/기업 상담(EAP)/집단 상담/심리 검사/교육 전문", 
-    "#개인상담 #기업상담 #집단상담 #심리검사 #교육전문", 
+    "상담 소장 (대표 원장)", 
+    "교육학 박사 (상담 심리 및 교육 심리 전공)", 
+    "한국상담학회 공인 1급 수련감독자(슈퍼바이저)\n한국상담학회 전문상담사 1급\n여성가족부 청소년상담사 1급 (국가공인)\n한국상담심리학회 정회원\n한국부부가족상담학회 정회원", 
+    "개인 심층 치유 / 기업 EAP / 부부·가족 갈등 / 종합심리평가 / 전문가 수련 지도", 
+    "#교육학박사 #1급슈퍼바이저 #10000시간임상 #성인개인상담 #부부상담 #청소년심리 #심리검사 #기업EAP", 
     "/images/counselor_park.jpg"
   );
 } else {
-  db.prepare("UPDATE counselors SET image_url = ? WHERE name = ?").run("/images/counselor_park.jpg", "박미경");
+  db.prepare("UPDATE counselors SET title = ?, education = ?, certifications = ?, style = ?, tags = ?, image_url = ? WHERE name = ?").run(
+    "상담 소장 (대표 원장)",
+    "교육학 박사 (상담 심리 및 교육 심리 전공)",
+    "한국상담학회 공인 1급 수련감독자(슈퍼바이저)\n한국상담학회 전문상담사 1급\n여성가족부 청소년상담사 1급 (국가공인)\n한국상담심리학회 정회원\n한국부부가족상담학회 정회원",
+    "개인 심층 치유 / 기업 EAP / 부부·가족 갈등 / 종합심리평가 / 전문가 수련 지도",
+    "#교육학박사 #1급슈퍼바이저 #10000시간임상 #성인개인상담 #부부상담 #청소년심리 #심리검사 #기업EAP",
+    "/images/counselor_park.jpg",
+    "박미경"
+  );
+}
+
+const existingKim = db.prepare("SELECT * FROM counselors WHERE name = ?").get("김지현") as any;
+if (!existingKim) {
+  db.prepare("INSERT INTO counselors (name, title, education, certifications, style, tags, image_url) VALUES (?, ?, ?, ?, ?, ?, ?)").run(
+    "김지현",
+    "수석 상담사 (부부·가족 전문)",
+    "상담심리학 석사 (부부 및 가족상담 전공)",
+    "한국상담심리학회 상담심리사 1급\n한국부부가족상담학회 부부상담전문가\n여성가족부 청소년상담사 2급\n국제 이마고(Imago) 부부치료 임상 수료\n한국비폭력대화(NVC) 중재자 과정",
+    "부부 갈등 회복 / 이혼 위기 극복 / 비폭력 대화(NVC) / 가족 관계 개선 / 대인관계 불안",
+    "#부부갈등회복 #이혼위기극복 #비폭력대화(NVC) #가족관계개선 #정서중심치료(EFT) #커플소통단절 #대인관계예민성",
+    "/images/counselor_park.jpg"
+  );
+}
+
+const existingLee = db.prepare("SELECT * FROM counselors WHERE name = ?").get("이진우") as any;
+if (!existingLee) {
+  db.prepare("INSERT INTO counselors (name, title, education, certifications, style, tags, image_url) VALUES (?, ?, ?, ?, ?, ?, ?)").run(
+    "이진우",
+    "전문 상담사 (청소년·CBT 전문)",
+    "임상 및 상담심리학 석사",
+    "보건복지부 정신건강임상심리사 2급\n여성가족부 청소년상담사 1급 (국가공인)\n한국인지행동치료학회(CBT) 전문가 수련\n한국임상심리학회 정회원\n청소년 진로 및 학습상담 전문가",
+    "청소년 심리 위기 / 학업 스트레스 & 시험불안 / 성인 ADHD 코칭 / 공황 및 강박 / 인지행동치료(CBT)",
+    "#청소년심리 #학업스트레스 #성인ADHD #불안·공황장애 #인지행동치료(CBT) #강박증 #진로코칭",
+    "/images/counselor_park.jpg"
+  );
 }
 
 // Seed data

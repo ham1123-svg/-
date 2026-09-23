@@ -103,6 +103,9 @@ export interface Testimonial {
   counselorInsight?: string;
   period: string;
   tags: string[];
+  recommendCount?: number;
+  date?: string;
+  isBest?: boolean;
 }
 
 export interface CommunityNotice {

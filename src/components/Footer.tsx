@@ -1,41 +1,27 @@
-import React from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import AdminLoginModal from './AdminLoginModal';
 
 export default function Footer() {
-  const location = useLocation();
   const navigate = useNavigate();
+  const [isAdminModalOpen, setIsAdminModalOpen] = useState(false);
 
-  const handleTestimonialsClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+  const handleAdminClick = (e: React.MouseEvent) => {
     e.preventDefault();
-    if (location.pathname === '/') {
-      const element = document.getElementById('testimonials-section');
-      if (element) {
-        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        window.history.pushState(null, '', '/#testimonials-section');
-      }
+    const isAuthed = sessionStorage.getItem('hbbr_admin_auth') === 'true';
+    if (isAuthed) {
+      navigate('/admin');
     } else {
-      navigate('/#testimonials-section');
+      setIsAdminModalOpen(true);
     }
   };
 
-  const handleFaqClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
-    e.preventDefault();
-    if (location.pathname === '/guide') {
-      const element = document.getElementById('faq');
-      if (element) {
-        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        window.history.pushState(null, '', '/guide#faq');
-      }
-    } else {
-      navigate('/guide#faq');
-    }
-  };
   return (
     <footer className="bg-brand-brown text-brand-beige py-16">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-10 lg:gap-12">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-10 lg:gap-14">
           {/* Brand Info */}
-          <div className="md:col-span-1">
+          <div>
             <h3 className="font-serif text-2xl font-bold mb-4">행복바람<span className="text-brand-sage">심리상담연구소</span></h3>
             <p className="text-brand-beige/65 text-xs sm:text-sm leading-relaxed mb-6">
               모든 내담자가 자신의 삶에서 행복의 바람을 맞이할 수 있도록 돕습니다. 
@@ -50,7 +36,7 @@ export default function Footer() {
             </div>
           </div>
           
-          {/* Contact Details */}
+          {/* Contact Details (Contact Us) */}
           <div>
             <h4 className="font-bold mb-5 text-brand-sage uppercase tracking-wider text-xs sm:text-sm">Contact Us</h4>
             <ul className="space-y-3 text-xs sm:text-sm text-brand-beige/70">
@@ -79,102 +65,22 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* Community Sub-Menus (하위 메뉴 5대 구성) */}
-          <div>
-            <div className="flex items-center gap-2 mb-5">
-              <h4 className="font-bold text-brand-sage uppercase tracking-wider text-xs sm:text-sm">
-                커뮤니티 (Community)
-              </h4>
-            </div>
-            <ul className="space-y-2.5 text-xs sm:text-sm text-brand-beige/70">
-              <li>
-                <Link 
-                  to="/community?tab=notice" 
-                  className="hover:text-brand-sage transition-colors flex items-center justify-between group py-1"
-                >
-                  <span className="group-hover:translate-x-1 transition-transform">
-                    1. 연구소 공지 &amp; 소식
-                  </span>
-                  <span className="text-[10px] text-brand-beige/40 group-hover:text-brand-sage">Notice</span>
-                </Link>
-              </li>
-              <li>
-                <Link 
-                  to="/community?tab=column" 
-                  className="hover:text-brand-sage transition-colors flex items-center justify-between group py-1"
-                >
-                  <span className="group-hover:translate-x-1 transition-transform">
-                    2. 전문가 심리 칼럼
-                  </span>
-                  <span className="text-[10px] text-brand-beige/40 group-hover:text-brand-sage">Column</span>
-                </Link>
-              </li>
-              <li>
-                <Link 
-                  to="/community?tab=review" 
-                  className="hover:text-brand-sage transition-colors flex items-center justify-between group py-1"
-                >
-                  <span className="group-hover:translate-x-1 transition-transform">
-                    3. 내담자 상담 후기
-                  </span>
-                  <span className="text-[10px] text-brand-beige/40 group-hover:text-brand-sage">Reviews</span>
-                </Link>
-              </li>
-              <li>
-                <Link 
-                  to="/community?tab=faq" 
-                  className="hover:text-brand-sage transition-colors flex items-center justify-between group py-1"
-                >
-                  <span className="group-hover:translate-x-1 transition-transform">
-                    4. 자주 묻는 질문 (FAQ)
-                  </span>
-                  <span className="text-[10px] text-brand-beige/40 group-hover:text-brand-sage">FAQ</span>
-                </Link>
-              </li>
-              <li>
-                <Link 
-                  to="/community?tab=qna" 
-                  className="hover:text-emerald-300 transition-colors flex items-center justify-between group py-1 text-emerald-200/90 font-medium"
-                >
-                  <span className="group-hover:translate-x-1 transition-transform flex items-center gap-1.5">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-                    <span>5. 1:1 비밀 상담 문의</span>
-                  </span>
-                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-950/80 text-emerald-300 border border-emerald-500/30">
-                    비공개
-                  </span>
-                </Link>
-              </li>
-            </ul>
-          </div>
-          
           {/* Customer & Legal */}
           <div>
             <h4 className="font-bold mb-5 text-brand-sage uppercase tracking-wider text-xs sm:text-sm">Customer &amp; Legal</h4>
             <ul className="space-y-3 text-xs sm:text-sm text-brand-beige/65">
-              <li>
-                <Link 
-                  to="/eap" 
-                  className="hover:text-brand-sage transition-colors text-brand-beige/85 font-semibold flex items-center gap-1.5"
-                >
-                  <span className="w-1.5 h-1.5 rounded-full bg-brand-sage"></span>
-                  <span>기관 및 기업상담(EAP) 제휴</span>
-                </Link>
-              </li>
-              <li>
-                <Link to="/reservation" className="hover:text-brand-sage transition-colors">
-                  실시간 상담 예약 및 오시는 길
-                </Link>
-              </li>
-              <li>
-                <Link to="/reservation/status" className="hover:text-brand-sage transition-colors">
-                  예약 내역 및 진행 상태 조회
-                </Link>
-              </li>
               <li><Link to="/confidentiality" className="hover:text-brand-sage transition-colors">비밀보장원칙</Link></li>
               <li><Link to="/privacy" className="hover:text-brand-sage transition-colors">개인정보처리방침</Link></li>
               <li><Link to="/terms" className="hover:text-brand-sage transition-colors">이용약관</Link></li>
-              <li><Link to="/admin" className="hover:text-brand-sage transition-colors text-brand-sage/80 font-medium">운영자 관리 모드</Link></li>
+              <li>
+                <button
+                  type="button"
+                  onClick={handleAdminClick}
+                  className="hover:text-brand-sage transition-colors text-brand-sage/80 font-medium text-left cursor-pointer"
+                >
+                  운영자 관리 모드
+                </button>
+              </li>
             </ul>
           </div>
         </div>
@@ -184,6 +90,12 @@ export default function Footer() {
           <p className="text-[11px]">울산 울주군 삼남읍 심리상담전문기관</p>
         </div>
       </div>
+
+      <AdminLoginModal
+        isOpen={isAdminModalOpen}
+        onClose={() => setIsAdminModalOpen(false)}
+        onSuccess={() => navigate('/admin')}
+      />
     </footer>
   );
 }
