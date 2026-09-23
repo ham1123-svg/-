@@ -76,7 +76,7 @@ export default function Footer() {
                 <button
                   type="button"
                   onClick={handleAdminClick}
-                  className="hover:text-brand-sage transition-colors text-brand-sage/80 font-medium text-left cursor-pointer"
+                  className="hover:text-brand-sage transition-colors text-left cursor-pointer"
                 >
                   운영자 관리 모드
                 </button>

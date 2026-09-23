@@ -1,42 +1,17 @@
-import React, { useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { Link, useLocation } from 'react-router-dom';
 import { 
-  ClipboardCheck, UserPlus, CalendarCheck, CheckCircle, 
-  ArrowRight, Clock, CreditCard, ShieldCheck, HelpCircle,
+  ClipboardCheck, ArrowRight, Clock, CreditCard, ShieldCheck, HelpCircle,
   Sparkles, FileText, ChevronRight
 } from 'lucide-react';
-import FAQ from '../components/FAQ';
-
-const steps = [
-  { 
-    step: "STEP 1",
-    title: "상담 접수", 
-    desc: "홈페이지 또는 전화를 통해 편안하게 상담을 신청합니다.", 
-    icon: <UserPlus className="w-7 h-7" /> 
-  },
-  { 
-    step: "STEP 2",
-    title: "초기 상담", 
-    desc: "현재 겪고 있는 어려움을 나누고 앞으로의 상담 목표를 설정합니다.", 
-    icon: <ClipboardCheck className="w-7 h-7" /> 
-  },
-  { 
-    step: "STEP 3",
-    title: "정기 상담", 
-    desc: "주 1회 정기적인 만남을 통해 심층적이고 체계적인 상담을 진행합니다.", 
-    icon: <CalendarCheck className="w-7 h-7" /> 
-  },
-  { 
-    step: "STEP 4",
-    title: "상담 종결", 
-    desc: "긍정적인 마음의 변화를 확인하고 스스로 회복할 수 있는 힘을 다집니다.", 
-    icon: <CheckCircle className="w-7 h-7" /> 
-  },
-];
+import FAQ, { FAQCategory } from '../components/FAQ';
+import CounselingTimeline from '../components/CounselingTimeline';
 
 export default function Guide() {
   const location = useLocation();
+  const [activeFaqCategory, setActiveFaqCategory] = useState<FAQCategory>('ALL');
+  const [targetFaqId, setTargetFaqId] = useState<string | null>(null);
 
   useEffect(() => {
     if (location.hash) {
@@ -53,6 +28,13 @@ export default function Guide() {
     const el = document.getElementById(id);
     if (el) {
       el.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
+  const handleTimelineFaqSelect = (category: FAQCategory, faqId?: string) => {
+    setActiveFaqCategory(category);
+    if (faqId) {
+      setTargetFaqId(faqId);
     }
   };
 
@@ -88,48 +70,19 @@ export default function Guide() {
               <HelpCircle className="w-4 h-4 text-white" />
               <span>자주 묻는 질문 (FAQ)</span>
             </button>
+            <Link
+              to="/confidentiality"
+              className="px-4 py-2 rounded-xl bg-white hover:bg-brand-green/20 text-xs sm:text-sm font-semibold text-brand-brown border border-brand-green/30 transition-all shadow-2xs hover:shadow-xs cursor-pointer flex items-center gap-1.5"
+            >
+              <ShieldCheck className="w-4 h-4 text-brand-sage" />
+              <span>비밀보장원칙 전문</span>
+            </Link>
           </div>
         </div>
 
-        {/* Process Visualization */}
+        {/* Process Visualization - Step-by-Step Visual Timeline */}
         <section id="process" className="mb-24 scroll-mt-24">
-          <div className="text-center mb-12">
-            <span className="text-xs font-bold tracking-widest text-brand-sage uppercase px-3.5 py-1.5 bg-brand-sage/10 rounded-full inline-block mb-3">
-              Counseling Process
-            </span>
-            <h2 className="text-2xl md:text-3xl font-serif font-bold text-brand-brown">상담 진행 과정</h2>
-          </div>
-          
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 relative">
-            {steps.map((step, idx) => (
-              <motion.div 
-                key={idx}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: idx * 0.15 }}
-                className="relative bg-white rounded-3xl p-8 shadow-sm hover:shadow-md transition-shadow border border-brand-green/30 flex flex-col items-center text-center"
-              >
-                {/* Step Badge */}
-                <div className="mb-4 inline-flex items-center px-3 py-1 rounded-full bg-brand-sage/10 text-brand-sage font-bold text-xs tracking-wider">
-                  {step.step}
-                </div>
-
-                <div className="w-16 h-16 rounded-2xl bg-brand-green/30 flex items-center justify-center text-brand-sage mb-5 border border-brand-sage/20">
-                  {step.icon}
-                </div>
-                
-                <h3 className="text-lg font-bold text-brand-brown mb-2">{step.title}</h3>
-                <p className="text-sm text-brand-brown/70 leading-relaxed">{step.desc}</p>
-                
-                {idx < steps.length - 1 && (
-                  <div className="hidden lg:flex absolute top-1/2 -right-4 -translate-y-1/2 z-10 w-8 h-8 rounded-full bg-brand-beige border border-brand-green/50 items-center justify-center text-brand-sage/60">
-                    <ArrowRight className="w-4 h-4" />
-                  </div>
-                )}
-              </motion.div>
-            ))}
-          </div>
+          <CounselingTimeline onSelectFaqCategory={handleTimelineFaqSelect} />
         </section>
 
         {/* Self-Diagnosis Callout Banner */}
@@ -235,7 +188,11 @@ export default function Guide() {
 
         {/* Frequently Asked Questions (FAQ) Section */}
         <div className="mt-28 scroll-mt-24" id="faq">
-          <FAQ />
+          <FAQ 
+            category={activeFaqCategory}
+            onCategoryChange={setActiveFaqCategory}
+            targetFAQId={targetFaqId}
+          />
         </div>
       </div>
     </div>

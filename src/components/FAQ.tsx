@@ -82,6 +82,15 @@ export const FAQ_DATA: FAQItem[] = [
     highlights: ['의료기록 / F코드 일절 미생성', '건강보험공단 전산 미등록', '100% 철저한 비밀보장']
   },
   {
+    id: 'faq-privacy-3',
+    category: 'PRIVACY',
+    categoryLabel: '비밀보장 & 원칙',
+    question: '상담 중 나눈 대화 내용과 개인정보는 구체적으로 어떻게 보호되나요?',
+    badge: '비밀보장 원칙',
+    answer: '내담자께서 안심하고 마음을 털어놓으실 수 있도록 3중 보안 원칙을 엄격히 준수합니다.\n\n1. 철저한 비밀보장 서약: 초기 상담 시작 전 상담사와 내담자 간 비밀보장 원칙 및 권리에 대한 공식 서약서를 작성하고 교부합니다.\n2. 암호화 분리 보관: 상담 기록 및 심리검사 결과지는 법정 의무 보관 기준에 맞춰 안전한 별도 분리 암호화 보관 체계로 관리됩니다.\n3. 비밀보장의 예외 (법적 필수 사항): 내담자 본인 또는 제3자의 생명이나 신체에 긴급한 위험(자해, 타해 위험)이 있거나, 법률에 의해 법원의 소환 명령이 있는 특수한 법정 사유를 제외하고는 가족, 배우자, 직장 등 어떠한 제3자에게도 동의 없이 공개되지 않습니다.',
+    highlights: ['공식 비밀보장 서약서 작성', '상담기록 암호화 분리 보관', '가족·회사 등 제3자 비공개']
+  },
+  {
     id: 'faq-privacy-2',
     category: 'PRIVACY',
     categoryLabel: '비밀보장 & 자격',
@@ -119,6 +128,9 @@ export const FAQ_DATA: FAQItem[] = [
 
 interface FAQProps {
   initialCategory?: FAQCategory;
+  category?: FAQCategory;
+  onCategoryChange?: (cat: FAQCategory) => void;
+  targetFAQId?: string | null;
   showHeader?: boolean;
   className?: string;
   limit?: number;
@@ -127,18 +139,43 @@ interface FAQProps {
 
 export default function FAQ({
   initialCategory = 'ALL',
+  category: controlledCategory,
+  onCategoryChange,
+  targetFAQId,
   showHeader = true,
   className = '',
   limit,
   highlightedIds
 }: FAQProps) {
   const { isHighContrast } = useHighContrast();
-  const [selectedCategory, setSelectedCategory] = useState<FAQCategory>(initialCategory);
+  const [internalCategory, setInternalCategory] = useState<FAQCategory>(initialCategory);
+  const selectedCategory = controlledCategory !== undefined ? controlledCategory : internalCategory;
+
+  const handleSelectCategory = (cat: FAQCategory) => {
+    if (controlledCategory === undefined) {
+      setInternalCategory(cat);
+    }
+    if (onCategoryChange) {
+      onCategoryChange(cat);
+    }
+  };
+
   const [searchQuery, setSearchQuery] = useState('');
   const [openIds, setOpenIds] = useState<Record<string, boolean>>({
     'faq-process-1': true, // Default open Process question
     'faq-fee-1': true,     // Default open Fee question
+    'faq-privacy-1': true, // Default open Confidentiality question
   });
+
+  // When targetFAQId is passed, make sure it is expanded and highlighted
+  useEffect(() => {
+    if (targetFAQId) {
+      setOpenIds(prev => ({
+        ...prev,
+        [targetFAQId]: true
+      }));
+    }
+  }, [targetFAQId]);
 
   // Ref array for managing focus across accordion headers (W3C APG Accordion Pattern)
   const headerButtonRefs = useRef<(HTMLButtonElement | null)[]>([]);
@@ -253,7 +290,7 @@ export default function FAQ({
             <span>Frequently Asked Questions</span>
           </div>
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-serif font-bold text-brand-brown mb-3">
-            상담 절차 및 비용 <span className="text-brand-sage">자주 묻는 질문</span>
+            상담 절차·비용 및 비밀보장 <span className="text-brand-sage">자주 묻는 질문</span>
           </h2>
           <p className="text-sm sm:text-base text-brand-brown/70 max-w-2xl mx-auto leading-relaxed font-serif">
             첫 상담을 준비하시는 분들을 위해 진행 단계, 공식 비용, 비밀보장 원칙 등
@@ -262,58 +299,85 @@ export default function FAQ({
         </div>
       )}
 
-      {/* Quick Summary Cards: 2 Key Pillars (Process & Fee Quick Glance) */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+      {/* Quick Summary Cards: 3 Key Pillars (Process, Cost & Confidentiality Quick Glance) */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
         {/* Process Quick Pillar */}
         <div className={cn(
-          "p-5 rounded-2xl border transition-all flex items-start gap-4",
+          "p-5 rounded-2xl border transition-all flex items-start gap-3.5",
           isHighContrast
             ? "bg-black text-white border-white/60"
             : "bg-white border-brand-green/30 shadow-xs"
         )}>
-          <div className="w-11 h-11 rounded-xl bg-brand-sage/10 text-brand-sage flex items-center justify-center shrink-0 border border-brand-sage/20">
+          <div className="w-10 h-10 rounded-xl bg-brand-sage/10 text-brand-sage flex items-center justify-center shrink-0 border border-brand-sage/20">
             <Clock className="w-5 h-5" />
           </div>
           <div className="space-y-1 flex-1 text-xs sm:text-sm">
             <div className="flex items-center justify-between">
-              <span className="font-bold text-brand-brown">상담 진행 절차 핵심</span>
+              <span className="font-bold text-brand-brown">진행 절차 핵심</span>
               <button
                 type="button"
-                onClick={() => setSelectedCategory('PROCESS')}
+                onClick={() => handleSelectCategory('PROCESS')}
                 className="text-[11px] text-brand-sage font-bold hover:underline cursor-pointer"
               >
-                절차 질문 모아보기 →
+                질문 보기 →
               </button>
             </div>
             <p className="text-brand-brown/70 leading-relaxed font-serif text-xs">
-              <strong>예약 접수 → 1회기 초기 면담 → 주 1회 정기 심층 상담 → 합의 종결</strong>의 4단계로 진행되며, 1일 5회 정원제로 운영됩니다.
+              <strong>접수 → 초기 면담 → 정기 상담 → 종결</strong>의 4단계이며, 1일 5회 사전 예약제로 운영됩니다.
             </p>
           </div>
         </div>
 
         {/* Fee Quick Pillar */}
         <div className={cn(
-          "p-5 rounded-2xl border transition-all flex items-start gap-4",
+          "p-5 rounded-2xl border transition-all flex items-start gap-3.5",
           isHighContrast
             ? "bg-black text-white border-white/60"
             : "bg-white border-brand-green/30 shadow-xs"
         )}>
-          <div className="w-11 h-11 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center shrink-0 border border-amber-200">
+          <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center shrink-0 border border-amber-200">
             <CreditCard className="w-5 h-5" />
           </div>
           <div className="space-y-1 flex-1 text-xs sm:text-sm">
             <div className="flex items-center justify-between">
-              <span className="font-bold text-brand-brown">상담 비용 & 혜택 핵심</span>
+              <span className="font-bold text-brand-brown">비용 정책 핵심</span>
               <button
                 type="button"
-                onClick={() => setSelectedCategory('FEE')}
+                onClick={() => handleSelectCategory('FEE')}
                 className="text-[11px] text-brand-sage font-bold hover:underline cursor-pointer"
               >
-                비용 질문 모아보기 →
+                비용 보기 →
               </button>
             </div>
             <p className="text-brand-brown/70 leading-relaxed font-serif text-xs">
-              개인 10만원(50분), 부부 18만원(80분), 아동 9만원(50분) 정찰제이며, <strong>울산페이·카드·현금영수증 100%</strong> 지원됩니다.
+              개인 10만원, 부부 18만원 정찰제이며, <strong>울산페이·카드·현금영수증 100%</strong> 지원됩니다.
+            </p>
+          </div>
+        </div>
+
+        {/* Confidentiality Quick Pillar */}
+        <div className={cn(
+          "p-5 rounded-2xl border transition-all flex items-start gap-3.5",
+          isHighContrast
+            ? "bg-black text-white border-white/60"
+            : "bg-white border-brand-green/30 shadow-xs"
+        )}>
+          <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center shrink-0 border border-emerald-200">
+            <ShieldCheck className="w-5 h-5" />
+          </div>
+          <div className="space-y-1 flex-1 text-xs sm:text-sm">
+            <div className="flex items-center justify-between">
+              <span className="font-bold text-brand-brown">비밀보장 원칙</span>
+              <button
+                type="button"
+                onClick={() => handleSelectCategory('PRIVACY')}
+                className="text-[11px] text-brand-sage font-bold hover:underline cursor-pointer"
+              >
+                보장 보기 →
+              </button>
+            </div>
+            <p className="text-brand-brown/70 leading-relaxed font-serif text-xs">
+              의료기록·보험공단(F코드) 일절 남지 않으며, <strong>100% 철저한 비밀보장 서약</strong>을 준수합니다.
             </p>
           </div>
         </div>
@@ -375,7 +439,7 @@ export default function FAQ({
                 id={`tab-${cat.key}`}
                 aria-selected={isSelected}
                 aria-controls="faq-accordion-container"
-                onClick={() => setSelectedCategory(cat.key)}
+                onClick={() => handleSelectCategory(cat.key)}
                 className={cn(
                   "px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-semibold transition-all cursor-pointer border",
                   isSelected
@@ -434,7 +498,7 @@ export default function FAQ({
               type="button"
               onClick={() => {
                 setSearchQuery('');
-                setSelectedCategory('ALL');
+                handleSelectCategory('ALL');
               }}
               className="mt-2 px-5 py-2.5 bg-brand-sage text-white text-xs font-bold rounded-xl shadow-xs hover:bg-brand-sage/90 transition-colors cursor-pointer"
             >
