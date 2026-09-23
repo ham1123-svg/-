@@ -137,6 +137,13 @@ try {
   // Column already exists
 }
 
+// Safe migration for updated_at column in community_notices table
+try {
+  db.exec("ALTER TABLE community_notices ADD COLUMN updated_at DATETIME");
+} catch (e) {
+  // Column already exists
+}
+
 // Seed default admin password to 3485 (or migrate old 1234 to 3485)
 const defaultPw = db.prepare("SELECT value FROM admin_settings WHERE key = 'admin_password'").get() as any;
 if (!defaultPw || defaultPw.value === '1234') {
@@ -749,6 +756,129 @@ async function startServer() {
       }
       res.json(notice);
     } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // Create new community notice/post (Admin)
+  app.post("/api/community/notices", (req, res) => {
+    try {
+      const { category, title, content, author, is_pinned } = req.body;
+      if (!title || !title.trim()) {
+        return res.status(400).json({ error: "제목을 입력해 주세요." });
+      }
+      if (!content || !content.trim()) {
+        return res.status(400).json({ error: "내용을 입력해 주세요." });
+      }
+
+      const stmt = db.prepare(`
+        INSERT INTO community_notices (category, title, content, author, views, is_pinned, created_at, updated_at)
+        VALUES (?, ?, ?, ?, 0, ?, datetime('now', 'localtime'), datetime('now', 'localtime'))
+      `);
+
+      const pinVal = is_pinned ? 1 : 0;
+      const authorVal = (author && author.trim()) ? author.trim() : "행복바람 운영팀";
+      const catVal = (category && category.trim()) ? category.trim() : "공지사항";
+
+      const info = stmt.run(catVal, title.trim(), content.trim(), authorVal, pinVal);
+      const newId = Number(info.lastInsertRowid);
+      const createdItem = db.prepare("SELECT * FROM community_notices WHERE id = ?").get(newId);
+
+      res.status(201).json({
+        success: true,
+        message: "게시글이 성공적으로 등록되었습니다.",
+        notice: createdItem
+      });
+    } catch (err: any) {
+      console.error("Failed to create community notice:", err);
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // Update community notice/post (Admin)
+  const updateCommunityNoticeHandler = (req: express.Request, res: express.Response) => {
+    try {
+      const { id } = req.params;
+      const { category, title, content, author, is_pinned } = req.body;
+
+      const existing = db.prepare("SELECT * FROM community_notices WHERE id = ?").get(id);
+      if (!existing) {
+        return res.status(404).json({ error: "게시글을 찾을 수 없습니다." });
+      }
+
+      if (!title || !title.trim()) {
+        return res.status(400).json({ error: "제목을 입력해 주세요." });
+      }
+      if (!content || !content.trim()) {
+        return res.status(400).json({ error: "내용을 입력해 주세요." });
+      }
+
+      const pinVal = is_pinned ? 1 : 0;
+      const authorVal = (author && author.trim()) ? author.trim() : (existing as any).author;
+      const catVal = (category && category.trim()) ? category.trim() : (existing as any).category;
+
+      db.prepare(`
+        UPDATE community_notices 
+        SET category = ?, title = ?, content = ?, author = ?, is_pinned = ?, updated_at = datetime('now', 'localtime')
+        WHERE id = ?
+      `).run(catVal, title.trim(), content.trim(), authorVal, pinVal, id);
+
+      const updated = db.prepare("SELECT * FROM community_notices WHERE id = ?").get(id);
+
+      res.json({
+        success: true,
+        message: "게시글이 성공적으로 수정되었습니다.",
+        notice: updated
+      });
+    } catch (err: any) {
+      console.error("Failed to update community notice:", err);
+      res.status(500).json({ error: err.message });
+    }
+  };
+
+  app.put("/api/community/notices/:id", updateCommunityNoticeHandler);
+  app.patch("/api/community/notices/:id", updateCommunityNoticeHandler);
+
+  // Delete community notice/post (Admin)
+  app.delete("/api/community/notices/:id", (req, res) => {
+    try {
+      const { id } = req.params;
+      const existing = db.prepare("SELECT * FROM community_notices WHERE id = ?").get(id);
+      if (!existing) {
+        return res.status(404).json({ error: "게시글을 찾을 수 없습니다." });
+      }
+
+      db.prepare("DELETE FROM community_notices WHERE id = ?").run(id);
+
+      res.json({
+        success: true,
+        message: "게시글이 삭제되었습니다."
+      });
+    } catch (err: any) {
+      console.error("Failed to delete community notice:", err);
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // Toggle is_pinned on community notice (Admin)
+  app.patch("/api/community/notices/:id/pin", (req, res) => {
+    try {
+      const { id } = req.params;
+      const existing = db.prepare("SELECT is_pinned FROM community_notices WHERE id = ?").get(id) as any;
+      if (!existing) {
+        return res.status(404).json({ error: "게시글을 찾을 수 없습니다." });
+      }
+
+      const newPinned = existing.is_pinned === 1 ? 0 : 1;
+      db.prepare("UPDATE community_notices SET is_pinned = ?, updated_at = datetime('now', 'localtime') WHERE id = ?").run(newPinned, id);
+
+      res.json({
+        success: true,
+        is_pinned: newPinned,
+        message: newPinned === 1 ? "상단 중요 공지로 고정되었습니다." : "상단 고정이 해제되었습니다."
+      });
+    } catch (err: any) {
+      console.error("Failed to toggle pin on notice:", err);
       res.status(500).json({ error: err.message });
     }
   });

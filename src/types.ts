@@ -105,6 +105,18 @@ export interface Testimonial {
   tags: string[];
 }
 
+export interface CommunityNotice {
+  id: number;
+  category: string;
+  title: string;
+  content: string;
+  author: string;
+  views: number;
+  is_pinned: number;
+  created_at: string;
+  updated_at?: string;
+}
+
 export const WEEKDAY_TIME_SLOTS = [
   '09:00',
   '10:30',

@@ -317,7 +317,7 @@ export default function Navbar() {
                   : "text-brand-brown hover:bg-brand-green/30"
               )}
             >
-              <span>커뮤니티 (후기 & 칼럼)</span>
+              <span>커뮤니티 (FAQ · 심리칼럼 · 상담후기)</span>
               <ChevronRight className="w-4 h-4 text-brand-brown/40" />
             </Link>
 

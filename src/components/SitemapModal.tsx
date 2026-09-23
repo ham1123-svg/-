@@ -465,42 +465,42 @@ export default function SitemapModal({ isOpen, onClose }: SitemapModalProps) {
                 </ul>
               </div>
 
-              {/* Category 5: 커뮤니티 & 소통 */}
+              {/* Category 5: 커뮤니티 (3대 메뉴) */}
               <div className="bg-brand-beige/25 rounded-2xl p-4 border border-brand-green/25 hover:border-brand-sage/50 transition-colors">
                 <div className="flex items-center gap-2 mb-3 pb-2 border-b border-brand-green/20">
                   <div className="w-7 h-7 rounded-lg bg-blue-100 text-blue-800 flex items-center justify-center">
                     <MessageSquare className="w-4 h-4" />
                   </div>
-                  <h4 className="font-bold text-sm text-brand-brown">소통 & 칼럼</h4>
+                  <h4 className="font-bold text-sm text-brand-brown">커뮤니티</h4>
                 </div>
                 <ul className="space-y-2 text-xs">
                   <li>
                     <button
                       type="button"
-                      onClick={() => handleNavigate('/community')}
+                      onClick={() => handleNavigate('/community?tab=faq')}
                       className="w-full text-left py-1 px-2 rounded-lg hover:bg-brand-green/20 text-brand-brown/85 font-medium flex items-center justify-between group cursor-pointer"
                     >
-                      <span>공지사항 & 소식</span>
+                      <span>1. 자주하는 질문 (FAQ & 문의)</span>
                       <ChevronRight className="w-3.5 h-3.5 text-brand-brown/40 group-hover:text-brand-sage group-hover:translate-x-0.5 transition-all" />
                     </button>
                   </li>
                   <li>
                     <button
                       type="button"
-                      onClick={() => handleNavigate('/community')}
+                      onClick={() => handleNavigate('/community?tab=column')}
                       className="w-full text-left py-1 px-2 rounded-lg hover:bg-brand-green/20 text-brand-brown/85 font-medium flex items-center justify-between group cursor-pointer"
                     >
-                      <span>마음 편지 & 상담 후기</span>
+                      <span>2. 전문가 심리 칼럼</span>
                       <ChevronRight className="w-3.5 h-3.5 text-brand-brown/40 group-hover:text-brand-sage group-hover:translate-x-0.5 transition-all" />
                     </button>
                   </li>
                   <li>
                     <button
                       type="button"
-                      onClick={() => handleNavigate('/community')}
+                      onClick={() => handleNavigate('/community?tab=review')}
                       className="w-full text-left py-1 px-2 rounded-lg hover:bg-brand-green/20 text-brand-brown/85 font-medium flex items-center justify-between group cursor-pointer"
                     >
-                      <span>심리학 전문 칼럼</span>
+                      <span>3. 내담자 상담 후기</span>
                       <ChevronRight className="w-3.5 h-3.5 text-brand-brown/40 group-hover:text-brand-sage group-hover:translate-x-0.5 transition-all" />
                     </button>
                   </li>

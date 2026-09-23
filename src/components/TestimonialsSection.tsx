@@ -510,10 +510,10 @@ export default function TestimonialsSection() {
                 <span>상담 예약 신청하기</span>
               </Link>
               <Link
-                to="/community"
+                to="/community?tab=review"
                 className="w-full sm:w-auto px-6 py-3.5 bg-white/10 hover:bg-white/20 text-white font-semibold rounded-2xl transition-all border border-white/20 flex items-center justify-center gap-2 text-sm sm:text-base"
               >
-                <span>커뮤니티 후기 더보기</span>
+                <span>고객 만족도 분석 & 후기 전체보기</span>
                 <ArrowRight className="w-4 h-4" />
               </Link>
             </div>

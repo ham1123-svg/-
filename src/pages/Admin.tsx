@@ -5,12 +5,13 @@ import {
   AlertCircle, Search, RefreshCw, Trash2, ChevronDown, 
   Filter, Lock, KeyRound, LogOut, ArrowUpRight, X,
   MessageSquareText, Send, BellRing, Info, Check, PhoneCall,
-  CalendarCheck, Edit3, Plus, HelpCircle, Mail, Building2
+  CalendarCheck, Edit3, Plus, HelpCircle, Mail, Building2, Bell
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { cn } from '../lib/utils';
-import { Reservation, NotificationLog, Program, RESERVATION_TIME_SLOTS, TIME_SLOT_DETAILS } from '../types';
+import { Reservation, NotificationLog, Program, CommunityNotice, RESERVATION_TIME_SLOTS, TIME_SLOT_DETAILS } from '../types';
 import AdminScheduleManager from '../components/AdminScheduleManager';
+import AdminCommunityManager from '../components/AdminCommunityManager';
 import AdminForgotPasswordModal from '../components/AdminForgotPasswordModal';
 
 const TIME_SLOTS = [...RESERVATION_TIME_SLOTS];
@@ -28,8 +29,8 @@ export default function Admin() {
   const [loginLoading, setLoginLoading] = useState(false);
   const [showForgotModal, setShowForgotModal] = useState(false);
 
-  // View Mode: 'calendar' (Timetable) or 'table' (List) or 'eap' (B2B EAP Inquiries) or 'qna' (Community Q&A)
-  const [viewMode, setViewMode] = useState<'calendar' | 'table' | 'eap' | 'qna'>('calendar');
+  // View Mode: 'calendar' (Timetable) or 'table' (List) or 'eap' (B2B EAP Inquiries) or 'qna' (Community Q&A) or 'community' (Community Posts/Notices)
+  const [viewMode, setViewMode] = useState<'calendar' | 'table' | 'eap' | 'qna' | 'community'>('calendar');
   const [programs, setPrograms] = useState<Program[]>([]);
 
   // EAP Inquiries state
@@ -42,6 +43,10 @@ export default function Admin() {
   const [activeReplyItem, setActiveReplyItem] = useState<any | null>(null);
   const [replyText, setReplyText] = useState('');
   const [replySubmitting, setReplySubmitting] = useState(false);
+
+  // Community Notices/Posts CMS state
+  const [communityNotices, setCommunityNotices] = useState<CommunityNotice[]>([]);
+  const [noticesLoading, setNoticesLoading] = useState(false);
 
   // Quick edit reservation modal state
   const [quickEditReservation, setQuickEditReservation] = useState<Reservation | null>(null);
@@ -167,6 +172,21 @@ export default function Admin() {
     }
   };
 
+  const loadCommunityNotices = async () => {
+    setNoticesLoading(true);
+    try {
+      const res = await fetch('/api/community/notices');
+      if (res.ok) {
+        const data = await res.json();
+        setCommunityNotices(data);
+      }
+    } catch (err) {
+      console.error('Failed to load community notices:', err);
+    } finally {
+      setNoticesLoading(false);
+    }
+  };
+
   const handleSaveReply = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!activeReplyItem?.id || !replyText.trim()) return;
@@ -214,6 +234,7 @@ export default function Admin() {
       loadPrograms();
       loadEapInquiries();
       loadCommunityQnas();
+      loadCommunityNotices();
     }
   }, [isAuthenticated]);
 
@@ -814,6 +835,21 @@ export default function Admin() {
               <HelpCircle className="w-4 h-4" />
               <span>1:1 비밀상담 문의 ({communityQnas.length})</span>
             </button>
+            <button
+              type="button"
+              onClick={() => {
+                setViewMode('community');
+                loadCommunityNotices();
+              }}
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                viewMode === 'community'
+                  ? 'bg-brand-sage text-white shadow-xs'
+                  : 'text-brand-brown/70 hover:bg-brand-beige/40'
+              }`}
+            >
+              <Bell className="w-4 h-4" />
+              <span>커뮤니티 글 관리 ({communityNotices.length})</span>
+            </button>
           </div>
 
           <div className="text-xs text-brand-brown/60 flex items-center gap-1.5">
@@ -1290,6 +1326,18 @@ export default function Admin() {
                 </table>
               </div>
             )}
+          </div>
+        )}
+
+        {/* VIEW 5: Community Notices / Posts CMS Management */}
+        {viewMode === 'community' && (
+          <div className="mb-8">
+            <AdminCommunityManager
+              notices={communityNotices}
+              loading={noticesLoading}
+              onRefresh={loadCommunityNotices}
+              onShowToast={showToast}
+            />
           </div>
         )}
 

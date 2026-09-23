@@ -33,75 +33,143 @@ export default function Footer() {
   return (
     <footer className="bg-brand-brown text-brand-beige py-16">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
-          <div>
-            <h3 className="font-serif text-2xl font-bold mb-6">행복바람<span className="text-brand-sage">심리상담연구소</span></h3>
-            <p className="text-brand-beige/60 text-sm leading-relaxed mb-6">
-              우리는 모든 내담자가 자신의 삶에서 행복의 바람을 맞이할 수 있도록 돕습니다. 
-              전문성과 따뜻한 마음으로 당신과 함께하겠습니다.
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-10 lg:gap-12">
+          {/* Brand Info */}
+          <div className="md:col-span-1">
+            <h3 className="font-serif text-2xl font-bold mb-4">행복바람<span className="text-brand-sage">심리상담연구소</span></h3>
+            <p className="text-brand-beige/65 text-xs sm:text-sm leading-relaxed mb-6">
+              모든 내담자가 자신의 삶에서 행복의 바람을 맞이할 수 있도록 돕습니다. 
+              10,000+ 시간 임상 경험과 따뜻한 공감으로 함께하겠습니다.
             </p>
-            <div className="flex gap-4">
-              <a href="#" className="w-10 h-10 rounded-full bg-brand-beige/10 flex items-center justify-center hover:bg-brand-sage transition-colors">
-                <span className="sr-only">Instagram</span>
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
-              </a>
+            <div className="p-3 rounded-xl bg-white/5 border border-white/10 text-xs text-brand-beige/70 space-y-1">
+              <div className="text-brand-sage font-bold flex items-center gap-1.5">
+                <span>✓ 100% 비밀보장 준수</span>
+              </div>
+              <div>국민건강보험공단 진료코드 미등록</div>
+              <div className="text-[11px] text-brand-beige/50">한국상담학회 윤리강령 준수 기관</div>
             </div>
           </div>
           
+          {/* Contact Details */}
           <div>
-            <h4 className="font-bold mb-6 text-brand-sage uppercase tracking-wider text-sm">Contact Us</h4>
-            <ul className="space-y-3.5 text-sm text-brand-beige/70">
+            <h4 className="font-bold mb-5 text-brand-sage uppercase tracking-wider text-xs sm:text-sm">Contact Us</h4>
+            <ul className="space-y-3 text-xs sm:text-sm text-brand-beige/70">
               <li className="flex items-start gap-2">
-                <span className="w-20 shrink-0 font-bold text-brand-beige">주소:</span>
+                <span className="w-16 shrink-0 font-bold text-brand-beige">주소:</span>
                 <span>울산광역시 울주군 삼남읍 도호1길 23 상가 408호</span>
               </li>
               <li className="flex items-start gap-2">
-                <span className="w-20 shrink-0 font-bold text-brand-beige">전화:</span>
-                <span>052-254-0230</span>
+                <span className="w-16 shrink-0 font-bold text-brand-beige">전화:</span>
+                <a href="tel:052-254-0230" className="hover:text-brand-sage transition-colors font-semibold text-brand-beige">
+                  052-254-0230
+                </a>
               </li>
               <li className="flex items-start gap-2">
-                <span className="w-20 shrink-0 font-bold text-brand-beige">이메일:</span>
+                <span className="w-16 shrink-0 font-bold text-brand-beige">이메일:</span>
                 <span>mikypa@naver.com</span>
               </li>
               <li className="flex items-start gap-2">
-                <span className="w-20 shrink-0 font-bold text-brand-beige">운영시간:</span>
-                <div className="space-y-1">
-                  <div>월~토 1일 5회 사전 예약제 (09:00, 10:30, 14:00, 15:30, 19:00)</div>
-                  <div className="text-brand-beige/50">일요일, 공휴일 휴무</div>
+                <span className="w-16 shrink-0 font-bold text-brand-beige">운영시간:</span>
+                <div className="space-y-0.5">
+                  <div>월~토 1일 5회 사전 예약제</div>
+                  <div className="text-[11px] text-brand-beige/50">(09:00, 10:30, 14:00, 15:30, 19:00)</div>
+                  <div className="text-[11px] text-amber-300/70">일요일, 공휴일 휴무</div>
                 </div>
               </li>
             </ul>
           </div>
-          
+
+          {/* Community Sub-Menus (하위 메뉴 5대 구성) */}
           <div>
-            <h4 className="font-bold mb-6 text-brand-sage uppercase tracking-wider text-sm">Customer & Legal</h4>
-            <ul className="space-y-4 text-sm text-brand-beige/60">
+            <div className="flex items-center gap-2 mb-5">
+              <h4 className="font-bold text-brand-sage uppercase tracking-wider text-xs sm:text-sm">
+                커뮤니티 (Community)
+              </h4>
+            </div>
+            <ul className="space-y-2.5 text-xs sm:text-sm text-brand-beige/70">
               <li>
                 <Link 
-                  to="/eap" 
-                  className="hover:text-brand-sage transition-colors text-brand-beige/85 font-medium flex items-center gap-1.5"
+                  to="/community?tab=notice" 
+                  className="hover:text-brand-sage transition-colors flex items-center justify-between group py-1"
                 >
-                  <span className="w-1.5 h-1.5 rounded-full bg-brand-sage"></span>
-                  <span>기관 및 기업상담(EAP) 제휴 문의</span>
+                  <span className="group-hover:translate-x-1 transition-transform">
+                    1. 연구소 공지 &amp; 소식
+                  </span>
+                  <span className="text-[10px] text-brand-beige/40 group-hover:text-brand-sage">Notice</span>
                 </Link>
               </li>
               <li>
-                <a 
-                  href="/#testimonials-section" 
-                  onClick={handleTestimonialsClick}
-                  className="hover:text-brand-sage transition-colors text-brand-beige/85 font-medium flex items-center gap-1.5 cursor-pointer"
+                <Link 
+                  to="/community?tab=column" 
+                  className="hover:text-brand-sage transition-colors flex items-center justify-between group py-1"
                 >
-                  <span>내담자 상담 후기</span>
-                </a>
+                  <span className="group-hover:translate-x-1 transition-transform">
+                    2. 전문가 심리 칼럼
+                  </span>
+                  <span className="text-[10px] text-brand-beige/40 group-hover:text-brand-sage">Column</span>
+                </Link>
               </li>
               <li>
-                <a 
-                  href="/guide#faq" 
-                  onClick={handleFaqClick}
-                  className="hover:text-brand-sage transition-colors text-brand-beige/85 font-medium flex items-center gap-1.5 cursor-pointer"
+                <Link 
+                  to="/community?tab=review" 
+                  className="hover:text-brand-sage transition-colors flex items-center justify-between group py-1"
                 >
-                  <span>자주 묻는 질문 (FAQ)</span>
-                </a>
+                  <span className="group-hover:translate-x-1 transition-transform">
+                    3. 내담자 상담 후기
+                  </span>
+                  <span className="text-[10px] text-brand-beige/40 group-hover:text-brand-sage">Reviews</span>
+                </Link>
+              </li>
+              <li>
+                <Link 
+                  to="/community?tab=faq" 
+                  className="hover:text-brand-sage transition-colors flex items-center justify-between group py-1"
+                >
+                  <span className="group-hover:translate-x-1 transition-transform">
+                    4. 자주 묻는 질문 (FAQ)
+                  </span>
+                  <span className="text-[10px] text-brand-beige/40 group-hover:text-brand-sage">FAQ</span>
+                </Link>
+              </li>
+              <li>
+                <Link 
+                  to="/community?tab=qna" 
+                  className="hover:text-emerald-300 transition-colors flex items-center justify-between group py-1 text-emerald-200/90 font-medium"
+                >
+                  <span className="group-hover:translate-x-1 transition-transform flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                    <span>5. 1:1 비밀 상담 문의</span>
+                  </span>
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-950/80 text-emerald-300 border border-emerald-500/30">
+                    비공개
+                  </span>
+                </Link>
+              </li>
+            </ul>
+          </div>
+          
+          {/* Customer & Legal */}
+          <div>
+            <h4 className="font-bold mb-5 text-brand-sage uppercase tracking-wider text-xs sm:text-sm">Customer &amp; Legal</h4>
+            <ul className="space-y-3 text-xs sm:text-sm text-brand-beige/65">
+              <li>
+                <Link 
+                  to="/eap" 
+                  className="hover:text-brand-sage transition-colors text-brand-beige/85 font-semibold flex items-center gap-1.5"
+                >
+                  <span className="w-1.5 h-1.5 rounded-full bg-brand-sage"></span>
+                  <span>기관 및 기업상담(EAP) 제휴</span>
+                </Link>
+              </li>
+              <li>
+                <Link to="/reservation" className="hover:text-brand-sage transition-colors">
+                  실시간 상담 예약 및 오시는 길
+                </Link>
+              </li>
+              <li>
+                <Link to="/reservation/status" className="hover:text-brand-sage transition-colors">
+                  예약 내역 및 진행 상태 조회
+                </Link>
               </li>
               <li><Link to="/confidentiality" className="hover:text-brand-sage transition-colors">비밀보장원칙</Link></li>
               <li><Link to="/privacy" className="hover:text-brand-sage transition-colors">개인정보처리방침</Link></li>
@@ -111,8 +179,9 @@ export default function Footer() {
           </div>
         </div>
         
-        <div className="mt-16 pt-8 border-t border-brand-beige/10 text-center text-xs text-brand-beige/40">
+        <div className="mt-14 pt-8 border-t border-brand-beige/10 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-brand-beige/40">
           <p>© 2026 행복바람심리상담연구소 (www.hbbr.kr). All rights reserved.</p>
+          <p className="text-[11px]">울산 울주군 삼남읍 심리상담전문기관</p>
         </div>
       </div>
     </footer>
