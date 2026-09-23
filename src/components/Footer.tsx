@@ -1,7 +1,35 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 
 export default function Footer() {
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  const handleTestimonialsClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    e.preventDefault();
+    if (location.pathname === '/') {
+      const element = document.getElementById('testimonials-section');
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        window.history.pushState(null, '', '/#testimonials-section');
+      }
+    } else {
+      navigate('/#testimonials-section');
+    }
+  };
+
+  const handleFaqClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    e.preventDefault();
+    if (location.pathname === '/guide') {
+      const element = document.getElementById('faq');
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        window.history.pushState(null, '', '/guide#faq');
+      }
+    } else {
+      navigate('/guide#faq');
+    }
+  };
   return (
     <footer className="bg-brand-brown text-brand-beige py-16">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -48,8 +76,24 @@ export default function Footer() {
           <div>
             <h4 className="font-bold mb-6 text-brand-sage uppercase tracking-wider text-sm">Customer & Legal</h4>
             <ul className="space-y-4 text-sm text-brand-beige/60">
-              <li><a href="/#testimonials-section" className="hover:text-brand-sage transition-colors text-brand-beige/85 font-medium flex items-center gap-1.5"><span>내담자 상담 후기</span></a></li>
-              <li><Link to="/guide#faq" className="hover:text-brand-sage transition-colors text-brand-beige/85 font-medium flex items-center gap-1.5"><span>자주 묻는 질문 (FAQ)</span></Link></li>
+              <li>
+                <a 
+                  href="/#testimonials-section" 
+                  onClick={handleTestimonialsClick}
+                  className="hover:text-brand-sage transition-colors text-brand-beige/85 font-medium flex items-center gap-1.5 cursor-pointer"
+                >
+                  <span>내담자 상담 후기</span>
+                </a>
+              </li>
+              <li>
+                <a 
+                  href="/guide#faq" 
+                  onClick={handleFaqClick}
+                  className="hover:text-brand-sage transition-colors text-brand-beige/85 font-medium flex items-center gap-1.5 cursor-pointer"
+                >
+                  <span>자주 묻는 질문 (FAQ)</span>
+                </a>
+              </li>
               <li><Link to="/confidentiality" className="hover:text-brand-sage transition-colors">비밀보장원칙</Link></li>
               <li><Link to="/privacy" className="hover:text-brand-sage transition-colors">개인정보처리방침</Link></li>
               <li><Link to="/terms" className="hover:text-brand-sage transition-colors">이용약관</Link></li>

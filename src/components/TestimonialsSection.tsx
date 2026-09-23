@@ -139,7 +139,7 @@ export default function TestimonialsSection() {
       tabIndex={0}
       onKeyDown={handleKeyDown}
       className={cn(
-        "py-24 relative overflow-hidden focus:outline-hidden",
+        "py-24 relative overflow-hidden focus:outline-hidden scroll-mt-20",
         isHighContrast 
           ? "bg-black text-white" 
           : "bg-gradient-to-b from-brand-beige/30 via-white to-brand-beige/20"

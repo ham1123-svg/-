@@ -37,7 +37,19 @@ import Admin from './pages/Admin';
 function ScrollToTopOnNavigate() {
   const { pathname, hash } = useLocation();
   useEffect(() => {
-    if (!hash) {
+    if (hash) {
+      const id = hash.replace('#', '');
+      const scrollToTarget = () => {
+        const element = document.getElementById(id);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      };
+
+      scrollToTarget();
+      const timer = setTimeout(scrollToTarget, 150);
+      return () => clearTimeout(timer);
+    } else {
       window.scrollTo(0, 0);
     }
   }, [pathname, hash]);

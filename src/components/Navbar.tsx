@@ -1,59 +1,31 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { 
-  Menu, X, Plus, ChevronRight, ChevronDown, Contrast, 
-  Keyboard, Calendar, Sparkles, FileText, ArrowRight, Search
+  Menu, X, Plus, ChevronRight, Contrast, 
+  Keyboard, Calendar, ArrowRight, Search
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import SitemapModal from './SitemapModal';
 import { useHighContrast } from '../context/HighContrastContext';
 import { useKeyboardShortcuts } from '../context/KeyboardShortcutsContext';
 
-interface SubNavItem {
-  name: string;
-  path: string;
-  desc: string;
-  badge?: string;
-  icon: React.ComponentType<{ className?: string }>;
-}
-
 interface NavItem {
   name: string;
   path: string;
-  subItems?: SubNavItem[];
   isCTA?: boolean;
 }
 
 // GNB Navigation Menu Order:
 // 1. 상담소 소개
 // 2. 상담사 소개
-// 3. 상담 프로그램 (하위: 프로그램 전체 & 절차/비용 안내)
+// 3. 상담 프로그램
 // 4. 자가진단
 // 5. 커뮤니티
 // 6. 예약 / 오시는 길 (커뮤니티 메뉴 바로 다음에 위치!)
 const mainNavItems: NavItem[] = [
   { name: '상담소 소개', path: '/about' },
   { name: '상담사 소개', path: '/counselors' },
-  { 
-    name: '상담 프로그램', 
-    path: '/programs',
-    subItems: [
-      { 
-        name: '상담 프로그램 전체', 
-        path: '/programs', 
-        desc: '개인·부부·청소년·종합심리검사',
-        badge: '맞춤 솔루션',
-        icon: Sparkles
-      },
-      { 
-        name: '상담 절차 & 비용 안내', 
-        path: '/guide', 
-        desc: '4단계 진행 절차, 정찰제 비용표 및 FAQ',
-        badge: '투명 정찰제',
-        icon: FileText
-      }
-    ]
-  },
+  { name: '상담 프로그램', path: '/programs' },
   { name: '자가진단', path: '/self-diagnosis' },
   { name: '커뮤니티', path: '/community' },
   { 
@@ -66,9 +38,6 @@ const mainNavItems: NavItem[] = [
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const [isSitemapOpen, setIsSitemapOpen] = useState(false);
-  const [isProgramDropdownOpen, setIsProgramDropdownOpen] = useState(false);
-  const [isMobileProgramExpanded, setIsMobileProgramExpanded] = useState(true);
-  const dropdownTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const location = useLocation();
   const { isHighContrast, toggleHighContrast } = useHighContrast();
@@ -77,24 +46,8 @@ export default function Navbar() {
   // Close menus on route change
   useEffect(() => {
     setIsOpen(false);
-    setIsProgramDropdownOpen(false);
   }, [location.pathname]);
 
-  // Handle Dropdown Mouse Hover with smooth debounce
-  const handleMouseEnter = () => {
-    if (dropdownTimeoutRef.current) {
-      clearTimeout(dropdownTimeoutRef.current);
-    }
-    setIsProgramDropdownOpen(true);
-  };
-
-  const handleMouseLeave = () => {
-    dropdownTimeoutRef.current = setTimeout(() => {
-      setIsProgramDropdownOpen(false);
-    }, 150);
-  };
-
-  const isProgramActive = location.pathname === '/programs' || location.pathname === '/guide';
   const isReservationActive = location.pathname === '/reservation';
   const isStatusActive = location.pathname === '/reservation/status' || location.pathname === '/reservation-status';
 
@@ -115,104 +68,6 @@ export default function Navbar() {
             {/* Desktop Navigation (소개 -> 상담사 -> 프로그램 -> 자가진단 -> 커뮤니티 -> 예약 / 오시는 길) */}
             <div className="hidden md:flex items-center space-x-1 lg:space-x-1.5 xl:space-x-2" role="navigation" aria-label="데스크톱 주 메뉴">
               {mainNavItems.map((item) => {
-                // Dropdown item for '상담 프로그램'
-                if (item.subItems) {
-                  return (
-                    <div
-                      key={item.path}
-                      className="relative"
-                      onMouseEnter={handleMouseEnter}
-                      onMouseLeave={handleMouseLeave}
-                    >
-                      <button
-                        type="button"
-                        onClick={() => setIsProgramDropdownOpen(!isProgramDropdownOpen)}
-                        aria-expanded={isProgramDropdownOpen}
-                        aria-haspopup="true"
-                        className={cn(
-                          "px-2.5 py-1.5 lg:px-3 lg:py-2 rounded-xl text-xs lg:text-sm font-medium transition-all flex items-center gap-1 cursor-pointer select-none",
-                          isProgramActive 
-                            ? "text-brand-sage font-bold bg-brand-green/25" 
-                            : "text-brand-brown/75 hover:text-brand-sage hover:bg-brand-green/20"
-                        )}
-                      >
-                        <span>{item.name}</span>
-                        <ChevronDown className={cn(
-                          "w-3.5 h-3.5 transition-transform duration-200 opacity-70",
-                          isProgramDropdownOpen && "rotate-180 text-brand-sage opacity-100"
-                        )} />
-                      </button>
-
-                      {/* Dropdown Menu Card */}
-                      {isProgramDropdownOpen && (
-                        <div 
-                          className="absolute left-0 mt-1 w-72 rounded-2xl bg-white/95 backdrop-blur-md border border-brand-green/30 shadow-xl p-2 z-50 animate-in fade-in slide-in-from-top-2 duration-150"
-                          role="menu"
-                          aria-orientation="vertical"
-                        >
-                          <div className="p-1.5 space-y-1">
-                            {item.subItems.map((sub) => {
-                              const isSubActive = location.pathname === sub.path;
-                              const IconComponent = sub.icon;
-                              return (
-                                <Link
-                                  key={sub.path}
-                                  to={sub.path}
-                                  role="menuitem"
-                                  onClick={() => setIsProgramDropdownOpen(false)}
-                                  className={cn(
-                                    "flex items-start gap-3 p-2.5 rounded-xl transition-all group",
-                                    isSubActive 
-                                      ? "bg-brand-beige/60 text-brand-sage font-bold" 
-                                      : "hover:bg-brand-beige/40 text-brand-brown/85"
-                                  )}
-                                >
-                                  <div className={cn(
-                                    "w-8 h-8 rounded-lg flex items-center justify-center shrink-0 mt-0.5 transition-colors",
-                                    isSubActive 
-                                      ? "bg-brand-sage text-white shadow-2xs" 
-                                      : "bg-brand-green/30 text-brand-sage group-hover:bg-brand-sage group-hover:text-white"
-                                  )}>
-                                    <IconComponent className="w-4 h-4" />
-                                  </div>
-                                  <div className="flex-1 min-w-0">
-                                    <div className="flex items-center justify-between gap-1">
-                                      <span className="text-xs sm:text-sm font-semibold truncate group-hover:text-brand-sage">
-                                        {sub.name}
-                                      </span>
-                                      {sub.badge && (
-                                        <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-brand-green/40 text-brand-brown/75 font-normal shrink-0">
-                                          {sub.badge}
-                                        </span>
-                                      )}
-                                    </div>
-                                    <p className="text-[11px] text-brand-brown/60 leading-tight mt-0.5 line-clamp-1">
-                                      {sub.desc}
-                                    </p>
-                                  </div>
-                                </Link>
-                              );
-                            })}
-                          </div>
-
-                          {/* Quick reservation link at bottom of dropdown */}
-                          <div className="mt-1 pt-1.5 border-t border-brand-green/20 px-2 py-1 flex items-center justify-between text-[11px] text-brand-brown/70 bg-brand-beige/20 rounded-b-xl">
-                            <span>첫 방문 초기상담 고민이신가요?</span>
-                            <Link 
-                              to="/reservation" 
-                              onClick={() => setIsProgramDropdownOpen(false)}
-                              className="text-brand-sage font-bold hover:underline flex items-center gap-0.5"
-                            >
-                              <span>예약 / 오시는 길</span>
-                              <ChevronRight className="w-3 h-3" />
-                            </Link>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  );
-                }
-
                 // CTA Button Item: '예약 / 오시는 길' (커뮤니티 바로 다음 위치!)
                 if (item.isCTA) {
                   return (
@@ -252,7 +107,7 @@ export default function Navbar() {
                   );
                 }
 
-                // Standard Menu Item (상담소 소개, 상담사 소개, 자가진단, 커뮤니티)
+                // Standard Menu Item (상담소 소개, 상담사 소개, 상담 프로그램, 자가진단, 커뮤니티)
                 const isActive = location.pathname === item.path;
                 return (
                   <Link
@@ -261,7 +116,7 @@ export default function Navbar() {
                     aria-label={`${item.name} 페이지로 이동${isActive ? ' (현재 위치)' : ''}`}
                     aria-current={isActive ? 'page' : undefined}
                     className={cn(
-                      "px-2.5 py-1.5 lg:px-3 lg:py-2 rounded-xl text-xs lg:text-sm font-medium transition-all",
+                      "px-2.5 py-1.5 lg:px-3 lg:py-2 rounded-xl text-xs lg:text-sm font-medium transition-all cursor-pointer select-none",
                       isActive
                         ? "text-brand-sage font-bold bg-brand-green/25"
                         : "text-brand-brown/75 hover:text-brand-sage hover:bg-brand-green/20"
@@ -416,62 +271,20 @@ export default function Navbar() {
               <ChevronRight className="w-4 h-4 text-brand-brown/40" />
             </Link>
 
-            {/* 3) 상담 프로그램 (통합 그룹 & 하위 메뉴) */}
-            <div className="rounded-xl border border-brand-green/30 bg-white/50 overflow-hidden my-1">
-              <div 
-                className="flex items-center justify-between px-3.5 py-3 cursor-pointer select-none bg-brand-green/20"
-                onClick={() => setIsMobileProgramExpanded(!isMobileProgramExpanded)}
-              >
-                <span className={cn(
-                  "text-base font-semibold",
-                  isProgramActive ? "text-brand-sage font-bold" : "text-brand-brown"
-                )}>
-                  상담 프로그램
-                </span>
-                <ChevronDown className={cn(
-                  "w-4 h-4 text-brand-brown/60 transition-transform duration-200",
-                  isMobileProgramExpanded && "rotate-180 text-brand-sage"
-                )} />
-              </div>
-
-              {isMobileProgramExpanded && (
-                <div className="p-2 space-y-1 bg-white/70 border-t border-brand-green/20">
-                  <Link
-                    to="/programs"
-                    onClick={() => setIsOpen(false)}
-                    className={cn(
-                      "flex items-center justify-between px-3 py-2.5 rounded-lg text-sm transition-colors",
-                      location.pathname === '/programs'
-                        ? "bg-brand-green/40 text-brand-sage font-bold"
-                        : "text-brand-brown/85 hover:bg-brand-beige/40"
-                    )}
-                  >
-                    <div className="flex items-center gap-2">
-                      <Sparkles className="w-3.5 h-3.5 text-brand-sage shrink-0" />
-                      <span>프로그램 전체 (개인/부부/청소년/검사)</span>
-                    </div>
-                    <ChevronRight className="w-3.5 h-3.5 text-brand-brown/30" />
-                  </Link>
-
-                  <Link
-                    to="/guide"
-                    onClick={() => setIsOpen(false)}
-                    className={cn(
-                      "flex items-center justify-between px-3 py-2.5 rounded-lg text-sm transition-colors",
-                      location.pathname === '/guide'
-                        ? "bg-brand-green/40 text-brand-sage font-bold"
-                        : "text-brand-brown/85 hover:bg-brand-beige/40"
-                    )}
-                  >
-                    <div className="flex items-center gap-2">
-                      <FileText className="w-3.5 h-3.5 text-brand-sage shrink-0" />
-                      <span>상담 절차 & 비용 안내 (4단계, FAQ)</span>
-                    </div>
-                    <ChevronRight className="w-3.5 h-3.5 text-brand-brown/30" />
-                  </Link>
-                </div>
+            {/* 3) 상담 프로그램 */}
+            <Link
+              to="/programs"
+              onClick={() => setIsOpen(false)}
+              className={cn(
+                "flex items-center justify-between px-3.5 py-3 text-base font-medium rounded-xl transition-colors",
+                location.pathname === '/programs'
+                  ? "bg-brand-green text-brand-sage font-bold"
+                  : "text-brand-brown hover:bg-brand-green/30"
               )}
-            </div>
+            >
+              <span>상담 프로그램</span>
+              <ChevronRight className="w-4 h-4 text-brand-brown/40" />
+            </Link>
 
             {/* 4) 자가진단 */}
             <Link
