@@ -321,6 +321,26 @@ export default function Navbar() {
               <ChevronRight className="w-4 h-4 text-brand-brown/40" />
             </Link>
 
+            {/* 5-2) 기관 및 기업상담(EAP) 제휴 문의 */}
+            <Link
+              to="/eap"
+              onClick={() => setIsOpen(false)}
+              className={cn(
+                "flex items-center justify-between px-3.5 py-3 text-base font-medium rounded-xl transition-colors",
+                location.pathname === '/eap'
+                  ? "bg-brand-green text-brand-sage font-bold"
+                  : "text-brand-brown hover:bg-brand-green/30"
+              )}
+            >
+              <div className="flex items-center gap-2">
+                <span>기업상담 (EAP) 제휴 문의</span>
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold">
+                  B2B 협약
+                </span>
+              </div>
+              <ChevronRight className="w-4 h-4 text-brand-brown/40" />
+            </Link>
+
             {/* 6) 예약 / 오시는 길 (커뮤니티 바로 다음 위치!) */}
             <div className="pt-2 pb-1">
               <Link

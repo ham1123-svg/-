@@ -351,10 +351,10 @@ export default function SitemapModal({ isOpen, onClose }: SitemapModalProps) {
                   <li>
                     <button
                       type="button"
-                      onClick={() => handleNavigate('/programs')}
+                      onClick={() => handleNavigate('/eap')}
                       className="w-full text-left py-1 px-2 rounded-lg hover:bg-brand-green/20 text-brand-brown/85 font-medium flex items-center justify-between group cursor-pointer"
                     >
-                      <span>집단 프로그램 & 기업 EAP</span>
+                      <span className="text-brand-sage font-semibold">기관 및 기업상담 (EAP) 제휴</span>
                       <ChevronRight className="w-3.5 h-3.5 text-brand-brown/40 group-hover:text-brand-sage group-hover:translate-x-0.5 transition-all" />
                     </button>
                   </li>

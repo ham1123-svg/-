@@ -5,9 +5,10 @@ import {
   AlertCircle, Search, RefreshCw, Trash2, ChevronDown, 
   Filter, Lock, KeyRound, LogOut, ArrowUpRight, X,
   MessageSquareText, Send, BellRing, Info, Check, PhoneCall,
-  CalendarCheck, Edit3, Plus, HelpCircle, Mail
+  CalendarCheck, Edit3, Plus, HelpCircle, Mail, Building2
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { cn } from '../lib/utils';
 import { Reservation, NotificationLog, Program, RESERVATION_TIME_SLOTS, TIME_SLOT_DETAILS } from '../types';
 import AdminScheduleManager from '../components/AdminScheduleManager';
 import AdminForgotPasswordModal from '../components/AdminForgotPasswordModal';
@@ -27,9 +28,13 @@ export default function Admin() {
   const [loginLoading, setLoginLoading] = useState(false);
   const [showForgotModal, setShowForgotModal] = useState(false);
 
-  // View Mode: 'calendar' (Timetable) or 'table' (List)
-  const [viewMode, setViewMode] = useState<'calendar' | 'table'>('calendar');
+  // View Mode: 'calendar' (Timetable) or 'table' (List) or 'eap' (B2B EAP Inquiries)
+  const [viewMode, setViewMode] = useState<'calendar' | 'table' | 'eap'>('calendar');
   const [programs, setPrograms] = useState<Program[]>([]);
+
+  // EAP Inquiries state
+  const [eapInquiries, setEapInquiries] = useState<any[]>([]);
+  const [eapLoading, setEapLoading] = useState(false);
 
   // Quick edit reservation modal state
   const [quickEditReservation, setQuickEditReservation] = useState<Reservation | null>(null);
@@ -110,10 +115,41 @@ export default function Admin() {
     }
   };
 
+  const loadEapInquiries = async () => {
+    setEapLoading(true);
+    try {
+      const res = await fetch('/api/eap/inquiries');
+      if (res.ok) {
+        const data = await res.json();
+        setEapInquiries(data);
+      }
+    } catch (err) {
+      console.error('Failed to load EAP inquiries:', err);
+    } finally {
+      setEapLoading(false);
+    }
+  };
+
+  const handleUpdateEapStatus = async (id: number, status: string) => {
+    try {
+      const res = await fetch(`/api/eap/inquiries/${id}/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status })
+      });
+      if (res.ok) {
+        loadEapInquiries();
+      }
+    } catch (err) {
+      console.error('Failed to update EAP inquiry status:', err);
+    }
+  };
+
   useEffect(() => {
     if (isAuthenticated) {
       loadReservations();
       loadPrograms();
+      loadEapInquiries();
     }
   }, [isAuthenticated]);
 
@@ -684,6 +720,21 @@ export default function Admin() {
               <Filter className="w-4 h-4" />
               <span>예약 목록 테이블 ({filteredReservations.length})</span>
             </button>
+            <button
+              type="button"
+              onClick={() => {
+                setViewMode('eap');
+                loadEapInquiries();
+              }}
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                viewMode === 'eap'
+                  ? 'bg-brand-sage text-white shadow-xs'
+                  : 'text-brand-brown/70 hover:bg-brand-beige/40'
+              }`}
+            >
+              <Building2 className="w-4 h-4" />
+              <span>EAP 제휴 문의 ({eapInquiries.length})</span>
+            </button>
           </div>
 
           <div className="text-xs text-brand-brown/60 flex items-center gap-1.5">
@@ -904,6 +955,145 @@ export default function Admin() {
             </div>
           )}
         </div>
+          </div>
+        )}
+
+        {/* VIEW 3: EAP B2B Partnership Inquiries Table */}
+        {viewMode === 'eap' && (
+          <div className="bg-white rounded-3xl border border-brand-green/30 shadow-xs overflow-hidden">
+            <div className="p-6 border-b border-brand-green/20 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <h3 className="font-serif font-bold text-xl text-brand-brown flex items-center gap-2">
+                  <Building2 className="w-5 h-5 text-brand-sage" />
+                  <span>기관 및 기업 EAP 제휴 문의 목록</span>
+                  <span className="text-xs px-2.5 py-0.5 rounded-full bg-brand-sage/15 text-brand-sage font-bold">
+                    총 {eapInquiries.length}건
+                  </span>
+                </h3>
+                <p className="text-xs text-brand-brown/60 mt-1">
+                  홈페이지 EAP 제휴 메뉴를 통해 접수된 기관 및 기업의 맞춤 제안서 신청 내역입니다.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={loadEapInquiries}
+                disabled={eapLoading}
+                className="px-3.5 py-2 rounded-xl border border-brand-brown/20 text-brand-brown text-xs font-bold hover:bg-brand-beige/40 flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+              >
+                <RefreshCw className={cn("w-3.5 h-3.5", eapLoading && "animate-spin")} />
+                <span>새로고침</span>
+              </button>
+            </div>
+
+            {eapLoading ? (
+              <div className="py-20 text-center text-brand-brown/60 text-sm">
+                <RefreshCw className="w-6 h-6 animate-spin mx-auto mb-2 text-brand-sage" />
+                <span>EAP 제휴 문의 내역을 불러오는 중입니다...</span>
+              </div>
+            ) : eapInquiries.length === 0 ? (
+              <div className="py-20 text-center text-brand-brown/60">
+                <Building2 className="w-12 h-12 mx-auto mb-3 text-brand-brown/20" />
+                <p className="font-medium text-sm">아직 접수된 EAP 제휴 문의가 없습니다.</p>
+                <p className="text-xs text-brand-brown/40 mt-1">
+                  고객이 /eap 페이지에서 문의서를 제출하면 여기에 실시간으로 표시됩니다.
+                </p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse text-xs sm:text-sm">
+                  <thead>
+                    <tr className="bg-brand-beige/40 border-b border-brand-green/20 text-brand-brown/70 font-bold text-xs">
+                      <th className="py-3.5 px-4">접수일시</th>
+                      <th className="py-3.5 px-4">기관 / 기업명</th>
+                      <th className="py-3.5 px-4">담당자 (부서)</th>
+                      <th className="py-3.5 px-4">연락처 / 이메일</th>
+                      <th className="py-3.5 px-4">규모 &amp; 상담형태</th>
+                      <th className="py-3.5 px-4">관심 분야</th>
+                      <th className="py-3.5 px-4">문의 내용</th>
+                      <th className="py-3.5 px-4">진행 상태</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-brand-green/10">
+                    {eapInquiries.map((inq) => (
+                      <tr key={inq.id} className="hover:bg-brand-beige/20 transition-colors">
+                        <td className="py-3.5 px-4 text-xs text-brand-brown/60 whitespace-nowrap">
+                          {inq.created_at ? inq.created_at.substring(0, 16) : '-'}
+                        </td>
+                        <td className="py-3.5 px-4 font-bold text-brand-brown whitespace-nowrap">
+                          {inq.company_name}
+                        </td>
+                        <td className="py-3.5 px-4 whitespace-nowrap">
+                          <span className="font-semibold text-brand-brown">{inq.contact_name}</span>
+                          {inq.department && (
+                            <span className="text-xs text-brand-brown/60 block">{inq.department}</span>
+                          )}
+                        </td>
+                        <td className="py-3.5 px-4 whitespace-nowrap text-xs">
+                          <a 
+                            href={`tel:${inq.phone}`} 
+                            className="text-brand-sage font-bold hover:underline flex items-center gap-1"
+                          >
+                            <Phone className="w-3 h-3" />
+                            <span>{inq.phone}</span>
+                          </a>
+                          {inq.email && (
+                            <a 
+                              href={`mailto:${inq.email}`} 
+                              className="text-brand-brown/60 hover:text-brand-brown flex items-center gap-1 mt-0.5"
+                            >
+                              <Mail className="w-3 h-3" />
+                              <span className="truncate max-w-[140px]">{inq.email}</span>
+                            </a>
+                          )}
+                        </td>
+                        <td className="py-3.5 px-4 whitespace-nowrap text-xs">
+                          <div className="font-semibold text-brand-brown">{inq.employee_count || '미지정'}</div>
+                          <div className="text-[11px] text-brand-brown/60">{inq.preferred_format || '형태미정'}</div>
+                        </td>
+                        <td className="py-3.5 px-4 text-xs text-brand-brown/80 max-w-[180px]">
+                          {inq.interests ? (
+                            <span className="line-clamp-2">{inq.interests}</span>
+                          ) : (
+                            <span className="text-brand-brown/40">-</span>
+                          )}
+                        </td>
+                        <td className="py-3.5 px-4 text-xs text-brand-brown/70 max-w-[220px]">
+                          {inq.message ? (
+                            <p className="line-clamp-2 hover:line-clamp-none transition-all cursor-pointer">
+                              {inq.message}
+                            </p>
+                          ) : (
+                            <span className="text-brand-brown/40">남긴 메모 없음</span>
+                          )}
+                        </td>
+                        <td className="py-3.5 px-4 whitespace-nowrap">
+                          <select
+                            value={inq.status || 'pending'}
+                            onChange={(e) => handleUpdateEapStatus(inq.id, e.target.value)}
+                            className={cn(
+                              "px-2.5 py-1 rounded-lg text-xs font-bold border transition-colors cursor-pointer",
+                              inq.status === 'completed'
+                                ? "bg-emerald-50 text-emerald-700 border-emerald-300"
+                                : inq.status === 'contacted'
+                                ? "bg-blue-50 text-blue-700 border-blue-300"
+                                : inq.status === 'cancelled'
+                                ? "bg-zinc-100 text-zinc-600 border-zinc-300"
+                                : "bg-amber-50 text-amber-700 border-amber-300"
+                            )}
+                          >
+                            <option value="pending">⏳ 검토 대기</option>
+                            <option value="contacted">📞 제안/상담중</option>
+                            <option value="completed">✅ 협약 완료</option>
+                            <option value="cancelled">❌ 미진행/보류</option>
+                          </select>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         )}
 

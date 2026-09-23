@@ -77,6 +77,15 @@ export default function Footer() {
             <h4 className="font-bold mb-6 text-brand-sage uppercase tracking-wider text-sm">Customer & Legal</h4>
             <ul className="space-y-4 text-sm text-brand-beige/60">
               <li>
+                <Link 
+                  to="/eap" 
+                  className="hover:text-brand-sage transition-colors text-brand-beige/85 font-medium flex items-center gap-1.5"
+                >
+                  <span className="w-1.5 h-1.5 rounded-full bg-brand-sage"></span>
+                  <span>기관 및 기업상담(EAP) 제휴 문의</span>
+                </Link>
+              </li>
+              <li>
                 <a 
                   href="/#testimonials-section" 
                   onClick={handleTestimonialsClick}

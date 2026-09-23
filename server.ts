@@ -87,6 +87,21 @@ db.exec(`
     expires_at TEXT NOT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   );
+
+  CREATE TABLE IF NOT EXISTS eap_inquiries (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    company_name TEXT NOT NULL,
+    contact_name TEXT NOT NULL,
+    department TEXT,
+    phone TEXT NOT NULL,
+    email TEXT,
+    employee_count TEXT,
+    interests TEXT,
+    preferred_format TEXT,
+    message TEXT,
+    status TEXT DEFAULT 'pending',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
 `);
 
 // Safe migration for admin_notes column in reservations table
@@ -501,6 +516,102 @@ async function startServer() {
       });
     } catch (err: any) {
       console.error("Quick reservation error:", err);
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // Dedicated endpoint: Corporate & Institutional EAP Inquiry submission
+  app.post("/api/eap/inquiries", async (req, res) => {
+    try {
+      const {
+        company_name,
+        contact_name,
+        department,
+        phone,
+        email,
+        employee_count,
+        interests,
+        preferred_format,
+        message
+      } = req.body;
+
+      if (!company_name || !company_name.trim()) {
+        return res.status(400).json({ error: "기관 및 기업명을 입력해 주세요." });
+      }
+
+      if (!contact_name || !contact_name.trim()) {
+        return res.status(400).json({ error: "담당자 성함을 입력해 주세요." });
+      }
+
+      if (!phone || !phone.trim()) {
+        return res.status(400).json({ error: "담당자 연락처를 입력해 주세요." });
+      }
+
+      const interestsStr = Array.isArray(interests) ? interests.join(", ") : (interests || "");
+
+      const info = db.prepare(`
+        INSERT INTO eap_inquiries 
+        (company_name, contact_name, department, phone, email, employee_count, interests, preferred_format, message)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `).run(
+        company_name.trim(),
+        contact_name.trim(),
+        (department || "").trim(),
+        phone.trim(),
+        (email || "").trim(),
+        (employee_count || "").trim(),
+        interestsStr,
+        (preferred_format || "").trim(),
+        (message || "").trim()
+      );
+
+      const inquiryId = Number(info.lastInsertRowid);
+
+      // Log notification entry for administrator tracking
+      try {
+        db.prepare(`
+          INSERT INTO notification_logs 
+          (reservation_id, recipient_name, recipient_phone, channel, template_title, message_content, status) 
+          VALUES (?, ?, ?, 'ADMIN_ALERT', 'EAP 제휴 문의 접수', ?, 'SUCCESS')
+        `).run(
+          inquiryId,
+          `${contact_name.trim()} (${company_name.trim()})`,
+          phone.trim(),
+          `[EAP 제휴 문의] ${company_name} / ${contact_name} (${employee_count || '규모 미정'}) / 희망: ${interestsStr || '맞춤상담'}`
+        );
+      } catch (logErr) {
+        console.error("Failed to log EAP admin notification:", logErr);
+      }
+
+      res.json({
+        success: true,
+        id: inquiryId,
+        message: "EAP 제휴 및 상담 문의가 정상 접수되었습니다. 담당자 검토 후 24시간 이내에 맞춤 제안서와 함께 연락드리겠습니다."
+      });
+    } catch (err: any) {
+      console.error("EAP inquiry error:", err);
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // Dedicated endpoint: Get all EAP inquiries (Admin)
+  app.get("/api/eap/inquiries", (req, res) => {
+    try {
+      const inquiries = db.prepare("SELECT * FROM eap_inquiries ORDER BY created_at DESC").all();
+      res.json(inquiries);
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // Dedicated endpoint: Update EAP inquiry status (Admin)
+  app.patch("/api/eap/inquiries/:id/status", (req, res) => {
+    try {
+      const { id } = req.params;
+      const { status } = req.body;
+      db.prepare("UPDATE eap_inquiries SET status = ? WHERE id = ?").run(status, id);
+      res.json({ success: true });
+    } catch (err: any) {
       res.status(500).json({ error: err.message });
     }
   });

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Heart, User, Users, BookOpen, CheckCircle2, X, Clock, ShieldCheck, Calendar, ArrowRight, Sparkles } from 'lucide-react';
+import { Heart, User, Users, BookOpen, CheckCircle2, X, Clock, ShieldCheck, Calendar, ArrowRight, Sparkles, Building2 } from 'lucide-react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { Program } from '../types';
 import { cn } from '../lib/utils';
@@ -375,6 +375,33 @@ export default function Programs() {
           </div>
         )}
 
+        {/* EAP Institutional Banner in Programs */}
+        <div className="mt-14 p-8 sm:p-10 rounded-3xl bg-gradient-to-r from-brand-sage/10 via-brand-green/20 to-brand-beige border border-brand-sage/30 flex flex-col md:flex-row items-center justify-between gap-6 shadow-xs">
+          <div className="flex items-start gap-4">
+            <div className="w-12 h-12 rounded-2xl bg-brand-sage text-white flex items-center justify-center shrink-0 mt-0.5">
+              <Building2 className="w-6 h-6" />
+            </div>
+            <div>
+              <span className="text-xs px-2.5 py-0.5 rounded-full bg-brand-sage text-white font-bold inline-block mb-1.5">
+                기업 & 기관 맞춤 솔루션
+              </span>
+              <h3 className="text-xl font-bold font-serif text-brand-brown">
+                기관 및 기업상담 (EAP) 제휴 & 견적 문의
+              </h3>
+              <p className="text-xs sm:text-sm text-brand-brown/75 mt-1 leading-relaxed">
+                감정노동자 보호(산안법 제41조), 직무 스트레스 평가(KOSS), 100% 비밀보장 1:1 상담 및 사내 힐링 특강을 제안해 드립니다.
+              </p>
+            </div>
+          </div>
+          <Link
+            to="/eap"
+            className="px-6 py-3.5 bg-brand-sage text-white font-bold rounded-2xl hover:bg-brand-sage/90 transition-all text-sm shrink-0 flex items-center gap-2 shadow-sm"
+          >
+            <span>EAP 제휴 상세 및 안내</span>
+            <ArrowRight className="w-4 h-4" />
+          </Link>
+        </div>
+
         {/* Visual Weekly Schedule Grid Section */}
         <section id="weekly-schedule" className="mt-20 pt-10 border-t border-brand-green/20">
           <div className="text-center mb-10">
@@ -568,13 +595,23 @@ export default function Programs() {
                     <Clock className="w-4 h-4" />
                     주간 시간표 확인
                   </a>
-                  <Link
-                    to={`/reservation?program=${encodeURIComponent(selectedProgram.title)}`}
-                    className="px-5 py-2.5 rounded-xl bg-brand-sage text-white font-bold hover:bg-brand-sage/90 transition-all text-sm flex items-center gap-2 shadow-sm"
-                  >
-                    <Calendar className="w-4 h-4" />
-                    이 프로그램 예약하기
-                  </Link>
+                  {selectedProgram.category === '기업상담' || selectedProgram.title.includes('EAP') ? (
+                    <Link
+                      to="/eap"
+                      className="px-5 py-2.5 rounded-xl bg-brand-sage text-white font-bold hover:bg-brand-sage/90 transition-all text-sm flex items-center gap-2 shadow-sm"
+                    >
+                      <Building2 className="w-4 h-4" />
+                      EAP 제휴 및 견적 문의하기
+                    </Link>
+                  ) : (
+                    <Link
+                      to={`/reservation?program=${encodeURIComponent(selectedProgram.title)}`}
+                      className="px-5 py-2.5 rounded-xl bg-brand-sage text-white font-bold hover:bg-brand-sage/90 transition-all text-sm flex items-center gap-2 shadow-sm"
+                    >
+                      <Calendar className="w-4 h-4" />
+                      이 프로그램 예약하기
+                    </Link>
+                  )}
                 </div>
               </div>
             </motion.div>

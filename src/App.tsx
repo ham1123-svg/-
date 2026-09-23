@@ -32,6 +32,7 @@ import Confidentiality from './pages/Confidentiality';
 import Privacy from './pages/Privacy';
 import Terms from './pages/Terms';
 import Admin from './pages/Admin';
+import CorporateEAP from './pages/CorporateEAP';
 
 // Route change scroll helper
 function ScrollToTopOnNavigate() {
@@ -82,6 +83,8 @@ export default function App() {
                   <Route path="/confidentiality" element={<Confidentiality />} />
                   <Route path="/privacy" element={<Privacy />} />
                   <Route path="/terms" element={<Terms />} />
+                  <Route path="/eap" element={<CorporateEAP />} />
+                  <Route path="/corporate" element={<CorporateEAP />} />
                   <Route path="/admin" element={<Admin />} />
                 </Routes>
               </AnimatePresence>

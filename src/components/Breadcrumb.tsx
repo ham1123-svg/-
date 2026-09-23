@@ -21,6 +21,8 @@ const ROUTE_DEFINITIONS: Record<string, { name: string; englishName: string }> =
   '/confidentiality': { name: '비밀보장 원칙', englishName: 'Confidentiality' },
   '/privacy': { name: '개인정보처리방침', englishName: 'Privacy Policy' },
   '/terms': { name: '이용약관', englishName: 'Terms' },
+  '/eap': { name: '기관·기업 EAP 제휴 문의', englishName: 'Corporate & Institutional EAP' },
+  '/corporate': { name: '기관·기업 EAP 제휴 문의', englishName: 'Corporate & Institutional EAP' },
   '/admin': { name: '관리자 모드', englishName: 'Admin' },
 };
 

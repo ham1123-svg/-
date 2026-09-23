@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { 
   Wind, 
@@ -350,12 +351,13 @@ export default function About() {
                 </p>
               </div>
             </div>
-            <a
-              href="/reservation"
-              className="whitespace-nowrap px-6 py-3.5 bg-brand-sage text-white font-bold rounded-2xl hover:bg-brand-sage/90 transition-all shadow-sm text-sm"
+            <Link
+              to="/eap"
+              className="whitespace-nowrap px-6 py-3.5 bg-brand-sage text-white font-bold rounded-2xl hover:bg-brand-sage/90 transition-all shadow-sm text-sm flex items-center gap-1.5"
             >
-              제휴 및 EAP 상담 문의
-            </a>
+              <span>제휴 및 EAP 상담 안내</span>
+              <span aria-hidden="true">&rarr;</span>
+            </Link>
           </div>
         </div>
       </section>
