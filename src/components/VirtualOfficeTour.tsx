@@ -82,51 +82,6 @@ const OFFICE_SPACES: OfficeSpace[] = [
       '소수정예(4~6인) 감정조절 및 마음챙김 워크숍 운영'
     ],
     atmosphere: '얼어붙었던 관계가 부드럽게 녹아내리는 평화로운 공간',
-  },
-  {
-    id: 'play-art-therapy',
-    name: '아동·청소년 놀이 및 표현치료실',
-    koreanCategory: '아동·청소년',
-    subtitle: 'Child Play & Expressive Art Therapy Room',
-    description: '말로 감정을 표현하기 어려운 아이들이 모래놀이, 인형, 점토, 미술 매체를 통해 무의식 속 불안과 억압된 감정을 자연스럽게 표출하는 공간입니다. 아이의 전두엽 성장과 정서 안정에 최적화된 친환경 자재로 시공되었습니다.',
-    imageUrl: 'https://images.unsplash.com/photo-1596464716127-f2a829822301?auto=format&fit=crop&q=80&w=1200&h=800',
-    badge: '친환경 무독성 & 모래·미술치료',
-    highlights: [
-      '스위스 정통 모래놀이치료(Sandplay) 피규어 세트 완비',
-      '아이들의 신체 안전을 고려한 둥근 모서리 및 친환경 바닥재',
-      '부모 코칭 관찰 및 피드백을 위한 안심 상담 환경'
-    ],
-    atmosphere: '아이가 있는 그대로의 자아를 마음껏 펼치는 창의적 공간',
-  },
-  {
-    id: 'psychological-testing',
-    name: '종합 심리평가 및 집중 검사실',
-    koreanCategory: '심리검사',
-    subtitle: 'Psychological Assessment & Diagnostic Suite',
-    description: '외부 소음과 시각적 산만함이 일절 차단된 고요한 독립 룸에서 MMPI-2 다면적인성검사, TCI 기질검사, 웩슬러 지능검사를 편안한 집중 속에 수행합니다. 정밀한 평가를 통해 자기 이해와 치유의 명확한 로드맵을 찾습니다.',
-    imageUrl: 'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&q=80&w=1200&h=800',
-    badge: '외부 소음 차단 & 1:1 집중 환경',
-    highlights: [
-      '잡음 없는 독립 부스 환경으로 검사 신뢰도 극대화',
-      '한국상담학회 1급 수련감독자의 1:1 정밀 해석 상담 연계',
-      '국민건강보험 전산 기록이 남지 않는 100% 비의료 안심 검사'
-    ],
-    atmosphere: '나 자신을 온전히 마주하는 조용하고 명료한 공간',
-  },
-  {
-    id: 'private-waiting',
-    name: '1인 독립 프라이빗 대기석 & 힐링 서가',
-    koreanCategory: '편의 시설',
-    subtitle: 'Private Waiting Nook & Curated Library',
-    description: '다른 내담자와 얼굴을 마주칠 염려가 없도록 설계된 프라이빗 칸막이 대기석과 박미경 소장이 직접 엄선한 마음 치유 도서가 비치된 미니 서가입니다. 상담 전후 나만의 시간을 차분히 정리하실 수 있습니다.',
-    imageUrl: 'https://images.unsplash.com/photo-1507842229451-2977d04e578c?auto=format&fit=crop&q=80&w=1200&h=800',
-    badge: '1인 독립 좌석 & 엄선 심리서가',
-    highlights: [
-      '내담자 간 시선이 완벽히 차단된 1인 안심 휴식 공간',
-      '상담 대기 시간 동안 읽기 좋은 힐링 에세이 및 심리학 도서',
-      '무선 충전 거치대 및 개인 소지품 보관 안심 트레이'
-    ],
-    atmosphere: '나만의 서재에 온 듯 조용하고 고즈넉한 휴식처',
   }
 ];
 
@@ -421,28 +376,41 @@ export default function VirtualOfficeTour({ className }: { className?: string })
                 <div className="text-[11px] font-serif font-bold text-brand-brown/60 mb-2">
                   다른 공간 바로 둘러보기 (클릭하여 전환):
                 </div>
-                <div className="grid grid-cols-6 gap-1.5">
+                <div className="grid grid-cols-3 gap-2">
                   {OFFICE_SPACES.map((space, idx) => (
                     <button
                       key={space.id}
                       type="button"
                       onClick={() => setCurrentIndex(idx)}
                       className={cn(
-                        "relative aspect-square rounded-xl overflow-hidden border-2 transition-all cursor-pointer group",
+                        "relative rounded-xl overflow-hidden border-2 transition-all cursor-pointer group flex flex-col text-left",
                         currentIndex === idx
-                          ? "border-brand-sage ring-2 ring-brand-sage/30 scale-105"
-                          : "border-transparent opacity-65 hover:opacity-100 hover:border-brand-green/40"
+                          ? "border-brand-sage ring-2 ring-brand-sage/30 shadow-xs"
+                          : "border-brand-green/25 opacity-75 hover:opacity-100 hover:border-brand-sage/50"
                       )}
                       title={space.name}
                     >
-                      <img 
-                        src={space.imageUrl} 
-                        alt={space.name}
-                        className="w-full h-full object-cover" 
-                      />
-                      {currentIndex === idx && (
-                        <div className="absolute inset-0 bg-brand-sage/15" />
-                      )}
+                      <div className="relative aspect-[16/10] w-full overflow-hidden bg-brand-beige/30">
+                        <img 
+                          src={space.imageUrl} 
+                          alt={space.name}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" 
+                        />
+                        {currentIndex === idx && (
+                          <div className="absolute inset-0 bg-brand-sage/15" />
+                        )}
+                        <span className="absolute bottom-1 right-1 px-1.5 py-0.5 rounded text-[9px] font-bold bg-black/60 text-white font-serif">
+                          0{idx + 1}
+                        </span>
+                      </div>
+                      <div className="p-1.5 bg-white">
+                        <div className="text-[11px] font-serif font-bold text-brand-brown truncate">
+                          {space.name}
+                        </div>
+                        <div className="text-[9px] font-serif text-brand-sage truncate">
+                          {space.koreanCategory}
+                        </div>
+                      </div>
                     </button>
                   ))}
                 </div>
