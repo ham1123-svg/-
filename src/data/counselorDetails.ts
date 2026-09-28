@@ -5,6 +5,22 @@ export const parkMiKyeongDetailedProfile: CounselorDetailedProfile = {
   philosophy: "상담은 일방적인 조언이나 훈계가 아닙니다. 내담자가 살아온 고유한 삶의 무게를 깊이 공감하고, 그 마음에 억눌려 있던 본연의 치유력과 회복탄력성(Resilience)을 함께 발견해 나가는 안전한 동행입니다. 100% 철저한 비밀보장 속에서 판단 없는 온전한 수용을 약속드립니다.",
   clinicalHours: "10,000+ 시간",
   supervisionCount: "한국상담학회 공인 1급 수련감독자",
+  availability: {
+    primaryDaysSummary: "월요일 ~ 금요일 (Mon - Fri) & 토요일 (Sat)",
+    weekdayHours: "09:00 ~ 20:00 (월~금, 야간 19:00 세션 운영)",
+    saturdayHours: "09:00 ~ 17:00 (토요일 주말 집중 상담)",
+    sundayHours: "정기 휴무 (일요일 및 법정 공휴일)",
+    notice: "100% 1일 5회 사전 예약제로 운영되어 대기 없이 1:1 프라이빗 상담이 보장됩니다. 직장인과 학생을 위해 평일 19:00 야간 타임과 토요일 주말 세션을 열어두고 있습니다.",
+    days: [
+      { day: "월", dayEn: "Mon", available: true, statusText: "상담 가능", hours: "09:00 ~ 20:00", slotsCount: 5, sessions: "오전 · 오후 · 야간", highlight: true },
+      { day: "화", dayEn: "Tue", available: true, statusText: "상담 가능", hours: "09:00 ~ 20:00", slotsCount: 5, sessions: "오전 · 오후 · 야간", highlight: true },
+      { day: "수", dayEn: "Wed", available: true, statusText: "상담 가능", hours: "09:00 ~ 20:00", slotsCount: 5, sessions: "오전 · 오후 · 야간", highlight: true },
+      { day: "목", dayEn: "Thu", available: true, statusText: "상담 가능", hours: "09:00 ~ 20:00", slotsCount: 5, sessions: "오전 · 오후 · 야간", highlight: true },
+      { day: "금", dayEn: "Fri", available: true, statusText: "상담 가능", hours: "09:00 ~ 20:00", slotsCount: 5, sessions: "오전 · 오후 · 야간", highlight: true },
+      { day: "토", dayEn: "Sat", available: true, statusText: "주말 집중", hours: "09:00 ~ 17:00", slotsCount: 4, sessions: "오전 · 오후 (조기 마감)", highlight: false },
+      { day: "일", dayEn: "Sun", available: false, statusText: "정기 휴무", hours: "휴무 (연구/수련)", slotsCount: 0, sessions: "긴급 EAP 사전 협의", highlight: false }
+    ]
+  },
   academicBackground: [
     "교육학 박사 (상담심리 및 교육심리 전공)",
     "교육대학원 상담심리학 석사",
@@ -540,11 +556,7 @@ export const leeJinWooDetailedProfile: CounselorDetailedProfile = {
 
 export const counselorProfilesById: Record<number | string, CounselorDetailedProfile> = {
   1: parkMiKyeongDetailedProfile,
-  2: kimJiHyunDetailedProfile,
-  3: leeJinWooDetailedProfile,
-  "박미경": parkMiKyeongDetailedProfile,
-  "김지현": kimJiHyunDetailedProfile,
-  "이진우": leeJinWooDetailedProfile
+  "박미경": parkMiKyeongDetailedProfile
 };
 
 export const defaultCounselorsList: Counselor[] = [
@@ -558,27 +570,5 @@ export const defaultCounselorsList: Counselor[] = [
     tags: "#교육학박사 #1급슈퍼바이저 #10000시간임상 #성인개인상담 #부부상담 #청소년심리 #심리검사 #기업EAP",
     image_url: "/images/counselor_park.jpg",
     detailedProfile: parkMiKyeongDetailedProfile
-  },
-  {
-    id: 2,
-    name: "김지현",
-    title: "수석 상담사 (부부·가족 전문)",
-    education: "상담심리학 석사 (부부 및 가족상담 전공)",
-    certifications: "한국상담심리학회 상담심리사 1급\n한국부부가족상담학회 부부상담전문가\n여성가족부 청소년상담사 2급\n국제 이마고(Imago) 부부치료 임상 수료\n한국비폭력대화(NVC) 중재자 과정",
-    style: "부부 갈등 회복 / 이혼 위기 극복 / 비폭력 대화(NVC) / 가족 관계 개선 / 대인관계 불안",
-    tags: "#부부갈등회복 #이혼위기극복 #비폭력대화(NVC) #가족관계개선 #정서중심치료(EFT) #커플소통단절 #대인관계예민성",
-    image_url: "/images/counselor_park.jpg",
-    detailedProfile: kimJiHyunDetailedProfile
-  },
-  {
-    id: 3,
-    name: "이진우",
-    title: "전문 상담사 (청소년·CBT 전문)",
-    education: "임상 및 상담심리학 석사",
-    certifications: "보건복지부 정신건강임상심리사 2급\n여성가족부 청소년상담사 1급 (국가공인)\n한국인지행동치료학회(CBT) 전문가 수련\n한국임상심리학회 정회원\n청소년 진로 및 학습상담 전문가",
-    style: "청소년 심리 위기 / 학업 스트레스 & 시험불안 / 성인 ADHD 코칭 / 공황 및 강박 / 인지행동치료(CBT)",
-    tags: "#청소년심리 #학업스트레스 #성인ADHD #불안·공황장애 #인지행동치료(CBT) #강박증 #진로코칭",
-    image_url: "/images/counselor_park.jpg",
-    detailedProfile: leeJinWooDetailedProfile
   }
 ];

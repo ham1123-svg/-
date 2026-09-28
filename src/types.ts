@@ -10,6 +10,26 @@ export interface CounselorCareerItem {
   organization: string;
 }
 
+export interface CounselorAvailabilityDay {
+  day: string;
+  dayEn: string;
+  available: boolean;
+  statusText: string;
+  hours: string;
+  slotsCount: number;
+  sessions: string;
+  highlight?: boolean;
+}
+
+export interface CounselorAvailabilitySchedule {
+  primaryDaysSummary: string;
+  weekdayHours: string;
+  saturdayHours: string;
+  sundayHours: string;
+  notice: string;
+  days: CounselorAvailabilityDay[];
+}
+
 export interface CounselorDetailedProfile {
   greeting?: string;
   philosophy?: string;
@@ -19,6 +39,30 @@ export interface CounselorDetailedProfile {
   careers?: CounselorCareerItem[];
   academicBackground?: string[];
   certificationsList?: string[];
+  licenseHighlights?: Array<{
+    name: string;
+    issuer?: string;
+    level?: string;
+    isSupervisor?: boolean;
+  }>;
+  availability?: CounselorAvailabilitySchedule;
+  specialtyTagsDetailed?: Array<{
+    tag?: string;
+    label?: string;
+    name?: string;
+    description?: string;
+    approach?: string;
+    targetSymptoms?: string[];
+    targetSymptom?: string;
+    recommendedProgram?: string;
+    badge?: string;
+    relatedKeywords?: string[];
+  }>;
+  philosophyPrinciples?: Array<{
+    title: string;
+    subtitle?: string;
+    description?: string;
+  }>;
   recommendedFor?: string[];
   sessionProcedure?: Array<{ step: string; title: string; desc: string }>;
 }
@@ -172,5 +216,23 @@ export function getTimeSlotsForDate(dateStr: string): string[] {
   const d = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
   return getTimeSlotsForDay(d.getDay());
 }
+
+export interface CounselingInsight {
+  id: number;
+  title: string;
+  category: string;
+  summary: string;
+  content?: string;
+  author: string;
+  author_title: string;
+  read_time: string;
+  image_url: string;
+  tags?: string;
+  featured?: number;
+  views?: number;
+  takeaways?: string[];
+  created_at: string;
+}
+
 
 

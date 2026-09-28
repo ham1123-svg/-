@@ -6,9 +6,14 @@ import {
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { cn } from '../lib/utils';
-import TestimonialsSection from '../components/TestimonialsSection';
-import FAQ from '../components/FAQ';
+import ClientTestimonial from '../components/ClientTestimonial';
+import FrequentlyAskedQuestions from '../components/FrequentlyAskedQuestions';
 import CounselingCenterMap from '../components/CounselingCenterMap';
+import CounselingInsights from '../components/CounselingInsights';
+import NewsletterSubscription from '../components/NewsletterSubscription';
+import ReservationProcess from '../components/ReservationProcess';
+import MentalHealthQuickPoll from '../components/MentalHealthQuickPoll';
+import VirtualOfficeTour from '../components/VirtualOfficeTour';
 
 const hashtags = [
   { label: "#청소년상담", tag: "청소년" },
@@ -160,6 +165,9 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Mental Health Quick Poll: 3-Second Daily Mood Check-In */}
+      <MentalHealthQuickPoll />
+
       {/* Self-Diagnosis Banner Section */}
       <section className="py-16 bg-gradient-to-b from-brand-beige/20 to-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -252,15 +260,27 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Frequently Asked Questions Section */}
-      <section className="py-24 bg-brand-beige/25 border-t border-brand-green/20">
+      {/* Virtual Office Tour: High-Quality Interior Carousel for Client Comfort */}
+      <VirtualOfficeTour />
+
+      {/* Reservation Process: Step-by-Step Visual Guide for First-time Visitors */}
+      <ReservationProcess />
+
+      {/* Counseling Insights (Expert Clinical Column & Blog Posts) */}
+      <CounselingInsights />
+
+      {/* Newsletter Subscription: Periodic Mental Health Wellness Tips */}
+      <NewsletterSubscription />
+
+      {/* Frequently Asked Questions Section (Collapsible Accordion Design) */}
+      <section className="py-20 sm:py-24 bg-brand-beige/25 border-t border-brand-green/20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <FAQ limit={6} />
+          <FrequentlyAskedQuestions />
         </div>
       </section>
 
-      {/* 내담자들이 남긴 따뜻한 후기 슬라이드 섹션 */}
-      <TestimonialsSection />
+      {/* Client Testimonial Carousel of Positive Counseling Feedback Cards */}
+      <ClientTestimonial />
 
       {/* Counseling Center Location & Directions Map */}
       <section className="py-20 bg-brand-beige/25 border-t border-brand-green/20">

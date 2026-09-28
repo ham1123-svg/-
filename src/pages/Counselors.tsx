@@ -16,6 +16,7 @@ import {
 import CounselorDetailModal, { CounselorModalTabType } from '../components/CounselorDetailModal';
 import QuickReservationModal from '../components/QuickReservationModal';
 import { useHighContrast } from '../context/HighContrastContext';
+import { cn } from '../lib/utils';
 
 export default function Counselors() {
   const [searchParams] = useSearchParams();
@@ -40,12 +41,15 @@ export default function Counselors() {
   }, []);
 
   const fetchCounselors = () => {
+    setLoading(true);
     fetch('/api/counselors')
       .then(res => res.json())
       .then(data => {
         if (Array.isArray(data) && data.length > 0) {
-          // Merge with detailed profile fallback by id or name
-          const enriched = data.map((c: Counselor) => {
+          // Filter to only Director Park Mi-kyeong
+          const onlyDirector = data.filter((c: Counselor) => c.name.includes("박미경"));
+          const targetList = onlyDirector.length > 0 ? onlyDirector : [defaultCounselorsList[0]];
+          const enriched = targetList.map((c: Counselor) => {
             const matchedProfile = counselorProfilesById[c.id] || 
               counselorProfilesById[c.name] || 
               c.detailedProfile || 
@@ -55,24 +59,21 @@ export default function Counselors() {
               detailedProfile: matchedProfile
             };
           });
-
-          // If server only returned 1 counselor, retain full list or merge
-          if (enriched.length < defaultCounselorsList.length) {
-            const existingNames = new Set(enriched.map((e: Counselor) => e.name));
-            const remaining = defaultCounselorsList.filter(dc => !existingNames.has(dc.name));
-            setCounselors([...enriched, ...remaining]);
-          } else {
-            setCounselors(enriched);
-          }
+          setCounselors(enriched);
+        } else {
+          setCounselors(defaultCounselorsList);
         }
       })
       .catch(() => {
-        // Fallback to default full list
+        // Fallback to default list with only Director Park Mi-kyeong
         setCounselors(defaultCounselorsList);
+      })
+      .finally(() => {
+        setLoading(false);
       });
   };
 
-  const openDetailModal = (counselor: Counselor, tab: CounselorModalTabType = 'overview') => {
+  const openDetailModal = (counselor: Counselor, tab: CounselorModalTabType = 'about') => {
     setModalCounselor(counselor);
     setModalInitialTab(tab);
   };
@@ -105,22 +106,9 @@ export default function Counselors() {
             상담사 소개
           </h1>
           <p className="text-brand-brown/70 font-serif text-sm sm:text-base max-w-2xl mx-auto leading-relaxed">
-            국가공인 및 공인 학회 1급 전문 자격과 풍부한 임상 경험을 갖춘 전문 상담진이<br className="hidden sm:inline" />
-            내담자 한 분 한 분의 상처 회복과 평온을 위해 온 마음으로 함께합니다.
+            국가공인 및 공인 학회 1급 전문 자격과 10,000시간 이상의 풍부한 임상 경험을 갖춘<br className="hidden sm:inline" />
+            <strong className="text-brand-brown font-bold">박미경 상담 소장</strong>이 내담자 한 분 한 분의 상처 회복과 평온을 위해 온 마음으로 함께합니다.
           </p>
-        </div>
-
-        {/* Feature Notice: 자격증, 전문분야 태그, 상담 철학 상세 모달 안내 */}
-        <div className="max-w-3xl mx-auto mb-8 p-3.5 sm:p-4 rounded-2xl bg-white/80 border border-brand-green/30 shadow-2xs flex items-center justify-between gap-3 text-xs">
-          <div className="flex items-center gap-2 text-brand-brown">
-            <span className="w-2 h-2 rounded-full bg-brand-sage animate-pulse" />
-            <span className="font-serif">
-              각 상담사 카드의 <strong>[상세 프로필 모달]</strong>을 누르시면 <strong>자격증 정보</strong>, <strong>전문 분야 태그</strong>, <strong>상담 철학</strong>을 한눈에 확인하실 수 있습니다.
-            </span>
-          </div>
-          <span className="text-[11px] text-brand-sage font-bold shrink-0 bg-brand-sage/10 px-2.5 py-1 rounded-full border border-brand-sage/20">
-            100% 비의료 비밀보장
-          </span>
         </div>
 
         {/* Search Bar */}
@@ -128,11 +116,11 @@ export default function Counselors() {
           <div className="relative">
             <input 
               type="text" 
-              placeholder="이름, 고민 분야(우울, 부부, 청소년, ADHD), 자격증으로 검색"
+              placeholder="고민 분야(우울, 부부, 청소년, ADHD, 성인), 자격증, 상담 기법 검색"
               className="w-full px-6 py-3.5 pr-12 rounded-full border border-brand-green/40 bg-white focus:border-brand-sage focus:ring-2 focus:ring-brand-sage/20 outline-hidden shadow-xs text-sm font-serif transition-all"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              aria-label="상담사 및 전문 분야 검색"
+              aria-label="전문 분야 및 자격증 검색"
             />
             <Search className="absolute right-5 top-3.5 text-brand-sage w-5 h-5 pointer-events-none" />
           </div>
@@ -175,12 +163,35 @@ export default function Counselors() {
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
-                  className={`rounded-3xl overflow-hidden shadow-xl border transition-all duration-300 ${
+                  onClick={() => openDetailModal(counselor, 'about')}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      openDetailModal(counselor, 'about');
+                    }
+                  }}
+                  aria-label={`${counselor.name} ${counselor.title} 상세 소개(About) 모달 열기`}
+                  className={cn(
+                    "rounded-3xl overflow-hidden shadow-xl border transition-all duration-300 cursor-pointer group hover:shadow-2xl hover:border-brand-sage/80 hover:-translate-y-0.5 relative",
                     isHighContrast 
                       ? 'bg-neutral-950 text-white border-2 border-white' 
                       : 'bg-white text-brand-brown border-brand-green/30'
-                  }`}
+                  )}
                 >
+                  {/* Card Click Indicator Banner */}
+                  <div className="bg-brand-beige/50 border-b border-brand-green/20 px-5 py-2 flex items-center justify-between text-xs transition-colors group-hover:bg-brand-sage/10">
+                    <span className="font-serif text-brand-brown/70 flex items-center gap-1.5 text-[11px] sm:text-xs">
+                      <Sparkles className="w-3.5 h-3.5 text-brand-sage shrink-0" />
+                      <span>카드를 클릭하면 <strong>특화 전문 분야 &amp; 공인 자격증 상세 소개(About)</strong> 모달이 열립니다</span>
+                    </span>
+                    <span className="text-[11px] font-bold text-brand-sage bg-white/90 px-2.5 py-0.5 rounded-full border border-brand-sage/30 flex items-center gap-1 shrink-0 group-hover:bg-brand-sage group-hover:text-white transition-all shadow-2xs">
+                      <Maximize2 className="w-3 h-3" />
+                      <span>About 상세 보기</span>
+                    </span>
+                  </div>
+
                   {/* Main Profile Row: Image (Left) + Primary Summary (Right) */}
                   <div className="flex flex-col md:flex-row">
                     
@@ -190,7 +201,10 @@ export default function Counselors() {
                         src={counselor.image_url || '/images/counselor_park.jpg'} 
                         alt={`${counselor.name} ${counselor.title || '상담사'}`} 
                         className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 cursor-pointer"
-                        onClick={() => openDetailModal(counselor, 'overview')}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openDetailModal(counselor, 'about');
+                        }}
                         loading="eager"
                         decoding="async"
                         referrerPolicy="no-referrer"
@@ -205,12 +219,15 @@ export default function Counselors() {
                       {/* Click overlay hint */}
                       <button
                         type="button"
-                        onClick={() => openDetailModal(counselor, 'overview')}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openDetailModal(counselor, 'about');
+                        }}
                         className="absolute top-4 right-4 z-20 px-3.5 py-1.5 rounded-full bg-black/65 hover:bg-black/85 text-white text-xs font-semibold backdrop-blur-md transition-all flex items-center gap-1.5 cursor-pointer shadow-md"
-                        title="자격증 · 전문분야 · 철학 상세 모달 열기"
+                        title="자격증 · 특화 전문분야 · 철학 상세 모달 열기"
                       >
                         <Maximize2 className="w-3.5 h-3.5 text-brand-sage" />
-                        <span>상세 모달 보기</span>
+                        <span>About 모달 보기</span>
                       </button>
 
                       {/* Gradient overlay for badges */}
@@ -229,7 +246,10 @@ export default function Counselors() {
                             <button
                               key={tag}
                               type="button"
-                              onClick={() => openDetailModal(counselor, 'specialties')}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                openDetailModal(counselor, 'specialties');
+                              }}
                               className="px-2.5 py-1 bg-white/95 hover:bg-white text-brand-brown text-xs font-semibold rounded-full shadow-xs border border-brand-green/20 transition-transform active:scale-95 cursor-pointer"
                               title="태그 상세 치유법 모달 열기"
                             >
@@ -248,7 +268,10 @@ export default function Counselors() {
                           <div className="flex flex-wrap items-baseline justify-between gap-2 mb-2">
                             <div className="flex items-baseline gap-2.5">
                               <h2 
-                                onClick={() => openDetailModal(counselor, 'overview')}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  openDetailModal(counselor, 'about');
+                                }}
                                 className="text-2xl sm:text-3xl font-serif font-bold text-brand-brown hover:text-brand-sage transition-colors cursor-pointer"
                               >
                                 {counselor.name}
@@ -261,10 +284,13 @@ export default function Counselors() {
                             {/* Direct Modal Button (Top Right of Card) */}
                             <button
                               type="button"
-                              onClick={() => openDetailModal(counselor, 'overview')}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                openDetailModal(counselor, 'about');
+                              }}
                               className="text-xs font-bold text-brand-sage hover:text-brand-brown transition-colors flex items-center gap-1 cursor-pointer bg-brand-sage/10 px-2.5 py-1 rounded-lg border border-brand-sage/20"
                             >
-                              <span>상세 모달</span>
+                              <span>About 모달</span>
                               <Maximize2 className="w-3 h-3" />
                             </button>
                           </div>
@@ -282,7 +308,10 @@ export default function Counselors() {
                               </span>
                               <button
                                 type="button"
-                                onClick={() => openDetailModal(counselor, 'philosophy')}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  openDetailModal(counselor, 'philosophy');
+                                }}
                                 className="text-[11px] font-bold text-brand-sage hover:text-brand-brown flex items-center gap-0.5 cursor-pointer"
                               >
                                 <span>철학 전문 보기</span>
@@ -301,12 +330,15 @@ export default function Counselors() {
                             <div className="flex items-center gap-2">
                               <Award className="w-4 h-4 text-emerald-600" />
                               <h3 className="text-xs sm:text-sm font-bold text-brand-brown tracking-wider uppercase">
-                                공인 전문 자격증 정보
+                                공인 전문 자격증 정보 (Credentials)
                               </h3>
                             </div>
                             <button
                               type="button"
-                              onClick={() => openDetailModal(counselor, 'certifications')}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                openDetailModal(counselor, 'certifications');
+                              }}
                               className="text-[11px] text-brand-sage hover:text-brand-brown font-semibold flex items-center gap-1 cursor-pointer"
                             >
                               <span>전체 자격증 보기</span>
@@ -335,12 +367,15 @@ export default function Counselors() {
                             <div className="flex items-center gap-2">
                               <Tag className="w-4 h-4 text-amber-600" />
                               <h3 className="text-xs sm:text-sm font-bold text-brand-brown tracking-wider uppercase">
-                                전문 분야 태그 및 상담 스타일
+                                특화 전문 분야 및 상담 스타일 (Specializations)
                               </h3>
                             </div>
                             <button
                               type="button"
-                              onClick={() => openDetailModal(counselor, 'specialties')}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                openDetailModal(counselor, 'specialties');
+                              }}
                               className="text-[11px] text-amber-700 hover:text-brand-brown font-semibold flex items-center gap-1 cursor-pointer"
                             >
                               <span>치유 기법 보기</span>
@@ -357,7 +392,10 @@ export default function Counselors() {
                                 <button
                                   key={idx}
                                   type="button"
-                                  onClick={() => openDetailModal(counselor, 'specialties')}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    openDetailModal(counselor, 'specialties');
+                                  }}
                                   className="px-2.5 py-0.5 bg-white hover:bg-amber-50 text-brand-sage hover:text-amber-800 text-xs font-medium rounded-md border border-brand-sage/20 shadow-2xs transition-colors cursor-pointer"
                                 >
                                   {tag}
@@ -373,14 +411,17 @@ export default function Counselors() {
                         {/* High-Impact Modal Button */}
                         <button
                           type="button"
-                          onClick={() => openDetailModal(counselor, 'overview')}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openDetailModal(counselor, 'about');
+                          }}
                           className="w-full py-3 px-4 rounded-xl text-xs sm:text-sm font-bold bg-white hover:bg-brand-green/20 text-brand-brown border-2 border-brand-sage/50 hover:border-brand-sage transition-all flex items-center justify-center gap-2 cursor-pointer shadow-xs active:scale-99"
                         >
                           <Award className="w-4 h-4 text-emerald-600" />
                           <Tag className="w-4 h-4 text-amber-600" />
                           <Heart className="w-4 h-4 text-rose-600" />
                           <span className="text-brand-brown font-bold">
-                            {counselor.name} {counselor.title} 자격증 · 전문분야 · 철학 상세 모달 보기
+                            {counselor.name} {counselor.title} 특화 전문분야 · 공인 자격증 About 모달 보기
                           </span>
                           <Maximize2 className="w-3.5 h-3.5 text-brand-sage ml-1" />
                         </button>
@@ -389,7 +430,10 @@ export default function Counselors() {
                           {/* Inline Expand/Collapse Button */}
                           <button
                             type="button"
-                            onClick={() => toggleExpand(counselor.id)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleExpand(counselor.id);
+                            }}
                             aria-expanded={isExpanded}
                             aria-controls={`counselor-details-${counselor.id}`}
                             className={`flex-1 py-3 px-4 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-1.5 border cursor-pointer ${
@@ -409,6 +453,7 @@ export default function Counselors() {
                           {/* Direct Reservation Link */}
                           <Link 
                             to="/reservation"
+                            onClick={(e) => e.stopPropagation()}
                             className="flex-1 py-3 px-4 bg-brand-sage hover:bg-brand-sage/90 text-white font-bold rounded-xl transition-all text-center flex items-center justify-center gap-2 shadow-sm hover:shadow-md text-xs sm:text-sm active:scale-98 cursor-pointer"
                           >
                             <Calendar className="w-4 h-4" />
@@ -429,6 +474,7 @@ export default function Counselors() {
                         animate={{ height: 'auto', opacity: 1 }}
                         exit={{ height: 0, opacity: 0 }}
                         transition={{ duration: 0.35, ease: 'easeInOut' }}
+                        onClick={(e) => e.stopPropagation()}
                         className="overflow-hidden border-t border-brand-green/25 bg-brand-beige/15"
                       >
                         <div className="p-6 sm:p-8 md:p-10 space-y-8">
@@ -560,11 +606,11 @@ export default function Counselors() {
                             <div className="flex items-center gap-2 w-full sm:w-auto">
                               <button
                                 type="button"
-                                onClick={() => openDetailModal(counselor, 'overview')}
+                                onClick={() => openDetailModal(counselor, 'about')}
                                 className="flex-1 sm:flex-none px-4 py-2 rounded-xl bg-brand-sage text-white text-xs font-bold hover:bg-brand-sage/90 transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
                               >
                                 <Maximize2 className="w-3.5 h-3.5" />
-                                <span>상세 프로필 모달 열기</span>
+                                <span>상세 소개(About) 모달 열기</span>
                               </button>
                               <button
                                 type="button"

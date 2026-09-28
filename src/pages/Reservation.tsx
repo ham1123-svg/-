@@ -5,8 +5,9 @@ import {
   MapPin, Phone, Mail, Clock, Send, CheckCircle, 
   CalendarCheck2, PhoneCall, HeartHandshake, Sparkles, ChevronRight, ShieldCheck,
   MessageSquareText, CheckCircle2, RotateCcw, Home as HomeIcon, BellRing, ExternalLink,
-  CalendarDays, Check, HelpCircle, Search
+  CalendarDays, Check, HelpCircle, Search, Copy
 } from 'lucide-react';
+import { cn } from '../lib/utils';
 import { Program, NotificationResult, ScheduleBlock, Reservation as ReservationType, RESERVATION_TIME_SLOTS, TIME_SLOT_DETAILS } from '../types';
 import WeeklyScheduleCalendar from '../components/WeeklyScheduleCalendar';
 import ReservationConfirmModal from '../components/ReservationConfirmModal';
@@ -31,6 +32,34 @@ export default function Reservation() {
   const [scheduleBlocks, setScheduleBlocks] = useState<ScheduleBlock[]>([]);
   const [existingReservations, setExistingReservations] = useState<ReservationType[]>([]);
   const [formError, setFormError] = useState<string>('');
+  const [copiedAddress, setCopiedAddress] = useState(false);
+
+  const handleCopyAddress = async () => {
+    const address = "울산광역시 울주군 삼남읍 도호1길 23 상가 408호";
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(address);
+      } else {
+        const textarea = document.createElement('textarea');
+        textarea.value = address;
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+      }
+      setCopiedAddress(true);
+      setTimeout(() => setCopiedAddress(false), 2500);
+    } catch {
+      const textarea = document.createElement('textarea');
+      textarea.value = address;
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textarea);
+      setCopiedAddress(true);
+      setTimeout(() => setCopiedAddress(false), 2500);
+    }
+  };
 
   const loadScheduleData = () => {
     fetch('/api/schedule-blocks')
@@ -719,7 +748,43 @@ export default function Reservation() {
               <div className="space-y-4">
                 <div className="flex items-start gap-3">
                   <MapPin className="w-5 h-5 text-brand-sage shrink-0 mt-1" />
-                  <p className="text-brand-brown/80">울산광역시 울주군 삼남읍 도호1길 23 상가 408호</p>
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <p className="text-brand-brown/85 font-medium select-all">
+                        울산광역시 울주군 삼남읍 도호1길 23 상가 408호
+                      </p>
+                      <button
+                        type="button"
+                        onClick={handleCopyAddress}
+                        className={cn(
+                          "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold transition-all duration-200 cursor-pointer shadow-2xs active:scale-95 border",
+                          copiedAddress
+                            ? "bg-emerald-600 text-white border-emerald-600 shadow-emerald-200"
+                            : "bg-white hover:bg-brand-sage/10 text-brand-brown border-brand-green/40 hover:border-brand-sage hover:text-brand-sage"
+                        )}
+                        aria-label="상담소 주소 복사하기"
+                        title="주소를 클립보드에 복사"
+                      >
+                        {copiedAddress ? (
+                          <>
+                            <Check className="w-3.5 h-3.5 text-white" />
+                            <span className="font-bold">복사 완료!</span>
+                          </>
+                        ) : (
+                          <>
+                            <Copy className="w-3.5 h-3.5 text-brand-sage" />
+                            <span>주소 복사</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                    {copiedAddress && (
+                      <p className="text-[11px] text-emerald-700 font-medium mt-1.5 flex items-center gap-1 animate-fade-in bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200 inline-flex">
+                        <CheckCircle2 className="w-3 h-3 text-emerald-600 shrink-0" />
+                        <span>클립보드에 주소가 복사되었습니다</span>
+                      </p>
+                    )}
+                  </div>
                 </div>
                 <div className="flex items-start gap-3">
                   <Phone className="w-5 h-5 text-brand-sage shrink-0 mt-1" />
@@ -739,6 +804,42 @@ export default function Reservation() {
                   <span className="text-brand-sage font-bold">[대중교통 이용 시]</span> <br />
                   KTX 울산역(통도사)에서 대중교통 이용 시 편리하게 방문하실 수 있습니다.
                 </p>
+              </div>
+
+              {/* Map Service Quick Links */}
+              <div className="mt-4 pt-4 border-t border-brand-sage/20">
+                <span className="text-xs font-bold text-brand-brown block mb-2.5">
+                  지도 앱으로 길찾기 &amp; 상세 위치 보기:
+                </span>
+                <div className="grid grid-cols-3 gap-2">
+                  <a
+                    href="https://map.naver.com/p/search/%EC%9A%B8%EC%82%B0%EA%B4%91%EC%97%AD%EC%8B%9C%20%EC%9A%B8%EC%83%8C%EA%B5%B0%20%EC%82%BC%EB%82%A8%EC%9D%8D%20%EB%8F%84%ED%98%B81%EA%B8%B8%2023"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-2.5 py-2 rounded-xl bg-white hover:bg-emerald-50 text-emerald-800 text-xs font-bold border border-emerald-300 shadow-2xs flex items-center justify-center gap-1 transition-all"
+                  >
+                    <span>네이버 지도</span>
+                    <ExternalLink className="w-3 h-3 text-emerald-600" />
+                  </a>
+                  <a
+                    href="https://map.kakao.com/link/search/%EC%9A%B8%EC%82%B0%EA%B4%91%EC%97%AD%EC%8B%9C%20%EC%9A%B8%EC%83%8C%EA%B5%B0%20%EC%82%BC%EB%82%A8%EC%9D%8D%20%EB%8F%84%ED%98%B81%EA%B8%B8%2023"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-2.5 py-2 rounded-xl bg-[#FEE500] hover:bg-[#FEDC00] text-[#191919] text-xs font-bold shadow-2xs flex items-center justify-center gap-1 transition-all"
+                  >
+                    <span>카카오맵</span>
+                    <ExternalLink className="w-3 h-3 text-amber-800" />
+                  </a>
+                  <a
+                    href="https://maps.google.com/maps?q=%EC%9A%B8%EC%82%B0%EA%B4%91%EC%97%AD%EC%8B%9C%20%EC%9A%B8%EC%83%8C%EA%B5%B0%20%EC%82%BC%EB%82%A8%EC%9D%8D%20%EB%8F%84%ED%98%B81%EA%B8%B8%2023"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-2.5 py-2 rounded-xl bg-white hover:bg-blue-50 text-blue-800 text-xs font-bold border border-blue-300 shadow-2xs flex items-center justify-center gap-1 transition-all"
+                  >
+                    <span>구글 맵</span>
+                    <ExternalLink className="w-3 h-3 text-blue-600" />
+                  </a>
+                </div>
               </div>
             </motion.div>
           </div>

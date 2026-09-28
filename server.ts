@@ -128,6 +128,38 @@ db.exec(`
     is_private INTEGER DEFAULT 1,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   );
+
+  CREATE TABLE IF NOT EXISTS counseling_insights (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title TEXT NOT NULL,
+    category TEXT NOT NULL,
+    summary TEXT NOT NULL,
+    content TEXT,
+    author TEXT DEFAULT '박미경 소장',
+    author_title TEXT DEFAULT '교육학 박사 · 한국상담학회 1급 슈퍼바이저',
+    read_time TEXT DEFAULT '5분 읽기',
+    image_url TEXT,
+    tags TEXT,
+    featured INTEGER DEFAULT 0,
+    views INTEGER DEFAULT 0,
+    takeaways TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+
+  CREATE TABLE IF NOT EXISTS newsletter_subscriptions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    email TEXT NOT NULL UNIQUE,
+    name TEXT,
+    interest_topic TEXT DEFAULT '전체',
+    subscribed_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    status TEXT DEFAULT 'active'
+  );
+
+  CREATE TABLE IF NOT EXISTS quick_poll_votes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    mood_id TEXT NOT NULL,
+    voted_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
 `);
 
 // Safe migration for admin_notes column in reservations table
@@ -182,31 +214,8 @@ if (!existingCounselor) {
   );
 }
 
-const existingKim = db.prepare("SELECT * FROM counselors WHERE name = ?").get("김지현") as any;
-if (!existingKim) {
-  db.prepare("INSERT INTO counselors (name, title, education, certifications, style, tags, image_url) VALUES (?, ?, ?, ?, ?, ?, ?)").run(
-    "김지현",
-    "수석 상담사 (부부·가족 전문)",
-    "상담심리학 석사 (부부 및 가족상담 전공)",
-    "한국상담심리학회 상담심리사 1급\n한국부부가족상담학회 부부상담전문가\n여성가족부 청소년상담사 2급\n국제 이마고(Imago) 부부치료 임상 수료\n한국비폭력대화(NVC) 중재자 과정",
-    "부부 갈등 회복 / 이혼 위기 극복 / 비폭력 대화(NVC) / 가족 관계 개선 / 대인관계 불안",
-    "#부부갈등회복 #이혼위기극복 #비폭력대화(NVC) #가족관계개선 #정서중심치료(EFT) #커플소통단절 #대인관계예민성",
-    "/images/counselor_park.jpg"
-  );
-}
-
-const existingLee = db.prepare("SELECT * FROM counselors WHERE name = ?").get("이진우") as any;
-if (!existingLee) {
-  db.prepare("INSERT INTO counselors (name, title, education, certifications, style, tags, image_url) VALUES (?, ?, ?, ?, ?, ?, ?)").run(
-    "이진우",
-    "전문 상담사 (청소년·CBT 전문)",
-    "임상 및 상담심리학 석사",
-    "보건복지부 정신건강임상심리사 2급\n여성가족부 청소년상담사 1급 (국가공인)\n한국인지행동치료학회(CBT) 전문가 수련\n한국임상심리학회 정회원\n청소년 진로 및 학습상담 전문가",
-    "청소년 심리 위기 / 학업 스트레스 & 시험불안 / 성인 ADHD 코칭 / 공황 및 강박 / 인지행동치료(CBT)",
-    "#청소년심리 #학업스트레스 #성인ADHD #불안·공황장애 #인지행동치료(CBT) #강박증 #진로코칭",
-    "/images/counselor_park.jpg"
-  );
-}
+// Keep only Director Park Mi-kyeong
+db.prepare("DELETE FROM counselors WHERE name != ?").run("박미경");
 
 // Seed data
 db.exec("DELETE FROM programs");
@@ -304,6 +313,208 @@ if (qnaCount === 0) {
   );
 }
 
+// Seed counseling insights (Clinical expert blog posts to build trust & authority)
+const insightsCount = (db.prepare("SELECT COUNT(*) as count FROM counseling_insights").get() as any).count;
+if (insightsCount === 0) {
+  const insertInsight = db.prepare(`
+    INSERT INTO counseling_insights (title, category, summary, content, author, author_title, read_time, image_url, tags, featured, views, takeaways, created_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `);
+
+  insertInsight.run(
+    "우리 아이의 산만함, 정말 ADHD일까요? 감별의 핵심 3대 기준과 부모의 양육 태도",
+    "아동·청소년",
+    "아이의 산만함은 발달적 특성일까요, 아니면 전문가의 개입이 필요한 ADHD일까요? 감별의 3대 핵심 기준(장소 일관성, 지속 기간, 기능적 손상)과 숨겨진 심리적 원인, 가정에서 실천하는 단계적 양육 솔루션을 제시합니다.",
+    "상담소를 찾는 학부모 열 분 중 세네 분은 비슷한 염려를 안고 찾아옵니다. \"선생님, 아이가 5분도 가만히 앉아 있질 못해요\", \"수업 시간에 멍하니 딴청만 피운다는데 혹시 ADHD는 아닐까요?\" 불안과 자책이 뒤섞인 목소리 뒤에는, 내 아이의 산만함을 어떤 시선으로 바라봐야 할지 막막한 부모의 마음이 자리 잡고 있습니다.\n\n아이들은 본래 세상에 대한 호기심이 넘치고, 신체 에너지를 발산하며 주의 통제력을 서서히 발달시켜 나가는 과정 중에 있습니다. 단순히 에너지가 넘치거나 흥미 없는 과제에 집중하지 못한다고 해서 모두 ADHD인 것은 아닙니다.\n\n■ 임상 현장에서 감별의 핵심으로 두는 3대 기준\n1. 상황의 일관성: 가정뿐 아니라 학교, 학원 등 최소 2곳 이상의 환경에서 일관되게 주의력 통제 어려움이 나타나는가?\n2. 지속 기간: 새 학기 적응기나 환경 변화에 따른 일시적 반응이 아닌 6개월 이상 지속되는가?\n3. 기능적 손상: 지적 능력에 비해 과도하게 학업 성취가 떨어지거나 친구 관계에서 반복적으로 배제·거절을 겪고 있는가?\n\n■ 겉모습 너머의 심리적 원인\n아이의 산만함은 뇌의 전두엽 발달 지연뿐만 아니라 마음속 깊은 불안과 긴장, 혹은 소아기 가면성 우울의 표현일 수 있습니다. '너는 왜 맨날 그래?'라는 인격적 비난 대신, 구체적이고 작은 행동 지시와 즉각적인 긍정 강화를 통해 자존감을 지켜주어야 합니다.",
+    "박미경 소장",
+    "교육학 박사 · 한국상담학회 1급 수련감독자",
+    "5분 읽기",
+    "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?auto=format&fit=crop&q=80&w=800&h=500",
+    "#아동청소년 #ADHD감별 #집중력코칭 #부모양육태도 #인지발달",
+    1,
+    384,
+    JSON.stringify([
+      "장소 일관성(최소 2곳)과 6개월 이상의 지속성 확인 필수",
+      "산만함의 기저에 깔린 내면의 불안과 가면성 우울 감별",
+      "행동과 인격을 분리하는 비폭력 양육 피드백과 성공 강화"
+    ]),
+    "2026-09-22 10:00:00"
+  );
+
+  insertInsight.run(
+    "번아웃 증후군을 극복하는 마음챙김과 자기 자비(Self-Compassion) 5단계",
+    "성인·번아웃",
+    "끝없는 피로감과 정서적 고갈에 지친 직장인을 위한 심리학적 처방전. 신체 감각 인지부터 엄격한 자기비판을 내려놓는 자기 자비 연습까지, 일상 회복의 5단계를 전합니다.",
+    "열심히 달려온 삶에서 어느 날 문득 모든 에너지가 소진된 듯한 무기력을 마주할 때가 있습니다. 아침에 눈을 뜨는 것이 버겁고, 좋아하던 취미조차 무미건조해지며, 사소한 일에도 날카로운 짜증이 솟구칩니다. 번아웃 증후군은 단순히 나약함의 문제가 아니라, 심리적 배터리가 완전히 방전되어 영혼이 보내는 강력한 쉼의 신호입니다.\n\n현대인들은 '더 잘해야 한다', '뒤처지면 안 된다'는 가혹한 내면의 비판자(Inner Critic)를 지니고 살아갑니다. 이 악순환의 고리를 끊기 위해 필요한 것이 바로 크리스틴 네프(Kristin Neff) 박사가 주창한 '자기 자비(Self-Compassion)'입니다.\n\n■ 일상 회복을 위한 마음챙김 5단계 실천법\n1단계: 신체 적신호 자각 (어깨 뭉침, 불면, 두통을 억누르지 않고 알아차림)\n2단계: 내면 비판 멈추기 (\"너는 왜 이것밖에 못해?\" 대신 \"그동안 참 많이 애썼구나\"로 전환)\n3단계: 정서적 호흡 공간 확보 (하루 3분, 오롯이 나의 들숨과 날숨에만 머무르기)\n4단계: 심리적 경계선(Boundary) 구축 (퇴근 후 메신저와 일 분리, 정중한 거절 연습)\n5단계: 회복을 위한 1:1 심층 상담 (방전된 원인 탐색 및 안전한 심리적 울타리 재건)",
+    "박미경 소장",
+    "교육학 박사 · 한국상담학회 1급 수련감독자",
+    "4분 읽기",
+    "https://images.unsplash.com/photo-1545205597-3d9d02c29597?auto=format&fit=crop&q=80&w=800&h=500",
+    "#성인상담 #번아웃극복 #마음챙김 #자기자비 #직장인스트레스",
+    1,
+    462,
+    JSON.stringify([
+      "몸이 보내는 피로 신호와 과도한 자기비판 멈춤이 첫 단추",
+      "하루 3분 정서적 호흡 공간 확보 및 일·휴식의 경계선 설정",
+      "소진의 근본 원인을 해소하는 전문 심리상담의 조력"
+    ]),
+    "2026-09-18 14:30:00"
+  );
+
+  insertInsight.run(
+    "반복되는 부부 갈등과 침묵의 벽, 정서중심치료(EFT)로 대화 복원하기",
+    "부부·가족",
+    "다툼 끝에 찾아오는 침묵과 냉담은 포기가 아닌 ‘상처받기 두려운 방어기제’입니다. 비난과 회피의 악순환 고리를 끊고 서로의 근원적 애착 욕구를 안전하게 전달하는 법을 안내합니다.",
+    "\"대화를 시작하면 결국 5분도 안 돼서 싸움으로 끝나요.\" \"남편은 말문이 막히면 방으로 들어가 버리고, 저는 그 문을 두드리며 소리를 지릅니다.\" 부부상담실을 찾는 수많은 커플들이 겪는 전형적인 '추적자(Pursuer) - 도망자(Withdrawer)' 갈등의 춤입니다.\n\n정서중심 부부치료(Emotionally Focused Therapy, EFT) 관점에서 보면, 겉으로 드러나는 비난과 분노는 '2차 정서(Secondary Emotion)'에 불과합니다. 그 깊은 바닥에는 \"당신에게 내가 아직 소중한 사람인가요?\", \"내가 힘들 때 곁에 있어줄 건가요?\"라는 버림받을지 모른다는 두려움과 고립감이라는 '1차 정서(Primary Emotion)'가 숨어 있습니다.\n\n도망자는 상처를 더 주기 싫고 갈등이 커질까 두려워 숨는 것이며, 추적자는 관계의 연결이 끊어질까 두려워 격렬히 흔드는 것입니다. 서로의 숨겨진 취약한 감정을 이해하고 인정하는 순간, 굳게 닫혔던 침묵의 벽이 열리고 진정한 소통이 다시 시작됩니다.",
+    "박미경 소장",
+    "교육학 박사 · 한국상담학회 1급 수련감독자",
+    "6분 읽기",
+    "https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?auto=format&fit=crop&q=80&w=800&h=500",
+    "#부부갈등 #정서중심치료 #비폭력대화 #애착손상 #관계회복",
+    1,
+    528,
+    JSON.stringify([
+      "비난과 침묵은 관계 단절의 두려움에서 비롯된 2차 방어기제",
+      "서로의 깊은 애착 욕구와 취약성을 안전하게 드러내는 훈련",
+      "이마고(Imago) 대화법과 중재를 통한 정서적 유대감 재건"
+    ]),
+    "2026-09-14 11:20:00"
+  );
+
+  insertInsight.run(
+    "갑작스러운 공황발작과 엄습하는 불안, 몸의 신호와 인지행동치료(CBT) 대처법",
+    "불안·공황",
+    "심장이 터질 듯 뛰고 숨이 턱 막힐 때, '이것은 죽을 병이 아니라 뇌의 일시적 오경보'임을 인지하는 것이 핵심입니다. 복식호흡과 왜곡된 파국화 인지 재구조화 기법을 소개합니다.",
+    "엘리베이터 안에서, 지하철 안에서, 혹은 평화롭게 쉬던 주말 오후에 갑자기 가슴이 조여오고 숨이 가빠지며 온몸이 떨리는 경험을 해보셨나요? \"이러다 심장마비로 죽는 것은 아닐까\", \"미쳐버리는 것은 아닐까\"라는 극심한 공포가 엄습합니다.\n\n응급실로 달려가 심전도와 피검사를 받아도 \"신체적으로는 아무 이상이 없습니다\"라는 말을 듣고 나면 막막함은 더 커집니다. 이것이 바로 공황발작(Panic Attack)의 특징입니다.\n\n인지행동치료(CBT)에서는 공황발작을 뇌의 편도체(Amygdala)가 울리는 '화재경보기 오작동'으로 설명합니다. 불이 나지 않았는데도 센서가 과민해져 경보를 울린 것뿐입니다. 발작은 통상 10분~20분 내에 정점을 찍고 자율신경계에 의해 반드시 가라앉습니다. 4-4-6 복식호흡과 함께 '몸의 감각을 위험으로 파국화하지 않는 인지 훈련'을 통해 불안의 통제력을 되찾을 수 있습니다.",
+    "박미경 소장",
+    "교육학 박사 · 한국상담학회 1급 수련감독자",
+    "5분 읽기",
+    "https://images.unsplash.com/photo-1506126613408-eca07ce68773?auto=format&fit=crop&q=80&w=800&h=500",
+    "#공황장애 #인지행동치료 #과호흡대처 #예기불안 #신체화증상",
+    0,
+    312,
+    JSON.stringify([
+      "공황발작은 신체적 치명상이 아닌 뇌의 자율신경계 과민 오경보",
+      "신체 감각을 위험으로 확대해석하는 파국화 사고 재구조화",
+      "4-4-6 복식호흡과 점진적 근육이완을 통한 신체 안정화"
+    ]),
+    "2026-09-08 09:30:00"
+  );
+
+  insertInsight.run(
+    "상처 입은 내면아이와 화해하기: 성인 애착과 자존감 회복의 여정",
+    "심층치유",
+    "어른이 되어서도 타인의 인정에 목매거나 쉽게 불안해진다면, 어린 시절 충족되지 못한 정서적 결핍을 살펴볼 때입니다. 온전한 수용 속에서 내면의 치유력을 되찾는 과정.",
+    "사회적으로 성공하고 남부러울 것 없이 살아가는 성인들 중에도 가슴 한구석이 텅 빈 것 같은 공허함과 불완전감을 호소하는 분들이 많습니다. 사소한 비판에도 자존감이 바닥으로 곤두박질치거나, 거절당할까 봐 자신의 욕구를 숨긴 채 타인에게만 맞추는 '착한 아이 콤플렉스'에 시달리기도 합니다.\n\n심층 심리상담에서는 이를 '상처받은 내면아이(Wounded Inner Child)'의 부름으로 봅니다. 어린 시절 충분한 정서적 지지와 지지적 수용을 받지 못했던 내면의 아이가 여전히 어른의 마음속에서 울고 있는 것입니다.\n\n상담은 그 울고 있는 아이에게 \"이제는 괜찮다, 내가 너를 지켜줄게\"라고 말해줄 수 있는 '건강한 내면의 성인 부모'를 세우는 과정입니다. 100% 비밀이 보장되는 안전한 상담실에서 판단 없는 온전한 공감을 경험할 때, 내담자는 비로소 가면을 벗고 자기 자신과의 평화로운 화해를 이뤄냅니다.",
+    "박미경 소장",
+    "교육학 박사 · 한국상담학회 1급 수련감독자",
+    "6분 읽기",
+    "https://images.unsplash.com/photo-1499209974431-9dddcece7f88?auto=format&fit=crop&q=80&w=800&h=500",
+    "#내면아이치유 #자존감회복 #원가족상처 #성인애착 #심층상담",
+    0,
+    295,
+    JSON.stringify([
+      "타인 인정 욕구와 거절 불안 이면에 숨겨진 내면아이의 결핍 탐색",
+      "과거의 상처를 있는 그대로 수용하는 안전한 심리적 지지 기반",
+      "자의식 과잉을 걷어내고 스스로를 품는 자기수용(Self-Acceptance)"
+    ]),
+    "2026-09-01 16:10:00"
+  );
+
+  insertInsight.run(
+    "비의료 심리상담의 100% 비밀보장과 객관적 심리평가(MMPI-2/TCI)의 의미",
+    "심리검사",
+    "국민건강보험공단 진료 기록이 남지 않는 순수 심리상담의 윤리적 원칙과, 표준화된 심리검사를 통해 타고난 기질과 후천적 성격을 객관적으로 파악하는 가치를 설명합니다.",
+    "많은 분들이 심리상담을 망설이는 가장 큰 이유 중 하나는 '혹시 기록이 남아 회사나 보험 가입 시 불이익을 받지 않을까'하는 염려 때문입니다.\n\n행복바람 심리상담연구소는 병의원이 아닌 순수 민간 심리상담 연구기관으로, 국민건강보험공단에 전산 코드가 일절 등록되지 않습니다. 한국상담학회 및 한국상담심리학회 윤리강령 제1조에 의거하여, 내담자의 모든 상담 내용과 개인정보는 법적으로 철저히 비밀이 보장됩니다.\n\n또한 효과적인 상담을 위해서는 나의 마음 상태를 객관적인 지표로 확인하는 과정이 큰 도움이 됩니다. 전 세계적으로 표준화된 객관적 다면적 인성검사(MMPI-2)와 기질 및 성격검사(TCI)는 내가 타고난 유전적 기질(자극추구, 위험회피, 사회적 민감성)과 환경 속에서 성숙해 온 성격(자율성, 연대감)을 정밀하게 분석하여, 왜곡된 죄책감에서 벗어나 나다운 삶의 방향을 설정할 수 있도록 돕습니다.",
+    "박미경 소장",
+    "교육학 박사 · 한국상담학회 1급 수련감독자",
+    "4분 읽기",
+    "https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&q=80&w=800&h=500",
+    "#비의료상담 #비밀보장 #MMPI2 #TCI기질검사 #자기이해",
+    0,
+    440,
+    JSON.stringify([
+      "건강보험공단 전산 미등재로 100% 비밀보장되는 안심 비의료기관",
+      "MMPI-2와 TCI를 통한 기질(유전)과 성격(환경)의 입체적 분석",
+      "공인 1급 슈퍼바이저의 정밀한 1:1 심리평가 결과 해석 상담"
+    ]),
+    "2026-08-25 15:00:00"
+  );
+}
+
+// Ensure diverse topic seeds (Psychology Tips, Parenting, Stress Management) exist for rich category filtering
+try {
+  const checkExtra = db.prepare("SELECT COUNT(*) as count FROM counseling_insights WHERE category IN ('심리학 팁', '자녀 양육', '스트레스 관리')").get() as any;
+  if (!checkExtra || checkExtra.count === 0) {
+    const insertInsight = db.prepare(`
+      INSERT INTO counseling_insights (title, category, summary, content, author, author_title, read_time, image_url, tags, featured, views, takeaways, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+
+    insertInsight.run(
+      "사소한 말 한마디에도 며칠간 마음이 다치는 분들을 위한 3가지 심리학 팁 (Psychology Tips)",
+      "심리학 팁",
+      "타인의 표정이나 말투에 상처받고 밤새 자책하는 ‘거절 민감성(Rejection Sensitivity)’. 인지 왜곡을 교정하고 타인의 평가와 나의 존재 가치를 안전하게 분리하는 실전 심리학 팁 3가지를 전합니다.",
+      "직장 동료의 짧은 단답이나 상사의 미묘한 눈빛 하나에 온종일 마음이 곤두박질치는 경험이 있으신가요? '내가 뭘 잘못했나?', '나를 싫어하나?' 꼬리를 무는 부정적 생각은 뇌의 ‘확증 편향’과 ‘독심술의 오류(Mind Reading)’가 빚어낸 인지 왜곡입니다.\n\n심리학에서는 이를 거절 민감성(Rejection Sensitivity Dysphoria)이라고 부릅니다. 이 고통의 쳇바퀴를 멈추기 위해 다음과 같은 3가지 심리학적 기법을 일상에서 실천해 보세요.\n\n1. 객관적 사실과 주관적 해석의 분리: ‘상사가 인사를 건성으로 했다’(사실)와 ‘나를 무시한다’(해석)를 종이에 적어 엄격히 구분합니다.\n2. 타인의 감정에 대한 책임 내려놓기: 상대방의 기분 저하는 그 사람의 개인적 스트레스나 수면 부족일 확률이 90% 이상입니다. 타인의 감정 쓰레기통이 되지 마세요.\n3. 내면의 든든한 자기 자비(Self-Compassion): 타인에게 기대했던 인정의 말을 오늘 밤 스스로에게 직접 건네주세요. '오늘도 힘든 하루 버텨내느라 참 고생 많았다.'",
+      "박미경 소장",
+      "교육학 박사 · 한국상담학회 1급 수련감독자",
+      "5분 읽기",
+      "https://images.unsplash.com/photo-1499209974431-9dddcece7f88?auto=format&fit=crop&q=80&w=800&h=500",
+      "#심리학팁 #PsychologyTips #거절민감성 #독심술오류 #자기자비 #감정분리",
+      1,
+      512,
+      JSON.stringify([
+        "객관적 사건(사실)과 내 머릿속의 불안한 추측(해석) 명확히 분리",
+        "타인의 나쁜 기분을 내 탓으로 돌리지 않는 심리적 독립",
+        "자가 비난을 멈추고 자존감을 보호하는 자기 자비 언어 습관"
+      ]),
+      "2026-09-26 09:00:00"
+    );
+
+    insertInsight.run(
+      "화내지 않고 자녀의 자율성을 키우는 긍정적 훈육 4원칙 (Parenting)",
+      "자녀 양육",
+      "아이의 고집과 반항에 언성을 높이게 되는 부모님들을 위한 감정코칭 양육법. 감정은 100% 수용하되 행동의 한계는 명확히 긋는 지혜로운 부모의 대화 기술을 안내합니다.",
+      "\"몇 번을 말해야 알아듣니?\" 오늘도 아이에게 소리를 지르고 난 뒤, 잠든 아이의 얼굴을 보며 후회와 죄책감에 눈물짓는 부모님들이 많습니다. 하지만 분노에 찬 체벌이나 언어적 압박은 아이의 뇌에서 편도체(공포 중추)만을 자극할 뿐, 전두엽(자기 조절 및 학습 중추)의 성장을 가로막습니다.\n\n세계적 심리학자 존 가트맨(John Gottman) 박사의 감정코칭 훈육법은 명확합니다. '아이의 모든 감정은 옳다. 하지만 모든 행동이 허용되는 것은 아니다.'\n\n■ 긍정적 부모 양육(Parenting) 4대 원칙\n1. 감정 읽어주기: '숙제하기 싫어서 짜증이 많이 났구나' (감정 수용)\n2. 공감의 울타리: '엄마도 어릴 때 숙제하기 정말 싫었단다' (유대감 형성)\n3. 행동의 한계 긋기: '하지만 화가 난다고 물건을 던지는 건 안 돼' (명확한 규칙)\n4. 스스로 대안 찾기: '그럼 10분만 쉬고 시작할까, 아니면 쉬운 과목부터 먼저 해볼까?' (자율적 선택 부여)",
+      "박미경 소장",
+      "교육학 박사 · 한국상담학회 1급 수련감독자",
+      "5분 읽기",
+      "https://images.unsplash.com/photo-1485546246426-74dc88dec4d9?auto=format&fit=crop&q=80&w=800&h=500",
+      "#자녀양육 #Parenting #아동청소년 #부모코칭 #감정코칭 #긍정훈육",
+      1,
+      438,
+      JSON.stringify([
+        "아동의 감정은 100% 수용하되 공격적 행동의 한계는 단호하게 설정",
+        "분노 표출 대신 공감과 존중으로 아이의 자기통제 전두엽 발달 촉진",
+        "부모의 일관된 태도와 자율적 대안 선택권을 통한 주체성 확립"
+      ]),
+      "2026-09-24 16:30:00"
+    );
+
+    insertInsight.run(
+      "만성 긴장과 두통을 줄이는 5분 직장인 스트레스 관리 루틴 (Stress Management)",
+      "스트레스 관리",
+      "컴퓨터 앞 경직된 몸, 쉴 새 없이 밀려오는 업무 카톡에 지친 직장인을 위한 신체 안정화 테크닉. 점진적 근육이완법과 미주신경 활성화 호흡법을 공유합니다.",
+      "스트레스는 단순히 머릿속의 생각이 아닙니다. 스트레스 호르몬인 코르티솔과 아드레날린은 교감신경을 과항진시켜 승모근을 뭉치게 하고, 호흡을 얕게 만들며, 만성 소화불량과 긴장성 두통을 유발합니다.\n\n진정한 스트레스 관리(Stress Management)는 머리가 아닌 '몸의 신호'를 진정시키는 것에서 출발합니다.\n\n■ 책상에서 실천하는 5분 스트레스 완화 루틴\n1. 4-7-8 미주신경 자극 호흡: 4초간 코로 숨을 들이마시고, 7초간 숨을 참은 뒤, 8초간 입으로 길게 내쉽니다. 부교감신경이 즉각 활성화되어 심박수가 안정됩니다.\n2. 점진적 근육 수축-이완법: 양어깨를 귀까지 한껏 움츠려 5초간 꽉 쥐었다가, 한순간에 툭 하고 긴장을 바닥으로 떨어뜨립니다.\n3. 디지털 디톡스 안구 휴식: 모니터에서 눈을 떼고 창밖의 먼 산이나 하늘을 1분간 바라보며 시야각을 넓혀줍니다.",
+      "박미경 소장",
+      "교육학 박사 · 한국상담학회 1급 수련감독자",
+      "4분 읽기",
+      "https://images.unsplash.com/photo-1506126613408-eca07ce68773?auto=format&fit=crop&q=80&w=800&h=500",
+      "#스트레스관리 #StressManagement #성인번아웃 #호흡이완 #직장인힐링",
+      1,
+      476,
+      JSON.stringify([
+        "신체 신호(승모근 뭉침, 두통)를 인지하고 부교감신경 이완 활성화",
+        "4-7-8 호흡법과 점진적 근육이완법을 통한 즉각적인 과긴장 완화",
+        "퇴근 후 업무 메신저 알림 끄기를 통한 심리적 회복 환경 구축"
+      ]),
+      "2026-09-20 11:00:00"
+    );
+  }
+} catch (e) {
+  console.error("Error seeding extra insights:", e);
+}
+
 async function startServer() {
   const app = express();
   const PORT = 3000;
@@ -326,7 +537,7 @@ async function startServer() {
 
   // API Routes
   app.get("/api/counselors", (req, res) => {
-    const counselors = db.prepare("SELECT * FROM counselors").all();
+    const counselors = db.prepare("SELECT * FROM counselors WHERE name = ?").all("박미경");
     res.json(counselors);
   });
 
@@ -789,6 +1000,199 @@ async function startServer() {
         return res.status(404).json({ error: "공지사항을 찾을 수 없습니다." });
       }
       res.json(notice);
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // --- Counseling Insights (Expert Blog Posts) Endpoints ---
+  app.get("/api/insights/categories", (req, res) => {
+    try {
+      const rows = db.prepare("SELECT category, tags FROM counseling_insights").all() as any[];
+      res.json({ total: rows.length, rows });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.get("/api/insights", (req, res) => {
+    try {
+      const { category, search, featured, limit } = req.query;
+      let query = "SELECT * FROM counseling_insights WHERE 1=1";
+      const params: any[] = [];
+
+      if (category && category !== 'all' && category !== '전체') {
+        const catStr = String(category).trim();
+        // Support flexible topic keywords matching
+        const keywords = [catStr];
+        if (catStr.includes('Psychology') || catStr.includes('심리학')) {
+          keywords.push('심리학', 'Psychology', '내면아이');
+        } else if (catStr.includes('Parenting') || catStr.includes('양육') || catStr.includes('아동')) {
+          keywords.push('양육', 'Parenting', '아동', '청소년');
+        } else if (catStr.includes('Stress') || catStr.includes('스트레스') || catStr.includes('번아웃')) {
+          keywords.push('스트레스', 'Stress', '번아웃');
+        } else if (catStr.includes('Couple') || catStr.includes('부부') || catStr.includes('가족')) {
+          keywords.push('부부', '가족', 'Couple');
+        } else if (catStr.includes('Anxiety') || catStr.includes('불안') || catStr.includes('공황')) {
+          keywords.push('불안', '공황', 'Anxiety');
+        } else if (catStr.includes('Self') || catStr.includes('자존감') || catStr.includes('심층')) {
+          keywords.push('자존감', '심층', '내면아이');
+        } else if (catStr.includes('Assessment') || catStr.includes('검사')) {
+          keywords.push('검사', '평가', 'MMPI', 'TCI');
+        }
+
+        const conditions = keywords.map(() => "(category = ? OR category LIKE ? OR tags LIKE ? OR title LIKE ?)");
+        query += ` AND (${conditions.join(" OR ")})`;
+        keywords.forEach(kw => {
+          const term = `%${kw}%`;
+          params.push(kw, term, term, term);
+        });
+      }
+
+      if (featured === '1' || featured === 'true') {
+        query += " AND featured = 1";
+      }
+
+      if (search && typeof search === 'string' && search.trim()) {
+        query += " AND (title LIKE ? OR summary LIKE ? OR tags LIKE ? OR category LIKE ?)";
+        const term = `%${search.trim()}%`;
+        params.push(term, term, term, term);
+      }
+
+      query += " ORDER BY featured DESC, id DESC";
+
+      if (limit && !isNaN(Number(limit))) {
+        query += ` LIMIT ${Number(limit)}`;
+      }
+
+      const rows = db.prepare(query).all(...params);
+      const parsed = rows.map((r: any) => ({
+        ...r,
+        takeaways: r.takeaways ? JSON.parse(r.takeaways) : []
+      }));
+      res.json(parsed);
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.get("/api/insights/:id", (req, res) => {
+    try {
+      const { id } = req.params;
+      db.prepare("UPDATE counseling_insights SET views = views + 1 WHERE id = ?").run(id);
+      const insight = db.prepare("SELECT * FROM counseling_insights WHERE id = ?").get(id) as any;
+      if (!insight) {
+        return res.status(404).json({ error: "칼럼을 찾을 수 없습니다." });
+      }
+      res.json({
+        ...insight,
+        takeaways: insight.takeaways ? JSON.parse(insight.takeaways) : []
+      });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // --- Mental Health Quick Poll Endpoints ---
+  const BASELINE_POLL_COUNTS: Record<string, number> = {
+    peaceful: 62,
+    happy: 48,
+    tired: 104,
+    anxious: 78,
+    heavy: 56,
+    confused: 41,
+  };
+
+  const getPollStats = () => {
+    const counts: Record<string, number> = { ...BASELINE_POLL_COUNTS };
+    const rows = db.prepare("SELECT mood_id, COUNT(*) as count FROM quick_poll_votes GROUP BY mood_id").all() as any[];
+    for (const r of rows) {
+      if (counts[r.mood_id] !== undefined) {
+        counts[r.mood_id] += r.count;
+      } else {
+        counts[r.mood_id] = r.count;
+      }
+    }
+    const totalVotes = Object.values(counts).reduce((acc, c) => acc + c, 0);
+    const percentages: Record<string, number> = {};
+    for (const [key, count] of Object.entries(counts)) {
+      percentages[key] = totalVotes > 0 ? Math.round((count / totalVotes) * 100) : 0;
+    }
+    return { counts, percentages, totalVotes };
+  };
+
+  app.get("/api/poll/stats", (req, res) => {
+    try {
+      const stats = getPollStats();
+      res.json(stats);
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.post("/api/poll/vote", (req, res) => {
+    try {
+      const { mood_id } = req.body;
+      const validMoods = ['peaceful', 'happy', 'tired', 'anxious', 'heavy', 'confused'];
+      if (!mood_id || !validMoods.includes(mood_id)) {
+        return res.status(400).json({ error: "올바른 감정 항목을 선택해 주세요." });
+      }
+      db.prepare("INSERT INTO quick_poll_votes (mood_id) VALUES (?)").run(mood_id);
+      const stats = getPollStats();
+      res.json({
+        success: true,
+        userVotedMood: mood_id,
+        ...stats,
+      });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // --- Newsletter Subscription Endpoints ---
+  app.post("/api/newsletter/subscribe", (req, res) => {
+    try {
+      const { email, name, interest_topic } = req.body;
+      if (!email || !email.trim()) {
+        return res.status(400).json({ error: "이메일 주소를 입력해 주세요." });
+      }
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email.trim())) {
+        return res.status(400).json({ error: "올바른 이메일 형식을 입력해 주세요 (예: user@example.com)." });
+      }
+
+      const cleanEmail = email.trim().toLowerCase();
+      const topic = interest_topic || '전체';
+      const cleanName = name ? name.trim() : null;
+
+      const existing = db.prepare("SELECT * FROM newsletter_subscriptions WHERE email = ?").get(cleanEmail) as any;
+      if (existing) {
+        db.prepare("UPDATE newsletter_subscriptions SET status = 'active', interest_topic = ?, name = COALESCE(?, name) WHERE email = ?")
+          .run(topic, cleanName, cleanEmail);
+        return res.json({ 
+          success: true, 
+          message: "이미 구독 중인 이메일입니다. 구독 정보(관심 주제)가 최신으로 업데이트되었습니다." 
+        });
+      }
+
+      db.prepare(`
+        INSERT INTO newsletter_subscriptions (email, name, interest_topic)
+        VALUES (?, ?, ?)
+      `).run(cleanEmail, cleanName, topic);
+
+      res.status(201).json({
+        success: true,
+        message: "행복바람 마음 건강 레터 구독이 완료되었습니다. 격주 화요일 아침 따뜻한 치유 팁을 보내드립니다."
+      });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message || "구독 처리 중 오류가 발생했습니다." });
+    }
+  });
+
+  app.get("/api/newsletter/stats", (req, res) => {
+    try {
+      const count = (db.prepare("SELECT COUNT(*) as count FROM newsletter_subscriptions WHERE status = 'active'").get() as any).count;
+      res.json({ subscriberCount: count + 1420 }); // Base readers count for positive social proof
     } catch (err: any) {
       res.status(500).json({ error: err.message });
     }
