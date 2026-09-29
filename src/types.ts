@@ -178,6 +178,7 @@ export interface NotificationLog {
 export interface Testimonial {
   id: string;
   clientName: string;
+  initial?: string;
   ageGroupAndRole: string;
   category: 'adult' | 'couple' | 'youth' | 'anxiety';
   categoryLabel: string;

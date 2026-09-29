@@ -1362,6 +1362,19 @@ export default function Community() {
               </div>
             </div>
 
+            {/* Clinical Ethics & Confidentiality Notice Banner */}
+            <div className="p-4 sm:p-5 rounded-2xl bg-emerald-50/90 border border-emerald-200/90 mb-6 flex items-start gap-3.5 text-xs text-emerald-950 font-serif leading-relaxed shadow-2xs">
+              <ShieldCheck className="w-5 h-5 text-emerald-700 shrink-0 mt-0.5" />
+              <div>
+                <strong className="block text-sm font-bold text-emerald-900 mb-1">
+                  한국상담심리학회 윤리강령 제1조 [비밀보장 및 사생활 보호] 원칙 준수 안내
+                </strong>
+                <p className="text-emerald-900/85">
+                  행복바람심리상담연구소의 모든 상담 후기는 내담자 본인의 자발적 공유 동의를 받았으며, 내담자의 인격과 사생활을 철저히 보호하기 위해 <strong>모든 성명(영문 이니셜 및 가명 처리), 직무, 세부 정황을 100% 비식별 가명화 및 재구성</strong>하여 게시하고 있습니다.
+                </p>
+              </div>
+            </div>
+
             {/* Visual Client Satisfaction Analytics with Radar & Bar Chart */}
             <ClientSatisfactionAnalytics />
 
@@ -1381,8 +1394,11 @@ export default function Community() {
                           </span>
                           <span className="text-[11px] text-brand-brown/50">{rev.programTaken}</span>
                         </div>
-                        <h4 className="font-bold text-sm text-brand-brown flex items-center gap-1.5">
+                        <h4 className="font-bold text-sm text-brand-brown flex items-center gap-1.5 flex-wrap">
                           <span>{rev.clientName}</span>
+                          <span className="text-[10px] px-1.5 py-0.2 rounded-md bg-slate-100 text-slate-700 font-bold border border-slate-200 font-sans">
+                            가명 보호
+                          </span>
                           <span className="text-xs font-normal text-brand-brown/60">({rev.ageGroupAndRole})</span>
                         </h4>
                       </div>

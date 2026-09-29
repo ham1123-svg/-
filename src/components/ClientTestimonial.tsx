@@ -139,9 +139,9 @@ export default function ClientTestimonial({ className }: { className?: string })
             행복바람의 안전한 상담실에서 다시 일상을 살아갈 평온과 용기를 되찾은 실제 내담자분들의 이야기입니다.
           </p>
 
-          <div className="inline-flex items-center gap-2 mt-4 px-3.5 py-1 rounded-full bg-white/90 border border-brand-green/30 text-xs font-serif text-brand-brown/70 shadow-2xs">
-            <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-            <span>100% 개인식별정보 익명 보호 · 한국상담학회 윤리강령 준수</span>
+          <div className="inline-flex items-center gap-2 mt-4 px-4 py-1.5 rounded-full bg-emerald-50/95 border border-emerald-300 text-xs font-serif text-emerald-900 shadow-2xs font-bold">
+            <ShieldCheck className="w-4 h-4 text-emerald-700 shrink-0" />
+            <span>한국상담심리학회 윤리강령 준수 · 100% 철저한 비밀보장 및 개인식별정보 비식별 가명 처리</span>
           </div>
         </div>
 
@@ -275,16 +275,22 @@ export default function ClientTestimonial({ className }: { className?: string })
                         </span>
                       </div>
 
-                      <span className="text-[10px] px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-800 font-serif font-bold border border-emerald-200/80 flex items-center gap-1">
-                        <CheckCircle2 className="w-2.5 h-2.5 text-emerald-600" />
-                        <span>종결 내담자 인증</span>
-                      </span>
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[10px] px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-800 font-serif font-bold border border-emerald-200/80 flex items-center gap-1">
+                          <CheckCircle2 className="w-2.5 h-2.5 text-emerald-600" />
+                          <span>종결 인증</span>
+                        </span>
+                        <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-slate-100 text-slate-700 font-serif font-bold border border-slate-200 flex items-center gap-1">
+                          <ShieldCheck className="w-2.5 h-2.5 text-brand-sage" />
+                          <span>가명 보호</span>
+                        </span>
+                      </div>
                     </div>
 
                     {/* Client Identity Header */}
                     <div className="flex items-center gap-3 mb-4">
-                      <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-sage to-brand-brown text-white font-serif font-bold text-sm flex items-center justify-center shadow-2xs border border-white/50 shrink-0">
-                        {card.clientName.substring(0, 1)}
+                      <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-sage to-brand-brown text-white font-serif font-bold text-xs flex items-center justify-center shadow-2xs border border-white/50 shrink-0 tracking-wider">
+                        {card.initial || card.clientName.slice(0, 1)}
                       </div>
                       <div className="min-w-0">
                         <div className="flex items-center gap-1.5 flex-wrap">
@@ -512,16 +518,28 @@ export default function ClientTestimonial({ className }: { className?: string })
               {/* Modal Body */}
               <div className="p-6 sm:p-8 overflow-y-auto space-y-6">
                 
+                {/* Anonymity & Privacy Assurance Banner */}
+                <div className="p-3.5 bg-emerald-50/90 border border-emerald-200/90 rounded-2xl flex items-start gap-2.5 text-xs text-emerald-950 font-serif leading-relaxed">
+                  <ShieldCheck className="w-4 h-4 text-emerald-700 shrink-0 mt-0.5" />
+                  <div>
+                    <strong className="font-bold text-emerald-900 block mb-0.5">내담자 비밀보장 및 개인정보 비식별 조치 안내</strong>
+                    <span>본 후기는 내담자의 자발적 동의 하에 게재되었으며, 신원 특정을 철저히 방지하기 위해 성명(가명·이니셜), 직무, 세부 상황을 100% 가명화 및 재구성하여 비밀을 완벽히 보호합니다.</span>
+                  </div>
+                </div>
+
                 {/* Client Info Banner */}
                 <div className="flex items-center justify-between gap-3 pb-4 border-b border-brand-green/20">
                   <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-brand-sage to-brand-brown text-white font-serif font-bold text-base flex items-center justify-center shadow-xs">
-                      {selectedStory.clientName.substring(0, 1)}
+                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-brand-sage to-brand-brown text-white font-serif font-bold text-sm flex items-center justify-center shadow-xs tracking-wider">
+                      {selectedStory.initial || selectedStory.clientName.slice(0, 1)}
                     </div>
                     <div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <span className="text-base font-serif font-bold text-brand-brown">
                           {selectedStory.clientName}
+                        </span>
+                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 font-bold border border-slate-200 font-serif">
+                          비식별 가명화
                         </span>
                         <span className="text-xs text-brand-brown/70 font-serif">
                           {selectedStory.ageGroupAndRole}
