@@ -282,7 +282,7 @@ export default function Reservation() {
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="mb-14"
+          className="mb-8 sm:mb-10"
           aria-label="상담 예약 절차 안내"
         >
           <div className="bg-white/80 backdrop-blur-xs rounded-3xl p-6 sm:p-8 border border-brand-green/30 shadow-xs">
@@ -369,6 +369,7 @@ export default function Reservation() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.1 }}
+          className="mb-6 sm:mb-8"
         >
           <WeeklyScheduleCalendar
             selectedDate={formData.preferred_date}
@@ -384,7 +385,7 @@ export default function Reservation() {
           />
         </motion.div>
 
-        <div className="grid lg:grid-cols-2 gap-12" ref={formRef} id="reservation-form-section">
+        <div className="grid lg:grid-cols-2 gap-12 scroll-mt-24" ref={formRef} id="reservation-form-section">
           {/* Reservation Form */}
           <motion.div 
             initial={{ opacity: 0, x: -20 }}

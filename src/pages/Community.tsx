@@ -1642,7 +1642,7 @@ export default function Community() {
               마음의 무게를 혼자 짊어지지 마세요
             </h3>
             <p className="text-white/80 text-xs sm:text-sm leading-relaxed mb-6">
-              10,000+ 시간 임상 경험의 교육학 박사 박미경 소장이 온전한 환대와 따뜻한 마음으로 당신의 회복 여정을 함께합니다.
+              총 30,000시간 이상의 심층 상담 시간을 축적한 교육학 박사 박미경 소장이 온전한 환대와 따뜻한 마음으로 당신의 회복 여정을 함께합니다.
             </p>
             <div className="flex flex-wrap items-center justify-center gap-3">
               <Link

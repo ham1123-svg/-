@@ -93,11 +93,54 @@ export interface Reservation {
   phone: string;
   program_id: number;
   program_title?: string;
+  program_category?: string;
   preferred_date: string;
   preferred_time: string;
   status?: string;
   admin_notes?: string;
   created_at?: string;
+}
+
+export interface CategoryMonthlyTrend {
+  month: string;
+  monthLabel: string;
+  '개인상담': number;
+  '부부상담': number;
+  '심리검사': number;
+  '기업상담': number;
+  '집단/교육': number;
+  total: number;
+  [key: string]: any;
+}
+
+export interface CategorySummaryStat {
+  category: string;
+  count: number;
+  percentage: number;
+  color: string;
+  secondaryColor: string;
+  iconName: string;
+  growthMoM?: number;
+}
+
+export interface ReservationTrendAnalytics {
+  months: string[];
+  monthlyData: CategoryMonthlyTrend[];
+  categoryTotals: CategorySummaryStat[];
+  summary: {
+    totalReservations: number;
+    monthlyAverage: number;
+    topCategory: {
+      category: string;
+      count: number;
+      percentage: number;
+    };
+    momGrowth: number;
+    highestMonth: {
+      monthLabel: string;
+      count: number;
+    };
+  };
 }
 
 export interface ScheduleBlock {

@@ -6,7 +6,9 @@ import fs from "fs";
 import { 
   sendReservationNotification, 
   isNotificationGatewayConfigured, 
-  formatPhoneNumber 
+  formatPhoneNumber,
+  sendAdminNewReservationNotification,
+  sendAdminTestAlimtalk
 } from "./src/server/notificationService.ts";
 import nodemailer from "nodemailer";
 
@@ -189,6 +191,12 @@ if (!adminEmailRow) {
   db.prepare("INSERT OR REPLACE INTO admin_settings (key, value) VALUES ('admin_email', 'hahm1123@gmail.com, mikypa@naver.com')").run();
 }
 
+// Seed registered admin mobile phone for Kakao Alimtalk reception
+const adminPhoneRow = db.prepare("SELECT value FROM admin_settings WHERE key = 'admin_phone'").get() as any;
+if (!adminPhoneRow || adminPhoneRow.value === '010-8588-4663') {
+  db.prepare("INSERT OR REPLACE INTO admin_settings (key, value) VALUES ('admin_phone', '010-7322-5676')").run();
+}
+
 // Seed data
 const existingCounselor = db.prepare("SELECT * FROM counselors WHERE name = ?").get("박미경") as any;
 if (!existingCounselor) {
@@ -197,18 +205,18 @@ if (!existingCounselor) {
     "박미경", 
     "상담 소장 (대표 원장)", 
     "교육학 박사 (상담 심리 및 교육 심리 전공)", 
-    "한국상담학회 공인 1급 수련감독자(슈퍼바이저)\n한국상담학회 전문상담사 1급\n여성가족부 청소년상담사 1급 (국가공인)\n한국상담심리학회 정회원\n한국부부가족상담학회 정회원", 
+    "한국상담학회 공인 1급 수련감독자(슈퍼바이저)\n한국상담학회 전문상담사 1급 (No. 818)\n여성가족부 청소년상담사 1급 (국가공인)\n한국상담심리학회 정회원\n한국부부가족상담학회 정회원", 
     "개인 심층 치유 / 기업 EAP / 부부·가족 갈등 / 종합심리평가 / 전문가 수련 지도", 
-    "#교육학박사 #1급슈퍼바이저 #10000시간임상 #성인개인상담 #부부상담 #청소년심리 #심리검사 #기업EAP", 
+    "#교육학박사 #1급슈퍼바이저 #총상담30000시간 #성인개인상담 #부부상담 #청소년심리 #심리검사 #기업EAP", 
     "/images/counselor_park.jpg"
   );
 } else {
   db.prepare("UPDATE counselors SET title = ?, education = ?, certifications = ?, style = ?, tags = ?, image_url = ? WHERE name = ?").run(
     "상담 소장 (대표 원장)",
     "교육학 박사 (상담 심리 및 교육 심리 전공)",
-    "한국상담학회 공인 1급 수련감독자(슈퍼바이저)\n한국상담학회 전문상담사 1급\n여성가족부 청소년상담사 1급 (국가공인)\n한국상담심리학회 정회원\n한국부부가족상담학회 정회원",
+    "한국상담학회 공인 1급 수련감독자(슈퍼바이저)\n한국상담학회 전문상담사 1급 (No. 818)\n여성가족부 청소년상담사 1급 (국가공인)\n한국상담심리학회 정회원\n한국부부가족상담학회 정회원",
     "개인 심층 치유 / 기업 EAP / 부부·가족 갈등 / 종합심리평가 / 전문가 수련 지도",
-    "#교육학박사 #1급슈퍼바이저 #10000시간임상 #성인개인상담 #부부상담 #청소년심리 #심리검사 #기업EAP",
+    "#교육학박사 #1급슈퍼바이저 #총상담30000시간 #성인개인상담 #부부상담 #청소년심리 #심리검사 #기업EAP",
     "/images/counselor_park.jpg",
     "박미경"
   );
@@ -218,13 +226,90 @@ if (!existingCounselor) {
 db.prepare("DELETE FROM counselors WHERE name != ?").run("박미경");
 
 // Seed data
-db.exec("DELETE FROM programs");
-const insertProgram = db.prepare("INSERT INTO programs (category, title, description, tags) VALUES (?, ?, ?, ?)");
-insertProgram.run("개인상담", "청소년 및 성인 상담", "우울, 불안, 스트레스, 대인관계 등 개인의 심리적 성장을 돕는 1:1 맞춤형 상담입니다.", "#청소년 #성인 #심리성장");
-insertProgram.run("부부상담", "부부 및 가족 관계 개선", "부부 갈등 해결, 의사소통 개선 및 관계 회복을 위한 전문적인 심리 지원을 제공합니다.", "#부부갈등 #관계회복 #의사소통");
-insertProgram.run("심리검사", "종합 심리검사 및 해석", "객관적인 검사를 통해 자기 이해를 돕고 현재의 심리적 상태를 정밀하게 파악합니다.", "#자기이해 #정밀진단 #성격검사");
-insertProgram.run("기업상담", "EAP (근로자 지원 프로그램)", "직장 내 스트레스 관리 및 조직 적응을 위한 임직원 맞춤형 상담 서비스를 제공합니다.", "#직장스트레스 #조직적응 #EAP");
-insertProgram.run("집단/교육", "집단상담 및 심리교육", "특정 주제를 가진 소그룹 상담과 마음 건강을 위한 다양한 교육 프로그램을 운영합니다.", "#집단상담 #심리교육 #워크숍");
+const programCount = (db.prepare("SELECT COUNT(*) as count FROM programs").get() as any).count;
+if (programCount === 0) {
+  const insertProgram = db.prepare("INSERT INTO programs (category, title, description, tags) VALUES (?, ?, ?, ?)");
+  insertProgram.run("개인상담", "청소년 및 성인 상담", "우울, 불안, 스트레스, 대인관계 등 개인의 심리적 성장을 돕는 1:1 맞춤형 상담입니다.", "#청소년 #성인 #심리성장");
+  insertProgram.run("부부상담", "부부 및 가족 관계 개선", "부부 갈등 해결, 의사소통 개선 및 관계 회복을 위한 전문적인 심리 지원을 제공합니다.", "#부부갈등 #관계회복 #의사소통");
+  insertProgram.run("심리검사", "종합 심리검사 및 해석", "객관적인 검사를 통해 자기 이해를 돕고 현재의 심리적 상태를 정밀하게 파악합니다.", "#자기이해 #정밀진단 #성격검사");
+  insertProgram.run("기업상담", "EAP (근로자 지원 프로그램)", "직장 내 스트레스 관리 및 조직 적응을 위한 임직원 맞춤형 상담 서비스를 제공합니다.", "#직장스트레스 #조직적응 #EAP");
+  insertProgram.run("집단/교육", "집단상담 및 심리교육", "특정 주제를 가진 소그룹 상담과 마음 건강을 위한 다양한 교육 프로그램을 운영합니다.", "#집단상담 #심리교육 #워크숍");
+}
+
+// Seed 6-month historical reservation data for analytics if reservations count is low
+const reservationCount = (db.prepare("SELECT COUNT(*) as count FROM reservations").get() as any).count;
+if (reservationCount < 40) {
+  const programMap: { [cat: string]: number } = {};
+  const currentPrograms = db.prepare("SELECT id, category FROM programs").all() as Array<{ id: number; category: string }>;
+  currentPrograms.forEach(p => {
+    programMap[p.category] = p.id;
+  });
+
+  const sampleClients = [
+    { name: '이지원', phone: '010-2345-6789' },
+    { name: '박서준', phone: '010-3456-7891' },
+    { name: '김도윤', phone: '010-4567-8912' },
+    { name: '최유진', phone: '010-5678-9123' },
+    { name: '정하은', phone: '010-6789-1234' },
+    { name: '강민재', phone: '010-7890-2345' },
+    { name: '윤서연', phone: '010-8901-3456' },
+    { name: '임준서', phone: '010-9012-4567' },
+    { name: '송예린', phone: '010-1123-5678' },
+    { name: '오지후', phone: '010-2234-6789' },
+    { name: '황수빈', phone: '010-3345-7890' },
+    { name: '한우진', phone: '010-4456-8901' },
+    { name: '신아린', phone: '010-5567-9012' },
+    { name: '배도현', phone: '010-6678-0123' },
+    { name: '권지우', phone: '010-7789-1234' },
+    { name: '조은서', phone: '010-8890-2345' },
+    { name: '문태양', phone: '010-9901-3456' },
+    { name: '유다온', phone: '010-1234-4567' },
+    { name: '홍준혁', phone: '010-2345-5678' },
+    { name: '백서아', phone: '010-3456-6789' }
+  ];
+
+  const timeSlots = ['09:00', '10:30', '14:00', '15:30', '17:00', '18:30', '20:00'];
+  const insertRes = db.prepare(`
+    INSERT INTO reservations (name, phone, program_id, preferred_date, preferred_time, status, created_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?)
+  `);
+
+  const monthlyDistributions = [
+    { year: 2026, month: 4, days: 30, counts: { '개인상담': 22, '부부상담': 12, '심리검사': 7, '기업상담': 5, '집단/교육': 2 } },
+    { year: 2026, month: 5, days: 31, counts: { '개인상담': 25, '부부상담': 18, '심리검사': 8, '기업상담': 5, '집단/교육': 3 } },
+    { year: 2026, month: 6, days: 30, counts: { '개인상담': 29, '부부상담': 15, '심리검사': 10, '기업상담': 7, '집단/교육': 3 } },
+    { year: 2026, month: 7, days: 31, counts: { '개인상담': 33, '부부상담': 16, '심리검사': 13, '기업상담': 6, '집단/교육': 4 } },
+    { year: 2026, month: 8, days: 31, counts: { '개인상담': 37, '부부상담': 17, '심리검사': 14, '기업상담': 7, '집단/교육': 4 } },
+    { year: 2026, month: 9, days: 28, counts: { '개인상담': 42, '부부상담': 21, '심리검사': 12, '기업상담': 8, '집단/교육': 5 } }
+  ];
+
+  let clientIdx = 0;
+  monthlyDistributions.forEach(mDist => {
+    Object.entries(mDist.counts).forEach(([cat, targetCount]) => {
+      const pid = programMap[cat] || (currentPrograms[0]?.id ?? 1);
+      for (let i = 0; i < targetCount; i++) {
+        const client = sampleClients[clientIdx % sampleClients.length];
+        clientIdx++;
+
+        const day = 1 + Math.floor((i / targetCount) * (mDist.days - 2)) + (i % 2);
+        const dayStr = String(Math.min(day, mDist.days)).padStart(2, '0');
+        const monthStr = String(mDist.month).padStart(2, '0');
+        const dateStr = `${mDist.year}-${monthStr}-${dayStr}`;
+        const timeStr = timeSlots[(i + clientIdx) % timeSlots.length];
+        
+        let status = 'completed';
+        if (mDist.month === 9) {
+          status = i % 5 === 0 ? 'pending' : (i % 2 === 0 ? 'confirmed' : 'completed');
+        } else if (mDist.month === 8) {
+          status = i % 10 === 0 ? 'confirmed' : 'completed';
+        }
+
+        const createdAt = `${dateStr} ${timeStr}:00`;
+        insertRes.run(client.name, client.phone, pid, dateStr, timeStr, status, createdAt);
+      }
+    });
+  });
+}
 
 // Seed community notices
 const noticeCount = (db.prepare("SELECT COUNT(*) as count FROM community_notices").get() as any).count;
@@ -705,12 +790,141 @@ async function startServer() {
   app.get("/api/reservations", (req, res) => {
     try {
       const reservations = db.prepare(`
-        SELECT r.*, p.title as program_title 
+        SELECT r.*, p.title as program_title, p.category as program_category 
         FROM reservations r 
         LEFT JOIN programs p ON r.program_id = p.id 
         ORDER BY r.id DESC
       `).all();
       res.json(reservations);
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // Admin Data Visualization Analytics: 6-month reservation trends by category
+  app.get("/api/admin/analytics/reservations-trend", (req, res) => {
+    try {
+      const baseYear = 2026;
+      const baseMonth = 8; // September (0-indexed)
+
+      const months: string[] = [];
+      const monthLabels: { [key: string]: string } = {};
+
+      for (let i = 5; i >= 0; i--) {
+        const d = new Date(baseYear, baseMonth - i, 1);
+        const yyyy = d.getFullYear();
+        const mm = String(d.getMonth() + 1).padStart(2, '0');
+        const key = `${yyyy}-${mm}`;
+        months.push(key);
+        monthLabels[key] = `${d.getMonth() + 1}월`;
+      }
+
+      const rows = db.prepare(`
+        SELECT 
+          strftime('%Y-%m', r.preferred_date) as month,
+          COALESCE(p.category, '개인상담') as category,
+          COUNT(*) as count
+        FROM reservations r
+        LEFT JOIN programs p ON r.program_id = p.id
+        WHERE strftime('%Y-%m', r.preferred_date) IN (${months.map(m => `'${m}'`).join(',')})
+        GROUP BY month, category
+      `).all() as Array<{ month: string; category: string; count: number }>;
+
+      const categories = ['개인상담', '부부상담', '심리검사', '기업상담', '집단/교육'];
+      
+      const monthlyDataMap: { [month: string]: any } = {};
+      months.forEach(m => {
+        monthlyDataMap[m] = {
+          month: m,
+          monthLabel: monthLabels[m],
+          '개인상담': 0,
+          '부부상담': 0,
+          '심리검사': 0,
+          '기업상담': 0,
+          '집단/교육': 0,
+          total: 0
+        };
+      });
+
+      rows.forEach(row => {
+        if (monthlyDataMap[row.month]) {
+          const cat = categories.includes(row.category) ? row.category : '개인상담';
+          monthlyDataMap[row.month][cat] = (monthlyDataMap[row.month][cat] || 0) + Number(row.count);
+          monthlyDataMap[row.month].total += Number(row.count);
+        }
+      });
+
+      const monthlyData = months.map(m => monthlyDataMap[m]);
+
+      const categoryCounts: { [cat: string]: number } = {
+        '개인상담': 0,
+        '부부상담': 0,
+        '심리검사': 0,
+        '기업상담': 0,
+        '집단/교육': 0
+      };
+
+      let grandTotal = 0;
+      monthlyData.forEach(md => {
+        categories.forEach(cat => {
+          categoryCounts[cat] += md[cat];
+        });
+        grandTotal += md.total;
+      });
+
+      const categoryStyles: { [cat: string]: { color: string; secondaryColor: string; iconName: string } } = {
+        '개인상담': { color: '#4B6354', secondaryColor: '#EDF2EE', iconName: 'User' },
+        '부부상담': { color: '#C87D55', secondaryColor: '#FDF4EF', iconName: 'Users' },
+        '심리검사': { color: '#4A6984', secondaryColor: '#EEF3F8', iconName: 'ClipboardCheck' },
+        '기업상담': { color: '#8C6D46', secondaryColor: '#F8F4EE', iconName: 'Building2' },
+        '집단/교육': { color: '#795B78', secondaryColor: '#F7F2F6', iconName: 'GraduationCap' }
+      };
+
+      const categoryTotals = categories.map(cat => ({
+        category: cat,
+        count: categoryCounts[cat],
+        percentage: grandTotal > 0 ? Math.round((categoryCounts[cat] / grandTotal) * 1000) / 10 : 0,
+        color: categoryStyles[cat].color,
+        secondaryColor: categoryStyles[cat].secondaryColor,
+        iconName: categoryStyles[cat].iconName
+      }));
+
+      let topCategory = categoryTotals[0];
+      categoryTotals.forEach(ct => {
+        if (ct.count > topCategory.count) {
+          topCategory = ct;
+        }
+      });
+
+      const prevMonth = monthlyData[monthlyData.length - 2]?.total || 0;
+      const currentMonth = monthlyData[monthlyData.length - 1]?.total || 0;
+      const momGrowth = prevMonth > 0 
+        ? Math.round(((currentMonth - prevMonth) / prevMonth) * 1000) / 10 
+        : 0;
+
+      let highestMonth = { monthLabel: monthlyData[0]?.monthLabel || '', count: monthlyData[0]?.total || 0 };
+      monthlyData.forEach(md => {
+        if (md.total > highestMonth.count) {
+          highestMonth = { monthLabel: md.monthLabel, count: md.total };
+        }
+      });
+
+      res.json({
+        months,
+        monthlyData,
+        categoryTotals,
+        summary: {
+          totalReservations: grandTotal,
+          monthlyAverage: Math.round(grandTotal / (months.length || 1)),
+          topCategory: {
+            category: topCategory.category,
+            count: topCategory.count,
+            percentage: topCategory.percentage
+          },
+          momGrowth,
+          highestMonth
+        }
+      });
     } catch (err: any) {
       res.status(500).json({ error: err.message });
     }
@@ -774,7 +988,41 @@ async function startServer() {
         }
       }
 
-      // Initial Receipt Log (simulated/preview receipt notification)
+      // 1. Dispatch Kakao Alimtalk to Registered Administrator Mobile
+      let adminNotifyResult = null;
+      try {
+        const adminPhoneRow = db.prepare("SELECT value FROM admin_settings WHERE key = 'admin_phone'").get() as any;
+        const registeredAdminPhone = adminPhoneRow?.value || process.env.ADMIN_PHONE || '010-7322-5676';
+
+        adminNotifyResult = await sendAdminNewReservationNotification({
+          adminPhone: registeredAdminPhone,
+          applicantName: name,
+          applicantPhone: phone,
+          programTitle,
+          preferredDate: preferred_date,
+          preferredTime: preferred_time,
+          reservationId,
+          isQuick: false
+        });
+
+        db.prepare(`
+          INSERT INTO notification_logs 
+          (reservation_id, recipient_name, recipient_phone, channel, template_title, message_content, status) 
+          VALUES (?, ?, ?, ?, ?, ?, ?)
+        `).run(
+          reservationId,
+          `관리자 (${formatPhoneNumber(registeredAdminPhone)})`,
+          registeredAdminPhone,
+          adminNotifyResult.channel,
+          adminNotifyResult.templateTitle,
+          adminNotifyResult.content,
+          adminNotifyResult.status
+        );
+      } catch (adminNotifyErr) {
+        console.error("Failed to process admin Alimtalk notification:", adminNotifyErr);
+      }
+
+      // 2. Dispatch Kakao Alimtalk Receipt Notice to Applicant Mobile
       let notificationResult = null;
       try {
         notificationResult = await sendReservationNotification({
@@ -808,7 +1056,8 @@ async function startServer() {
         id: reservationId, 
         status: "pending",
         message: "예약 신청이 정상 접수되었습니다. 관리자 확인 후 예약이 확정되며 카카오톡 알림톡이 발송됩니다.",
-        notification: notificationResult
+        notification: notificationResult,
+        adminNotification: adminNotifyResult
       });
     } catch (err: any) {
       res.status(500).json({ error: err.message });
@@ -843,7 +1092,41 @@ async function startServer() {
 
       const reservationId = Number(info.lastInsertRowid);
 
-      // Attempt receipt notification log
+      // 1. Dispatch Kakao Alimtalk to Registered Administrator Mobile
+      let adminNotifyResult = null;
+      try {
+        const adminPhoneRow = db.prepare("SELECT value FROM admin_settings WHERE key = 'admin_phone'").get() as any;
+        const registeredAdminPhone = adminPhoneRow?.value || process.env.ADMIN_PHONE || '010-7322-5676';
+
+        adminNotifyResult = await sendAdminNewReservationNotification({
+          adminPhone: registeredAdminPhone,
+          applicantName: cleanName,
+          applicantPhone: cleanPhone,
+          programTitle: "간편 전화상담(콜백) 요청",
+          preferredDate: todayStr,
+          preferredTime: callbackSlot,
+          reservationId,
+          isQuick: true
+        });
+
+        db.prepare(`
+          INSERT INTO notification_logs 
+          (reservation_id, recipient_name, recipient_phone, channel, template_title, message_content, status) 
+          VALUES (?, ?, ?, ?, ?, ?, ?)
+        `).run(
+          reservationId,
+          `관리자 (${formatPhoneNumber(registeredAdminPhone)})`,
+          registeredAdminPhone,
+          adminNotifyResult.channel,
+          adminNotifyResult.templateTitle,
+          adminNotifyResult.content,
+          adminNotifyResult.status
+        );
+      } catch (adminNotifyErr) {
+        console.error("Failed to process admin quick-reservation notification:", adminNotifyErr);
+      }
+
+      // 2. Dispatch Kakao Alimtalk Receipt Notice to Applicant Mobile
       let notificationResult = null;
       try {
         notificationResult = await sendReservationNotification({
@@ -877,7 +1160,8 @@ async function startServer() {
         success: true,
         id: reservationId,
         message: "간편 전화상담(콜백) 예약이 정상 접수되었습니다. 전문 상담사가 확인 후 빠르게 연락드리겠습니다.",
-        notification: notificationResult
+        notification: notificationResult,
+        adminNotification: adminNotifyResult
       });
     } catch (err: any) {
       console.error("Quick reservation error:", err);
@@ -1620,12 +1904,18 @@ async function startServer() {
   app.get("/api/notifications/config", (req, res) => {
     try {
       const isConfigured = isNotificationGatewayConfigured();
+      const adminPhoneRow = db.prepare("SELECT value FROM admin_settings WHERE key = 'admin_phone'").get() as any;
+      const adminPhone = adminPhoneRow ? adminPhoneRow.value : '010-7322-5676';
+
       res.json({
         configured: isConfigured,
         channel: "카카오 알림톡 (SMS 자동 대체)",
         senderNumber: process.env.ALIMTALK_SENDER_NUMBER || "052-254-0230",
+        adminPhone: adminPhone,
+        adminPhoneFormatted: formatPhoneNumber(adminPhone),
         pfId: process.env.ALIMTALK_PFID || "@행복바람심리상담연구소",
         templateId: process.env.ALIMTALK_TEMPLATE_ID || "RESERVATION_CONFIRM_V1",
+        adminTemplateId: process.env.ALIMTALK_ADMIN_TEMPLATE_ID || "ADMIN_NEW_RESERVATION_V1",
         mode: isConfigured ? "LIVE_GATEWAY" : "SIMULATED_PREVIEW"
       });
     } catch (err: any) {
@@ -2407,6 +2697,65 @@ async function startServer() {
       res.json({ success: true, message: '관리자 이메일이 성공적으로 저장되었습니다.' });
     } catch (err: any) {
       res.status(500).json({ error: err.message });
+    }
+  });
+
+  // Registered Administrator Phone Management for Kakao Alimtalk
+  app.get("/api/admin/registered-phone", (req, res) => {
+    try {
+      const row = db.prepare("SELECT value FROM admin_settings WHERE key = 'admin_phone'").get() as any;
+      const phone = row ? row.value : '010-7322-5676';
+      res.json({ phone, formattedPhone: formatPhoneNumber(phone) });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.post("/api/admin/registered-phone", (req, res) => {
+    try {
+      const { phone } = req.body;
+      if (!phone || typeof phone !== 'string' || !phone.trim()) {
+        return res.status(400).json({ success: false, error: '관리자 모바일 번호를 입력해 주세요.' });
+      }
+      const cleanPhone = phone.trim();
+      db.prepare("INSERT OR REPLACE INTO admin_settings (key, value) VALUES ('admin_phone', ?)").run(cleanPhone);
+      res.json({ 
+        success: true, 
+        phone: cleanPhone, 
+        formattedPhone: formatPhoneNumber(cleanPhone), 
+        message: '관리자 카카오 알림톡 수신 모바일 번호가 저장되었습니다.' 
+      });
+    } catch (err: any) {
+      res.status(500).json({ success: false, error: err.message });
+    }
+  });
+
+  app.post("/api/admin/notifications/test-admin", async (req, res) => {
+    try {
+      const row = db.prepare("SELECT value FROM admin_settings WHERE key = 'admin_phone'").get() as any;
+      const targetPhone = req.body.phone?.trim() || (row ? row.value : '010-7322-5676');
+      const result = await sendAdminTestAlimtalk(targetPhone);
+
+      db.prepare(`
+        INSERT INTO notification_logs 
+        (reservation_id, recipient_name, recipient_phone, channel, template_title, message_content, status) 
+        VALUES (NULL, ?, ?, ?, ?, ?, ?)
+      `).run(
+        `관리자 (${formatPhoneNumber(targetPhone)})`,
+        targetPhone,
+        result.channel,
+        result.templateTitle,
+        result.content,
+        result.status
+      );
+
+      res.json({ 
+        success: true, 
+        notification: result, 
+        message: `관리자 모바일(${formatPhoneNumber(targetPhone)})로 알림톡 테스트가 발송되었습니다.` 
+      });
+    } catch (err: any) {
+      res.status(500).json({ success: false, error: err.message });
     }
   });
 

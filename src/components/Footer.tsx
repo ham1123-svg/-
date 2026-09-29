@@ -25,7 +25,7 @@ export default function Footer() {
             <h3 className="font-serif text-2xl font-bold mb-4">행복바람<span className="text-brand-sage">심리상담연구소</span></h3>
             <p className="text-brand-beige/65 text-xs sm:text-sm leading-relaxed mb-6">
               모든 내담자가 자신의 삶에서 행복의 바람을 맞이할 수 있도록 돕습니다. 
-              10,000+ 시간 임상 경험과 따뜻한 공감으로 함께하겠습니다.
+              총 30,000시간 이상의 심층 상담 시간과 따뜻한 공감으로 함께하겠습니다.
             </p>
             <div className="p-3 rounded-xl bg-white/5 border border-white/10 text-xs text-brand-beige/70 space-y-1">
               <div className="text-brand-sage font-bold flex items-center gap-1.5">

@@ -132,8 +132,11 @@ export default function Guide() {
                 <span className="text-brand-sage font-bold">180,000원</span>
               </div>
               <div className="flex justify-between items-center py-4 border-b border-brand-green/10">
-                <span className="font-medium">놀이/미술 치료 (40분+10분 부모상담)</span>
-                <span className="text-brand-sage font-bold">90,000원</span>
+                <div>
+                  <span className="font-medium text-brand-brown">아동 상담 (50분)</span>
+                  <span className="block text-xs text-brand-brown/60 mt-0.5">아동 상담 40분 + 부모 양육 피드백 10분</span>
+                </div>
+                <span className="text-brand-sage font-bold">100,000원</span>
               </div>
               <div className="flex justify-between items-center py-4">
                 <span className="font-medium">종합심리검사 (Full Battery)</span>

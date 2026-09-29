@@ -135,10 +135,10 @@ export default function CounselorDetailModal({
             <div className="flex items-center gap-2">
               <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-brand-sage text-white uppercase tracking-wider flex items-center gap-1">
                 <ShieldCheck className="w-3.5 h-3.5" />
-                <span>공인 전문 상담사 상세 프로필</span>
+                <span>Executive Profile · 상담 소장 상세 프로필</span>
               </span>
               <span className="text-xs text-brand-brown/60 font-serif hidden md:inline">
-                자격증 정보 · 전문 분야 태그 · 상담 철학 검증 리포트
+                총 상담 30,000+ 시간 · 공인 1급 수련감독자 자격 검증 리포트
               </span>
             </div>
             <button
@@ -376,7 +376,7 @@ export default function CounselorDetailModal({
                   </div>
                 </div>
 
-                {/* 누적 임상 & 100% 비의료 비밀보장 배너 */}
+                {/* 총 상담 시간 & 100% 비의료 비밀보장 배너 */}
                 <div className="p-4 sm:p-5 rounded-2xl bg-brand-green/15 border border-brand-green/30 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-xl bg-brand-sage text-white flex items-center justify-center shrink-0">
@@ -384,16 +384,16 @@ export default function CounselorDetailModal({
                     </div>
                     <div>
                       <strong className="block text-brand-brown text-sm font-bold">
-                        누적 임상 상담 {profile.clinicalHours || '10,000+ 시간'} & 100% 비의료 비밀보장
+                        총 상담 시간 {profile.clinicalHours || '30,000+ 시간'} (Over 30,000 Consultation Hours) &amp; 100% 비의료 비밀보장
                       </strong>
                       <span className="text-brand-brown/75 font-serif">
-                        국민건강보험 및 전산에 기록이 남지 않으며 한국상담학회 윤리강령에 따라 안전하게 보호됩니다.
+                        단순 연수(16년 등) 표기가 아닌 실제 1:1 심층 상담 시간 기준이며, 국민건강보험 및 전산에 기록이 남지 않습니다.
                       </span>
                     </div>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
                     <span className="px-2.5 py-1 rounded-lg bg-emerald-100 text-emerald-800 font-bold text-[11px]">
-                      기록 미등재 안심
+                      총 상담 30,000+ 시간 인증
                     </span>
                   </div>
                 </div>

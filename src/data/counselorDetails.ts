@@ -3,7 +3,7 @@ import { Counselor, CounselorDetailedProfile } from '../types';
 export const parkMiKyeongDetailedProfile: CounselorDetailedProfile = {
   greeting: "상처 입은 마음에 따뜻한 바람이 불어오도록, 내담자 고유의 회복탄력성을 일깨우는 안전한 동행을 약속드립니다.",
   philosophy: "상담은 일방적인 조언이나 훈계가 아닙니다. 내담자가 살아온 고유한 삶의 무게를 깊이 공감하고, 그 마음에 억눌려 있던 본연의 치유력과 회복탄력성(Resilience)을 함께 발견해 나가는 안전한 동행입니다. 100% 철저한 비밀보장 속에서 판단 없는 온전한 수용을 약속드립니다.",
-  clinicalHours: "10,000+ 시간",
+  clinicalHours: "30,000+ 시간 (총 상담 시간)",
   supervisionCount: "한국상담학회 공인 1급 수련감독자",
   availability: {
     primaryDaysSummary: "월요일 ~ 금요일 (Mon - Fri) & 토요일 (Sat)",
@@ -35,7 +35,7 @@ export const parkMiKyeongDetailedProfile: CounselorDetailedProfile = {
       isSupervisor: true
     },
     {
-      name: "전문상담사 1급",
+      name: "전문상담사 1급 (No. 818)",
       issuer: "한국상담학회",
       level: "공인 1급",
       isSupervisor: false
@@ -61,7 +61,7 @@ export const parkMiKyeongDetailedProfile: CounselorDetailedProfile = {
   ],
   certificationsList: [
     "한국상담학회 수련감독자 (슈퍼바이저, 공인 1급 상담사 양성 지도 자격)",
-    "한국상담학회 공인 1급 전문상담사 (Accredited Professional Counselor)",
+    "한국상담학회 공인 1급 전문상담사 (No. 818, Accredited Professional Counselor)",
     "여성가족부 국가공인 청소년상담사 1급 (국가 공인 최고 등급 자격증)",
     "한국상담심리학회 정회원 (윤리규정 준수)",
     "한국부부가족상담학회 정회원",
@@ -81,9 +81,9 @@ export const parkMiKyeongDetailedProfile: CounselorDetailedProfile = {
       approach: "엄격한 윤리 강령과 표준화된 임상 지도 체계 적용"
     },
     {
-      tag: "#10000시간임상",
-      label: "10,000+ 임상 경험",
-      description: "울산 및 영남권에서 수많은 위기 내담자의 회복을 이끌어온 독보적인 임상 누적 시간입니다.",
+      tag: "#30000시간상담",
+      label: "총 상담 30,000+ 시간",
+      description: "단순한 연수(16년 등) 표기가 아닌, 실제 내담자와 직접 1:1로 마주하며 축적한 30,000시간 이상의 총 상담 시간(누적 임상 세션)입니다.",
       approach: "내담자 맞춤형 실전 통합 임상 솔루션 제공"
     },
     {
@@ -565,9 +565,9 @@ export const defaultCounselorsList: Counselor[] = [
     name: "박미경",
     title: "상담 소장 (대표 원장)",
     education: "교육학 박사 (상담 심리 및 교육 심리 전공)",
-    certifications: "한국상담학회 공인 1급 수련감독자(슈퍼바이저)\n한국상담학회 전문상담사 1급\n여성가족부 청소년상담사 1급 (국가공인)\n한국상담심리학회 정회원\n한국부부가족상담학회 정회원",
+    certifications: "한국상담학회 공인 1급 수련감독자(슈퍼바이저)\n한국상담학회 전문상담사 1급 (No. 818)\n여성가족부 청소년상담사 1급 (국가공인)\n한국상담심리학회 정회원\n한국부부가족상담학회 정회원",
     style: "개인 심층 치유 / 기업 EAP / 부부·가족 갈등 / 종합심리평가 / 전문가 수련 지도",
-    tags: "#교육학박사 #1급슈퍼바이저 #10000시간임상 #성인개인상담 #부부상담 #청소년심리 #심리검사 #기업EAP",
+    tags: "#교육학박사 #1급슈퍼바이저 #총상담30000시간 #성인개인상담 #부부상담 #청소년심리 #심리검사 #기업EAP",
     image_url: "/images/counselor_park.jpg",
     detailedProfile: parkMiKyeongDetailedProfile
   }

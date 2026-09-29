@@ -100,14 +100,20 @@ export default function Counselors() {
         {/* Page Header */}
         <div className="text-center mb-10 sm:mb-12">
           <span className="text-xs font-bold tracking-widest text-brand-sage uppercase px-3.5 py-1.5 bg-brand-sage/10 rounded-full inline-block mb-3 border border-brand-sage/20">
-            Professional Counselor Profile
+            Executive Profile · 박미경 소장 프로필
           </span>
           <h1 className="text-3xl md:text-4xl font-serif font-bold text-brand-brown mb-3">
-            상담사 소개
+            상담 소장 프로필 <span className="text-brand-sage font-normal text-2xl md:text-3xl">(Executive Profile)</span>
           </h1>
-          <p className="text-brand-brown/70 font-serif text-sm sm:text-base max-w-2xl mx-auto leading-relaxed">
-            국가공인 및 공인 학회 1급 전문 자격과 10,000시간 이상의 풍부한 임상 경험을 갖춘<br className="hidden sm:inline" />
-            <strong className="text-brand-brown font-bold">박미경 상담 소장</strong>이 내담자 한 분 한 분의 상처 회복과 평온을 위해 온 마음으로 함께합니다.
+          <p className="text-brand-brown/80 font-serif text-sm sm:text-base max-w-4xl mx-auto leading-relaxed break-keep text-center">
+            <span>
+              국가공인 및 공인 학회 1급 전문 자격과{' '}
+              <strong className="text-brand-sage font-bold">30,000시간 이상의 총 상담 시간(누적 임상 상담 시간)</strong>을 갖춘
+            </span>
+            <br />
+            <span className="text-brand-brown/75 mt-1 inline-block">
+              <strong className="text-brand-brown font-bold">박미경 상담 소장(대표 원장)</strong>이 내담자 한 분 한 분의 상처 회복과 평온을 위해 온 마음으로 함께합니다.
+            </span>
           </p>
         </div>
 
@@ -266,7 +272,7 @@ export default function Counselors() {
                         {/* Name & Academic Title */}
                         <div className="border-b border-brand-green/20 pb-5 mb-5">
                           <div className="flex flex-wrap items-baseline justify-between gap-2 mb-2">
-                            <div className="flex items-baseline gap-2.5">
+                            <div className="flex items-baseline gap-2.5 flex-wrap">
                               <h2 
                                 onClick={(e) => {
                                   e.stopPropagation();
@@ -278,6 +284,10 @@ export default function Counselors() {
                               </h2>
                               <span className="px-3 py-1 bg-brand-sage/15 text-brand-sage font-bold text-xs sm:text-sm rounded-full">
                                 {counselor.title}
+                              </span>
+                              <span className="px-2.5 py-0.5 bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-bold rounded-md flex items-center gap-1 shadow-2xs">
+                                <Clock className="w-3 h-3 text-emerald-600" />
+                                <span>총 상담 30,000+ 시간</span>
                               </span>
                             </div>
 
@@ -483,13 +493,13 @@ export default function Counselors() {
                           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                             <div className="p-4 rounded-2xl bg-white border border-brand-green/20 text-center">
                               <span className="text-[11px] font-bold text-brand-brown/60 block mb-1">
-                                누적 임상 상담
+                                총 상담 시간 (Total Consultation Hours)
                               </span>
                               <strong className="text-lg sm:text-xl font-bold text-brand-sage font-mono">
-                                {profile.clinicalHours || '10,000+ 시간'}
+                                {profile.clinicalHours || '30,000+ 시간'}
                               </strong>
                               <p className="text-[11px] text-brand-brown/60 mt-0.5">
-                                성인·부부·청소년 통합 임상
+                                단순 연수(16년 등) 표기 대신 실제 1:1 심층 상담 시간 기준
                               </p>
                             </div>
 

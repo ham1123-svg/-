@@ -258,7 +258,7 @@ export default function CounselingInsights({ className, limit = 9 }: CounselingI
           </h2>
           <p className="text-sm sm:text-base text-brand-brown/75 font-serif leading-relaxed">
             행복바람 심리상담연구소 박미경 소장(교육학 박사 · 한국상담학회 1급 슈퍼바이저)이<br className="hidden sm:inline" />
-            10,000시간 이상의 심층 임상 현장에서 검증된 회복의 원리와 일상 솔루션을 전해드립니다.
+            30,000시간 이상의 심층 임상 현장에서 검증된 회복의 원리와 일상 솔루션을 전해드립니다.
           </p>
         </div>
 
@@ -289,7 +289,7 @@ export default function CounselingInsights({ className, limit = 9 }: CounselingI
               <Clock className="w-5 h-5" />
             </div>
             <div>
-              <div className="text-xs font-bold text-brand-brown font-serif">10,000+ 임상 시간</div>
+              <div className="text-xs font-bold text-brand-brown font-serif">총 상담 30,000+ 시간</div>
               <div className="text-[11px] text-brand-brown/70 font-serif">풍부한 치유 사례와 경험</div>
             </div>
           </div>
@@ -672,7 +672,7 @@ export default function CounselingInsights({ className, limit = 9 }: CounselingI
 
                   <div className="flex items-center gap-2 shrink-0">
                     <span className="px-2.5 py-1 bg-white rounded-lg border border-brand-green/20 text-brand-brown text-[11px] font-semibold shadow-2xs">
-                      10,000+ 임상 세션
+                      총 상담 30,000+ 시간
                     </span>
                     <span className="px-2.5 py-1 bg-white rounded-lg border border-brand-green/20 text-emerald-800 text-[11px] font-bold shadow-2xs">
                       100% 비의료 안심

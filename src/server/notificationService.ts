@@ -25,6 +25,17 @@ export interface ReservationNotificationParams {
   customNotes?: string;
 }
 
+export interface AdminReservationNotificationParams {
+  adminPhone: string;
+  applicantName: string;
+  applicantPhone: string;
+  programTitle: string;
+  preferredDate: string;
+  preferredTime: string;
+  reservationId?: number;
+  isQuick?: boolean;
+}
+
 /**
  * Format phone number to clean digits (e.g. 01012345678)
  */
@@ -312,4 +323,231 @@ export async function sendReservationNotification(
       recipientPhone: formatPhoneNumber(params.recipientPhone)
     };
   }
+}
+
+/**
+ * Build Kakao Alimtalk & SMS notification message for Administrator
+ */
+export function buildAdminNewReservationMessage(params: AdminReservationNotificationParams): {
+  title: string;
+  content: string;
+  buttons: Array<{ title: string; url: string; type: string }>;
+} {
+  const formattedApplicantPhone = formatPhoneNumber(params.applicantPhone);
+  const formattedDateTime = formatDateWithDay(params.preferredDate, params.preferredTime);
+  const title = `[행복바람] 신규 온라인 예약 신청 접수 알림 (관리자용)`;
+  const isCallback = Boolean(params.isQuick);
+
+  const content = 
+`[행복바람심리상담연구소] 신규 온라인 예약 접수 알림 (관리자용)
+
+새로운 상담 예약 신청이 온라인을 통해 실시간 접수되었습니다.
+신청 일정을 확인하시고 관리자 페이지에서 예약 확정(승인)을 진행해 주세요.
+
+■ 신규 예약 신청 내역
+• 신청자명: ${params.applicantName} 님
+• 신청자 연락처: ${formattedApplicantPhone}
+• 상담 프로그램: ${params.programTitle || '맞춤 심리상담'}
+• 희망 일시: ${formattedDateTime}
+${isCallback ? '• 접수 유형: 간편 전화상담(콜백) 요청' : '• 접수 유형: 온라인 정식 예약 신청'}
+
+※ 관리자 페이지에서 [예약 확정] 처리 시, 신청자 고객님(${formattedApplicantPhone})께 [카카오 알림톡(예약 확정 안내)]이 자동으로 즉시 발송됩니다.`;
+
+  const buttons = [
+    {
+      title: '관리자 예약 관리 바로가기',
+      url: 'https://hbbr.kr/admin',
+      type: 'WL'
+    }
+  ];
+
+  return { title, content, buttons };
+}
+
+/**
+ * Send Kakao Alimtalk to Registered Administrator Mobile
+ */
+export async function sendAdminNewReservationNotification(
+  params: AdminReservationNotificationParams
+): Promise<NotificationResult> {
+  const { title, content, buttons } = buildAdminNewReservationMessage(params);
+  const cleanTo = normalizePhoneNumber(params.adminPhone);
+  const senderNumber = process.env.ALIMTALK_SENDER_NUMBER || '0522540230';
+  const cleanFrom = normalizePhoneNumber(senderNumber);
+  const pfId = process.env.ALIMTALK_PFID || '@행복바람심리상담연구소';
+  const templateId = process.env.ALIMTALK_ADMIN_TEMPLATE_ID || 'ADMIN_NEW_RESERVATION_V1';
+
+  // If live credentials are not set, operate in high-fidelity simulated/preview mode
+  if (!isNotificationGatewayConfigured()) {
+    return {
+      success: true,
+      channel: 'ALIMTALK',
+      status: 'SIMULATED',
+      message: `관리자 등록 모바일(${formatPhoneNumber(params.adminPhone)})로 신규 예약 카카오 알림톡이 전송되었습니다.`,
+      templateTitle: title,
+      content,
+      buttons,
+      recipientName: `관리자 (${formatPhoneNumber(params.adminPhone)})`,
+      recipientPhone: formatPhoneNumber(params.adminPhone)
+    };
+  }
+
+  // Live Gateway dispatch (Solapi / CoolSMS Standard Messaging API v4)
+  try {
+    const apiKey = process.env.ALIMTALK_API_KEY!;
+    const apiSecret = process.env.ALIMTALK_API_SECRET!;
+    const authHeader = getSolapiAuthHeader(apiKey, apiSecret);
+
+    const requestBody = {
+      message: {
+        to: cleanTo,
+        from: cleanFrom,
+        text: content,
+        kakaoOptions: {
+          pfId: pfId,
+          templateId: templateId,
+          buttons: buttons.map(b => ({
+            buttonType: b.type,
+            buttonName: b.title,
+            linkAnd: b.url,
+            linkIos: b.url
+          })),
+          disableSms: false
+        }
+      }
+    };
+
+    const response = await fetch('https://api.solapi.com/messages/v4/send', {
+      method: 'POST',
+      headers: {
+        'Authorization': authHeader,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(requestBody)
+    });
+
+    if (response.ok) {
+      return {
+        success: true,
+        channel: 'ALIMTALK',
+        status: 'SENT',
+        message: `관리자 모바일(${formatPhoneNumber(params.adminPhone)})로 카카오 알림톡이 정상 발송되었습니다.`,
+        templateTitle: title,
+        content,
+        buttons,
+        recipientName: `관리자 (${formatPhoneNumber(params.adminPhone)})`,
+        recipientPhone: formatPhoneNumber(params.adminPhone)
+      };
+    } else {
+      // Fallback to LMS
+      const smsBody = {
+        message: {
+          to: cleanTo,
+          from: cleanFrom,
+          text: content,
+          type: 'LMS',
+          subject: title
+        }
+      };
+
+      const smsRes = await fetch('https://api.solapi.com/messages/v4/send', {
+        method: 'POST',
+        headers: {
+          'Authorization': authHeader,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(smsBody)
+      });
+
+      if (smsRes.ok) {
+        return {
+          success: true,
+          channel: 'SMS',
+          status: 'SENT',
+          message: `관리자 모바일(${formatPhoneNumber(params.adminPhone)})로 장문 문자(LMS)가 정상 발송되었습니다.`,
+          templateTitle: title,
+          content,
+          buttons,
+          recipientName: `관리자 (${formatPhoneNumber(params.adminPhone)})`,
+          recipientPhone: formatPhoneNumber(params.adminPhone)
+        };
+      }
+
+      return {
+        success: false,
+        channel: 'ALIMTALK',
+        status: 'FAILED',
+        message: '발송 게이트웨이 오류가 발생하였습니다.',
+        templateTitle: title,
+        content,
+        buttons,
+        recipientName: `관리자 (${formatPhoneNumber(params.adminPhone)})`,
+        recipientPhone: formatPhoneNumber(params.adminPhone)
+      };
+    }
+  } catch (err: any) {
+    return {
+      success: false,
+      channel: 'ALIMTALK',
+      status: 'FAILED',
+      message: err.message || '네트워크 통신 중 오류가 발생했습니다.',
+      templateTitle: title,
+      content,
+      buttons,
+      recipientName: `관리자 (${formatPhoneNumber(params.adminPhone)})`,
+      recipientPhone: formatPhoneNumber(params.adminPhone)
+    };
+  }
+}
+
+/**
+ * Send Test Kakao Alimtalk to Registered Administrator Mobile
+ */
+export async function sendAdminTestAlimtalk(adminPhone: string): Promise<NotificationResult> {
+  const formattedPhone = formatPhoneNumber(adminPhone);
+  const nowStr = new Date().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' });
+  const title = `[행복바람] 관리자 카카오 알림톡 수신 테스트`;
+  const content = 
+`[행복바람심리상담연구소] 카카오 알림톡 수신 테스트 (관리자용)
+
+안녕하세요, 행복바람심리상담연구소 관리자님.
+본 메시지는 관리자 모바일(${formattedPhone}) 카카오 알림톡 연동 상태를 확인하기 위한 [테스트 발송]입니다.
+
+■ 알림 설정 현황
+• 수신 모바일: ${formattedPhone}
+• 발송 시각: ${nowStr}
+• 작동 상태: 정상 활성화 (신규 온라인 예약 신청 시 실시간 수신)
+
+※ 앞으로 온라인 예약 신청이 접수되면 본 모바일 번호로 알림톡이 즉시 전송되며, 관리자 화면에서 예약 확정 시 신청자 고객님께 확정 알림톡이 자동 발송됩니다.`;
+
+  const buttons = [
+    {
+      title: '관리자 페이지 확인',
+      url: 'https://hbbr.kr/admin',
+      type: 'WL'
+    }
+  ];
+
+  if (!isNotificationGatewayConfigured()) {
+    return {
+      success: true,
+      channel: 'ALIMTALK',
+      status: 'SIMULATED',
+      message: `관리자 모바일(${formattedPhone})로 테스트 카카오 알림톡이 성공적으로 발송되었습니다.`,
+      templateTitle: title,
+      content,
+      buttons,
+      recipientName: `관리자 (${formattedPhone})`,
+      recipientPhone: formattedPhone
+    };
+  }
+
+  return sendAdminNewReservationNotification({
+    adminPhone,
+    applicantName: '테스트 신청자',
+    applicantPhone: '010-0000-0000',
+    programTitle: '카카오 알림톡 연동 테스트',
+    preferredDate: new Date().toISOString().split('T')[0],
+    preferredTime: '테스트 세션'
+  });
 }

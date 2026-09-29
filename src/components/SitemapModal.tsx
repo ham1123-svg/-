@@ -144,7 +144,7 @@ export default function SitemapModal({ isOpen, onClose }: SitemapModalProps) {
                       onClick={() => handleNavigate('/counselors')}
                       className="w-full text-left py-1 px-2 rounded-lg hover:bg-brand-green/20 text-brand-brown/85 font-medium flex items-center justify-between group cursor-pointer"
                     >
-                      <span>상담진 및 원장 프로필</span>
+                      <span>상담 소장 프로필 (Executive Profile)</span>
                       <ChevronRight className="w-3.5 h-3.5 text-brand-brown/40 group-hover:text-brand-sage group-hover:translate-x-0.5 transition-all" />
                     </button>
                   </li>

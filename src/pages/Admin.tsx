@@ -5,7 +5,8 @@ import {
   AlertCircle, Search, RefreshCw, Trash2, ChevronDown, 
   Filter, Lock, KeyRound, LogOut, ArrowUpRight, X,
   MessageSquareText, Send, BellRing, Info, Check, PhoneCall,
-  CalendarCheck, Edit3, Plus, HelpCircle, Mail, Building2, Bell
+  CalendarCheck, Edit3, Plus, HelpCircle, Mail, Building2, Bell,
+  TrendingUp, BarChart3
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { cn } from '../lib/utils';
@@ -13,6 +14,7 @@ import { Reservation, NotificationLog, Program, CommunityNotice, RESERVATION_TIM
 import AdminScheduleManager from '../components/AdminScheduleManager';
 import AdminCommunityManager from '../components/AdminCommunityManager';
 import AdminForgotPasswordModal from '../components/AdminForgotPasswordModal';
+import AdminReservationTrendChart from '../components/AdminReservationTrendChart';
 
 const TIME_SLOTS = [...RESERVATION_TIME_SLOTS];
 
@@ -29,8 +31,8 @@ export default function Admin() {
   const [loginLoading, setLoginLoading] = useState(false);
   const [showForgotModal, setShowForgotModal] = useState(false);
 
-  // View Mode: 'calendar' (Timetable) or 'table' (List) or 'eap' (B2B EAP Inquiries) or 'qna' (Community Q&A) or 'community' (Community Posts/Notices)
-  const [viewMode, setViewMode] = useState<'calendar' | 'table' | 'eap' | 'qna' | 'community'>('calendar');
+  // View Mode: 'calendar' (Timetable) or 'table' (List) or 'analytics' (6-Month Trends) or 'eap' (B2B EAP Inquiries) or 'qna' (Community Q&A) or 'community' (Community Posts/Notices)
+  const [viewMode, setViewMode] = useState<'calendar' | 'table' | 'analytics' | 'eap' | 'qna' | 'community'>('calendar');
   const [programs, setPrograms] = useState<Program[]>([]);
 
   // EAP Inquiries state
@@ -74,6 +76,12 @@ export default function Admin() {
   const [notificationConfig, setNotificationConfig] = useState<any>(null);
   const [loadingNotifications, setLoadingNotifications] = useState(false);
   const [resendingId, setResendingId] = useState<number | null>(null);
+  const [adminPhone, setAdminPhone] = useState('010-7322-5676');
+  const [adminPhoneInput, setAdminPhoneInput] = useState('010-7322-5676');
+  const [isEditingAdminPhone, setIsEditingAdminPhone] = useState(false);
+  const [isSavingAdminPhone, setIsSavingAdminPhone] = useState(false);
+  const [isTestingAdminAlimtalk, setIsTestingAdminAlimtalk] = useState(false);
+  const [previewLogModal, setPreviewLogModal] = useState<NotificationLog | null>(null);
 
   // Reservations state
   const [reservations, setReservations] = useState<Reservation[]>([]);
@@ -456,9 +464,63 @@ export default function Admin() {
       if (res.ok) {
         const data = await res.json();
         setNotificationConfig(data);
+        if (data.adminPhone) {
+          setAdminPhone(data.adminPhone);
+          setAdminPhoneInput(data.adminPhone);
+        }
       }
     } catch (err) {
       console.error('Failed to load notification config:', err);
+    }
+  };
+
+  const handleSaveAdminPhone = async () => {
+    if (!adminPhoneInput.trim()) {
+      showToast('관리자 모바일 번호를 입력해 주세요.');
+      return;
+    }
+    setIsSavingAdminPhone(true);
+    try {
+      const res = await fetch('/api/admin/registered-phone', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone: adminPhoneInput.trim() })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setAdminPhone(data.phone);
+        setIsEditingAdminPhone(false);
+        showToast('관리자 카카오 알림톡 수신 번호가 성공적으로 저장되었습니다.');
+        fetchNotificationConfig();
+      } else {
+        showToast(data.error || '저장에 실패했습니다.');
+      }
+    } catch (e: any) {
+      showToast('저장 중 오류가 발생했습니다.');
+    } finally {
+      setIsSavingAdminPhone(false);
+    }
+  };
+
+  const handleTestAdminAlimtalk = async () => {
+    setIsTestingAdminAlimtalk(true);
+    try {
+      const res = await fetch('/api/admin/notifications/test-admin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone: adminPhone })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        showToast(`관리자 모바일(${data.notification?.recipientPhone || adminPhone})로 테스트 알림톡이 성공적으로 발송되었습니다.`);
+        fetchNotificationLogs();
+      } else {
+        showToast(data.error || '테스트 발송에 실패했습니다.');
+      }
+    } catch (e: any) {
+      showToast('발송 요청 중 오류가 발생했습니다.');
+    } finally {
+      setIsTestingAdminAlimtalk(false);
     }
   };
 
@@ -628,11 +690,15 @@ export default function Admin() {
                 fetchNotificationLogs();
                 fetchNotificationConfig();
               }}
-              className="flex items-center gap-1.5 px-3.5 py-2.5 bg-amber-50 border border-amber-300/70 hover:border-amber-400 text-amber-950 text-sm font-semibold rounded-xl shadow-xs hover:bg-amber-100/60 transition-all cursor-pointer"
-              title="카카오 알림톡 및 문자 연동 관리"
+              className="flex items-center gap-2 px-3.5 py-2.5 bg-amber-50 hover:bg-amber-100/70 border border-amber-300 text-amber-950 text-sm font-semibold rounded-xl shadow-xs transition-all cursor-pointer"
+              title="카카오 알림톡 자동 발송 관리 (관리자 수신 번호 설정 & 고객 확정 자동발송)"
             >
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+              </span>
               <MessageSquareText className="w-4 h-4 text-amber-600" />
-              <span>알림톡/문자 연동</span>
+              <span>카카오 알림톡 설정</span>
             </button>
 
             {/* 비밀번호 변경 버튼 */}
@@ -713,7 +779,7 @@ export default function Admin() {
         )}
 
         {/* Stat Summary Cards */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-5">
           <div className="bg-white p-5 rounded-2xl border border-brand-green/20 shadow-xs">
             <div className="text-xs font-semibold text-brand-brown/60 mb-1">전체 신청 접수</div>
             <div className="text-3xl font-bold font-serif text-brand-brown">{stats.total}<span className="text-sm font-normal text-brand-brown/60 ml-1">건</span></div>
@@ -730,6 +796,27 @@ export default function Admin() {
             <div className="text-xs font-semibold text-brand-brown/70 mb-1">상담 완료</div>
             <div className="text-3xl font-bold font-serif text-brand-brown">{stats.completed}<span className="text-sm font-normal text-brand-brown/60 ml-1">건</span></div>
           </div>
+        </div>
+
+        {/* Quick Analytics Teaser Bar */}
+        <div className="mb-6 p-4 bg-gradient-to-r from-white via-brand-beige/25 to-brand-green/10 rounded-2xl border border-brand-green/25 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-2xs">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-brand-sage/15 text-brand-sage flex items-center justify-center shrink-0">
+              <TrendingUp className="w-5 h-5" />
+            </div>
+            <div className="text-xs sm:text-sm text-brand-brown">
+              <strong className="font-serif text-brand-sage mr-1.5">[상담 수요 통계 데이터]</strong>
+              최근 6개월(2026.04~09) 개인·부부·검사·EAP 분야별 예약 추이와 누적 점유율 차트를 확인하세요.
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => setViewMode('analytics')}
+            className="px-3.5 py-1.5 bg-brand-sage hover:bg-brand-sage/90 text-white text-xs font-bold rounded-xl transition-all shadow-2xs shrink-0 flex items-center gap-1.5 cursor-pointer"
+          >
+            <span>6개월 추이 차트 보기</span>
+            <ArrowUpRight className="w-3.5 h-3.5" />
+          </button>
         </div>
 
         {/* Today's Schedule Briefing Banner */}
@@ -807,6 +894,18 @@ export default function Admin() {
             </button>
             <button
               type="button"
+              onClick={() => setViewMode('analytics')}
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                viewMode === 'analytics'
+                  ? 'bg-brand-sage text-white shadow-xs'
+                  : 'text-brand-brown/70 hover:bg-brand-beige/40'
+              }`}
+            >
+              <TrendingUp className="w-4 h-4" />
+              <span>분야별 예약 추이 차트 (6개월)</span>
+            </button>
+            <button
+              type="button"
               onClick={() => {
                 setViewMode('eap');
                 loadEapInquiries();
@@ -857,6 +956,17 @@ export default function Admin() {
             실시간 예약 동기화 활성화됨
           </div>
         </div>
+
+        {/* VIEW 0: 6-Month Category Reservation Trend Chart (Data Visualization) */}
+        {viewMode === 'analytics' && (
+          <div className="mb-8">
+            <AdminReservationTrendChart
+              reservations={reservations}
+              onRefresh={loadReservations}
+              isLoading={loading}
+            />
+          </div>
+        )}
 
         {/* VIEW 1: Weekly Calendar Matrix */}
         {viewMode === 'calendar' && (
@@ -1713,6 +1823,101 @@ export default function Admin() {
 
               {/* Modal Content Scrollable Area */}
               <div className="flex-1 overflow-y-auto py-6 space-y-6 pr-1">
+                {/* Dual Flow Status Banner */}
+                <div className="grid sm:grid-cols-2 gap-3.5">
+                  <div className="p-4 bg-amber-50/80 rounded-2xl border border-amber-200 shadow-2xs">
+                    <div className="flex items-center gap-2 mb-1.5">
+                      <span className="w-5 h-5 rounded-md bg-amber-400 text-amber-950 font-extrabold text-[11px] flex items-center justify-center shadow-xs">1</span>
+                      <span className="font-bold text-xs text-amber-950">온라인 예약 신청 시 (실시간 수신)</span>
+                      <span className="ml-auto text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
+                        자동 연동
+                      </span>
+                    </div>
+                    <p className="text-xs text-amber-900/80 leading-relaxed">
+                      고객이 온라인 예약을 신청하면, <strong className="text-amber-950 font-bold">등록된 관리자 모바일({adminPhone})</strong>로 신청자 정보 및 희망 일시가 담긴 카카오 알림톡이 즉시 전송됩니다.
+                    </p>
+                  </div>
+                  <div className="p-4 bg-emerald-50/80 rounded-2xl border border-emerald-200 shadow-2xs">
+                    <div className="flex items-center gap-2 mb-1.5">
+                      <span className="w-5 h-5 rounded-md bg-emerald-500 text-white font-extrabold text-[11px] flex items-center justify-center shadow-xs">2</span>
+                      <span className="font-bold text-xs text-emerald-950">예약 확정 시 (승인 즉시 발송)</span>
+                      <span className="ml-auto text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">
+                        자동 연동
+                      </span>
+                    </div>
+                    <p className="text-xs text-emerald-900/80 leading-relaxed">
+                      관리자가 예약 확정(승인) 처리 시, <strong className="text-emerald-950 font-bold">신청자 고객님의 등록 모바일</strong>로 확정 일시, 상담실 위치 및 오시는 길 알림톡이 자동으로 즉시 발송됩니다.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Registered Administrator Phone Management Box */}
+                <div className="bg-white p-4.5 rounded-2xl border border-brand-green/25 shadow-2xs space-y-3">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div>
+                      <div className="text-xs font-bold text-brand-brown flex items-center gap-1.5">
+                        <PhoneCall className="w-4 h-4 text-brand-sage" />
+                        <span>신규 예약 알림톡 수신 관리자 모바일 번호</span>
+                      </div>
+                      <p className="text-[11px] text-brand-brown/55 mt-0.5">
+                        온라인 예약 신청이 접수되면 아래 등록된 관리자 휴대폰으로 알림톡이 자동 발송됩니다.
+                      </p>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-2">
+                      {isEditingAdminPhone ? (
+                        <div className="flex items-center gap-1.5">
+                          <input
+                            type="text"
+                            value={adminPhoneInput}
+                            onChange={(e) => setAdminPhoneInput(e.target.value)}
+                            placeholder="010-0000-0000"
+                            className="px-3 py-1.5 border border-brand-sage rounded-xl text-xs font-mono font-bold outline-none w-36 bg-brand-beige/10"
+                          />
+                          <button
+                            onClick={handleSaveAdminPhone}
+                            disabled={isSavingAdminPhone}
+                            className="px-3 py-1.5 bg-brand-sage text-white text-xs font-bold rounded-xl hover:bg-brand-sage/90 transition-all cursor-pointer"
+                          >
+                            {isSavingAdminPhone ? '저장중...' : '저장'}
+                          </button>
+                          <button
+                            onClick={() => {
+                              setAdminPhoneInput(adminPhone);
+                              setIsEditingAdminPhone(false);
+                            }}
+                            className="px-2.5 py-1.5 text-xs text-brand-brown/60 hover:bg-brand-beige/40 rounded-xl transition-all cursor-pointer"
+                          >
+                            취소
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-mono font-bold text-sm text-brand-brown px-3 py-1 bg-brand-beige/30 rounded-xl border border-brand-green/20">
+                            {adminPhone}
+                          </span>
+                          <button
+                            onClick={() => setIsEditingAdminPhone(true)}
+                            className="px-2.5 py-1 text-xs font-semibold text-brand-sage hover:bg-brand-sage/10 rounded-lg border border-brand-sage/30 transition-all cursor-pointer"
+                          >
+                            번호 변경
+                          </button>
+                        </div>
+                      )}
+
+                      <button
+                        onClick={handleTestAdminAlimtalk}
+                        disabled={isTestingAdminAlimtalk}
+                        className="px-3 py-1.5 bg-[#FEE500] hover:bg-[#FDD835] text-[#371D1E] text-xs font-bold rounded-xl transition-all shadow-2xs cursor-pointer flex items-center gap-1.5 shrink-0"
+                        title="등록된 관리자 모바일 번호로 알림톡 수신 테스트를 수행합니다"
+                      >
+                        <MessageSquareText className="w-3.5 h-3.5 fill-[#371D1E]" />
+                        <span>{isTestingAdminAlimtalk ? '발송중...' : '관리자 폰으로 테스트 발송'}</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
                 {/* Gateway Status Summary Card */}
                 <div className="bg-amber-50/70 rounded-2xl p-5 border border-amber-200">
                   <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
@@ -1789,51 +1994,72 @@ export default function Admin() {
                         <thead className="bg-brand-beige/50 text-brand-brown/70 font-semibold border-b border-brand-green/20">
                           <tr>
                             <th className="py-2.5 px-4">채널</th>
-                            <th className="py-2.5 px-4">수신자</th>
-                            <th className="py-2.5 px-4">전화번호</th>
+                            <th className="py-2.5 px-4">알림 구분</th>
+                            <th className="py-2.5 px-4">수신 대상</th>
+                            <th className="py-2.5 px-4">수신 전화번호</th>
                             <th className="py-2.5 px-4">상태</th>
                             <th className="py-2.5 px-4">발송 일시</th>
                             <th className="py-2.5 px-4 text-right">메시지 내용</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-brand-green/10">
-                          {notificationLogs.map((log) => (
-                            <tr key={log.id} className="hover:bg-brand-beige/20 transition-colors">
-                              <td className="py-2.5 px-4 whitespace-nowrap">
-                                <span className={`px-2 py-0.5 rounded-md font-bold text-[10px] ${
-                                  log.channel === 'ALIMTALK'
-                                    ? 'bg-[#FEE500]/40 text-[#371D1E] border border-[#FEE500]'
-                                    : 'bg-blue-100 text-blue-900 border border-blue-200'
-                                }`}>
-                                  {log.channel === 'ALIMTALK' ? '카카오 알림톡' : 'LMS 문자'}
-                                </span>
-                              </td>
-                              <td className="py-2.5 px-4 font-bold whitespace-nowrap">{log.recipient_name}</td>
-                              <td className="py-2.5 px-4 font-mono whitespace-nowrap text-brand-brown/80">{log.recipient_phone}</td>
-                              <td className="py-2.5 px-4 whitespace-nowrap">
-                                <span className="inline-flex items-center gap-1 text-emerald-700 font-semibold">
-                                  <Check className="w-3 h-3 text-emerald-600" />
-                                  발송 성공
-                                </span>
-                              </td>
-                              <td className="py-2.5 px-4 text-brand-brown/60 whitespace-nowrap">
-                                {new Date(log.created_at).toLocaleString('ko-KR', {
-                                  month: '2-digit',
-                                  day: '2-digit',
-                                  hour: '2-digit',
-                                  minute: '2-digit'
-                                })}
-                              </td>
-                              <td className="py-2.5 px-4 text-right">
-                                <button
-                                  onClick={() => window.alert(`[발송 메시지 본문]\n\n${log.message_content}`)}
-                                  className="text-[11px] text-brand-sage font-bold hover:underline cursor-pointer"
-                                >
-                                  전문 보기
-                                </button>
-                              </td>
-                            </tr>
-                          ))}
+                          {notificationLogs.map((log) => {
+                            const isAdminLog = log.recipient_name.includes('관리자') || log.template_title?.includes('관리자');
+                            const isConfirmedLog = log.template_title?.includes('확정');
+
+                            return (
+                              <tr key={log.id} className="hover:bg-brand-beige/20 transition-colors">
+                                <td className="py-2.5 px-4 whitespace-nowrap">
+                                  <span className={`px-2 py-0.5 rounded-md font-bold text-[10px] ${
+                                    log.channel === 'ALIMTALK'
+                                      ? 'bg-[#FEE500]/50 text-[#371D1E] border border-[#FEE500]'
+                                      : 'bg-blue-100 text-blue-900 border border-blue-200'
+                                  }`}>
+                                    {log.channel === 'ALIMTALK' ? '카카오 알림톡' : 'LMS 문자'}
+                                  </span>
+                                </td>
+                                <td className="py-2.5 px-4 whitespace-nowrap">
+                                  {isAdminLog ? (
+                                    <span className="px-2 py-0.5 rounded-md font-bold text-[10px] bg-amber-100 text-amber-900 border border-amber-300">
+                                      관리자 수신
+                                    </span>
+                                  ) : isConfirmedLog ? (
+                                    <span className="px-2 py-0.5 rounded-md font-bold text-[10px] bg-emerald-100 text-emerald-900 border border-emerald-300">
+                                      신청자 확정
+                                    </span>
+                                  ) : (
+                                    <span className="px-2 py-0.5 rounded-md font-bold text-[10px] bg-sky-100 text-sky-900 border border-sky-200">
+                                      신청자 접수
+                                    </span>
+                                  )}
+                                </td>
+                                <td className="py-2.5 px-4 font-bold whitespace-nowrap">{log.recipient_name}</td>
+                                <td className="py-2.5 px-4 font-mono whitespace-nowrap text-brand-brown/80">{log.recipient_phone}</td>
+                                <td className="py-2.5 px-4 whitespace-nowrap">
+                                  <span className="inline-flex items-center gap-1 text-emerald-700 font-semibold">
+                                    <Check className="w-3 h-3 text-emerald-600" />
+                                    발송 완료
+                                  </span>
+                                </td>
+                                <td className="py-2.5 px-4 text-brand-brown/60 whitespace-nowrap">
+                                  {new Date(log.created_at).toLocaleString('ko-KR', {
+                                    month: '2-digit',
+                                    day: '2-digit',
+                                    hour: '2-digit',
+                                    minute: '2-digit'
+                                  })}
+                                </td>
+                                <td className="py-2.5 px-4 text-right">
+                                  <button
+                                    onClick={() => setPreviewLogModal(log)}
+                                    className="px-2.5 py-1 text-[11px] bg-brand-beige/50 hover:bg-brand-sage hover:text-white rounded-lg border border-brand-green/20 transition-all font-bold cursor-pointer"
+                                  >
+                                    전문 보기
+                                  </button>
+                                </td>
+                              </tr>
+                            );
+                          })}
                         </tbody>
                       </table>
                     </div>
@@ -1866,6 +2092,59 @@ export default function Admin() {
                   className="px-6 py-2.5 bg-brand-sage hover:bg-brand-sage/90 text-white font-bold rounded-xl shadow-md transition-all text-sm cursor-pointer"
                 >
                   확인 완료
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+
+        {/* Kakao Alimtalk Message Detail Preview Modal */}
+        {previewLogModal && (
+          <div className="fixed inset-0 z-60 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-white rounded-3xl max-w-md w-full overflow-hidden shadow-2xl border border-brand-green/20 flex flex-col"
+            >
+              {/* Kakao Talk Header Bar */}
+              <div className="bg-[#FEE500] px-5 py-4 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-xl bg-[#371D1E] text-[#FEE500] flex items-center justify-center font-bold text-xs">
+                    Talk
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-[#371D1E] text-sm">카카오 알림톡 발송 전문</h3>
+                    <p className="text-[10px] text-[#371D1E]/70 font-mono">
+                      수신: {previewLogModal.recipient_name} ({previewLogModal.recipient_phone})
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setPreviewLogModal(null)}
+                  className="p-1.5 text-[#371D1E]/60 hover:text-[#371D1E] hover:bg-black/5 rounded-lg transition-colors cursor-pointer"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Message Body (Kakao Bubble Style) */}
+              <div className="p-5 max-h-[60vh] overflow-y-auto bg-[#BACEE0]/20">
+                <div className="bg-white rounded-2xl p-4 shadow-sm border border-brand-green/15 text-xs text-brand-brown font-sans whitespace-pre-wrap leading-relaxed">
+                  {previewLogModal.message_content}
+                </div>
+              </div>
+
+              {/* Modal Footer */}
+              <div className="p-4 bg-white border-t border-brand-green/10 flex items-center justify-between">
+                <span className="text-[11px] text-brand-brown/50">
+                  발송: {new Date(previewLogModal.created_at).toLocaleString('ko-KR')}
+                </span>
+                <button
+                  onClick={() => setPreviewLogModal(null)}
+                  className="px-4 py-2 bg-brand-sage hover:bg-brand-sage/90 text-white text-xs font-bold rounded-xl transition-all cursor-pointer"
+                >
+                  닫기
                 </button>
               </div>
             </motion.div>
