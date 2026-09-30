@@ -524,9 +524,10 @@ export default function Reservation() {
                 <form onSubmit={handleSubmit} className="space-y-6">
                   <div className="grid md:grid-cols-2 gap-6">
                     <div className="space-y-2">
-                      <label className="text-sm font-bold text-brand-brown/70 ml-1">성함 (닉네임 가능)</label>
+                      <label htmlFor="res-name" className="text-sm font-bold text-brand-brown/70 ml-1">성함 (닉네임 가능)</label>
                       <input 
                         required
+                        id="res-name"
                         type="text" 
                         placeholder="성함을 입력해 주세요"
                         className="w-full px-4 py-3 rounded-xl border border-brand-green/30 focus:border-brand-sage outline-none bg-brand-beige/10 text-sm"
@@ -535,9 +536,10 @@ export default function Reservation() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <label className="text-sm font-bold text-brand-brown/70 ml-1">연락처</label>
+                      <label htmlFor="res-phone" className="text-sm font-bold text-brand-brown/70 ml-1">연락처</label>
                       <input 
                         required
+                        id="res-phone"
                         type="tel" 
                         placeholder="010-0000-0000"
                         className="w-full px-4 py-3 rounded-xl border border-brand-green/30 focus:border-brand-sage outline-none bg-brand-beige/10 text-sm"
@@ -548,9 +550,10 @@ export default function Reservation() {
                   </div>
                   
                   <div className="space-y-2">
-                    <label className="text-sm font-bold text-brand-brown/70 ml-1">상담 프로그램 선택</label>
+                    <label htmlFor="res-program" className="text-sm font-bold text-brand-brown/70 ml-1">상담 프로그램 선택</label>
                     <select 
                       required
+                      id="res-program"
                       className="w-full px-4 py-3 rounded-xl border border-brand-green/30 focus:border-brand-sage outline-none bg-brand-beige/10 appearance-none text-sm"
                       value={formData.program_id}
                       onChange={e => setFormData({...formData, program_id: e.target.value})}
@@ -565,7 +568,7 @@ export default function Reservation() {
                   <div className="grid md:grid-cols-2 gap-6">
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
-                        <label className="text-sm font-bold text-brand-brown/70 ml-1">희망 날짜</label>
+                        <label htmlFor="res-date" className="text-sm font-bold text-brand-brown/70 ml-1">희망 날짜</label>
                         {formData.preferred_date && (
                           <span className="text-[11px] font-semibold text-brand-sage bg-brand-sage/10 px-2 py-0.5 rounded-md flex items-center gap-1">
                             <Check className="w-3 h-3 stroke-[2.5]" />
@@ -575,6 +578,7 @@ export default function Reservation() {
                       </div>
                       <input 
                         required
+                        id="res-date"
                         type="date" 
                         className="w-full px-4 py-3 rounded-xl border border-brand-green/30 focus:border-brand-sage outline-none bg-brand-beige/10 text-sm"
                         value={formData.preferred_date}
@@ -583,7 +587,7 @@ export default function Reservation() {
                     </div>
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
-                        <label className="text-sm font-bold text-brand-brown/70 ml-1">
+                        <label htmlFor="res-time" className="text-sm font-bold text-brand-brown/70 ml-1">
                           희망 시간 {isSaturday ? '(토요일 4회 운영)' : '(평일 5회 운영)'}
                         </label>
                         {formData.preferred_time && (
@@ -645,6 +649,7 @@ export default function Reservation() {
 
                       <select 
                         required
+                        id="res-time"
                         className="w-full px-4 py-3 rounded-xl border border-brand-green/30 focus:border-brand-sage outline-none bg-brand-beige/10 appearance-none text-sm cursor-pointer mt-1"
                         value={formData.preferred_time}
                         onChange={e => setFormData({...formData, preferred_time: e.target.value})}

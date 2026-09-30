@@ -197,7 +197,9 @@ export default function AdminForgotPasswordModal({
               </div>
             </div>
             <button
+              type="button"
               onClick={handleClose}
+              aria-label="비밀번호 찾기 모달 닫기"
               className="w-8 h-8 rounded-full bg-brand-beige/60 hover:bg-brand-brown/10 text-brand-brown flex items-center justify-center transition-colors cursor-pointer"
             >
               <X className="w-4 h-4" />
