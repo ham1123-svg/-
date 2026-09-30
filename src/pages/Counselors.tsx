@@ -177,7 +177,7 @@ export default function Counselors() {
                       openDetailModal(counselor, 'about');
                     }
                   }}
-                  aria-label={`${counselor.name} ${counselor.title} 상세 소개(About) 모달 열기`}
+                  aria-label={`${counselor.name} ${counselor.title} 상세 프로필 보기`}
                   className={cn(
                     "rounded-3xl overflow-hidden shadow-xl border transition-all duration-300 cursor-pointer group hover:shadow-2xl hover:border-brand-sage/80 hover:-translate-y-0.5 relative",
                     isHighContrast 
@@ -185,18 +185,6 @@ export default function Counselors() {
                       : 'bg-white text-brand-brown border-brand-green/30'
                   )}
                 >
-                  {/* Card Click Indicator Banner */}
-                  <div className="bg-brand-beige/50 border-b border-brand-green/20 px-5 py-2 flex items-center justify-between text-xs transition-colors group-hover:bg-brand-sage/10">
-                    <span className="font-serif text-brand-brown/70 flex items-center gap-1.5 text-[11px] sm:text-xs">
-                      <Sparkles className="w-3.5 h-3.5 text-brand-sage shrink-0" />
-                      <span>카드를 클릭하면 <strong>특화 전문 분야 &amp; 공인 자격증 상세 소개(About)</strong> 모달이 열립니다</span>
-                    </span>
-                    <span className="text-[11px] font-bold text-brand-sage bg-white/90 px-2.5 py-0.5 rounded-full border border-brand-sage/30 flex items-center gap-1 shrink-0 group-hover:bg-brand-sage group-hover:text-white transition-all shadow-2xs">
-                      <Maximize2 className="w-3 h-3" />
-                      <span>About 상세 보기</span>
-                    </span>
-                  </div>
-
                   {/* Main Profile Row: Image (Left) + Primary Summary (Right) */}
                   <div className="flex flex-col md:flex-row">
                     
@@ -221,20 +209,6 @@ export default function Counselors() {
                         }}
                       />
 
-                      {/* Click overlay hint */}
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          openDetailModal(counselor, 'about');
-                        }}
-                        className="absolute top-4 right-4 z-20 px-3.5 py-1.5 rounded-full bg-black/65 hover:bg-black/85 text-white text-xs font-semibold backdrop-blur-md transition-all flex items-center gap-1.5 cursor-pointer shadow-md"
-                        title="자격증 · 특화 전문분야 · 철학 상세 모달 열기"
-                      >
-                        <Maximize2 className="w-3.5 h-3.5 text-brand-sage" />
-                        <span>About 모달 보기</span>
-                      </button>
-
                       {/* Gradient overlay for badges */}
                       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/25 to-transparent pointer-events-none" />
                       
@@ -256,7 +230,7 @@ export default function Counselors() {
                                 openDetailModal(counselor, 'specialties');
                               }}
                               className="px-2.5 py-1 bg-white/95 hover:bg-white text-brand-brown text-xs font-semibold rounded-full shadow-xs border border-brand-green/20 transition-transform active:scale-95 cursor-pointer"
-                              title="태그 상세 치유법 모달 열기"
+                              title="치유 기법 보기"
                             >
                               {tag}
                             </button>
@@ -289,19 +263,6 @@ export default function Counselors() {
                                 <span>총 상담 30,000+ 시간</span>
                               </span>
                             </div>
-
-                            {/* Direct Modal Button (Top Right of Card) */}
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                openDetailModal(counselor, 'about');
-                              }}
-                              className="text-xs font-bold text-brand-sage hover:text-brand-brown transition-colors flex items-center gap-1 cursor-pointer bg-brand-sage/10 px-2.5 py-1 rounded-lg border border-brand-sage/20"
-                            >
-                              <span>About 모달</span>
-                              <Maximize2 className="w-3 h-3" />
-                            </button>
                           </div>
 
                           <p className="text-sm sm:text-base font-serif text-brand-brown/85 font-medium leading-relaxed">
@@ -364,7 +325,7 @@ export default function Counselors() {
                             ))}
                             {certList.length > 3 && (
                               <li className="text-[11px] text-brand-brown/60 pl-5 pt-0.5 font-serif">
-                                외 {certList.length - 3}개 자격증 및 학회 등록 이력 (모달에서 확인 가능)
+                                외 {certList.length - 3}개 자격증 및 학회 등록 이력 (상세 보기에서 확인 가능)
                               </li>
                             )}
                           </ul>
@@ -416,50 +377,23 @@ export default function Counselors() {
                       </div>
                       
                       {/* Action Bar (Highlighted Modal Button + Inline Expand + Reservation CTA) */}
-                      <div className="pt-4 border-t border-brand-green/20 space-y-3">
-                        {/* High-Impact Modal Button */}
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            openDetailModal(counselor, 'about');
-                          }}
-                          className="w-full py-3 px-4 rounded-xl text-xs sm:text-sm font-bold bg-white hover:bg-brand-green/20 text-brand-brown border-2 border-brand-sage/50 hover:border-brand-sage transition-all flex items-center justify-center gap-2 cursor-pointer shadow-xs active:scale-99"
-                        >
-                          <Award className="w-4 h-4 text-emerald-600" />
-                          <Tag className="w-4 h-4 text-amber-600" />
-                          <Heart className="w-4 h-4 text-rose-600" />
-                          <span className="text-brand-brown font-bold">
-                            {counselor.name} {counselor.title} 특화 전문분야 · 공인 자격증 About 모달 보기
-                          </span>
-                          <Maximize2 className="w-3.5 h-3.5 text-brand-sage ml-1" />
-                        </button>
-
+                      {/* Unified Clean Action Bar */}
+                      <div className="pt-4 border-t border-brand-green/20">
                         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
-                          {/* Inline Expand/Collapse Button */}
+                          {/* 1. Main Profile Detail Modal Button */}
                           <button
                             type="button"
                             onClick={(e) => {
                               e.stopPropagation();
-                              toggleExpand(counselor.id);
+                              openDetailModal(counselor, 'about');
                             }}
-                            aria-expanded={isExpanded}
-                            aria-controls={`counselor-details-${counselor.id}`}
-                            className={`flex-1 py-3 px-4 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-1.5 border cursor-pointer ${
-                              isExpanded
-                                ? 'bg-brand-brown text-white border-brand-brown shadow-xs'
-                                : 'bg-brand-beige/40 hover:bg-brand-beige text-brand-brown border-brand-green/40'
-                            }`}
+                            className="flex-1 py-3 px-4 rounded-xl text-xs sm:text-sm font-bold bg-white hover:bg-brand-green/20 text-brand-brown border-2 border-brand-sage/60 hover:border-brand-sage transition-all flex items-center justify-center gap-2 cursor-pointer shadow-xs active:scale-98"
                           >
-                            <span>{isExpanded ? '상세 정보 접기' : '페이지 내에서 펼쳐보기'}</span>
-                            {isExpanded ? (
-                              <ChevronUp className="w-4 h-4" />
-                            ) : (
-                              <ChevronDown className="w-4 h-4 text-brand-sage" />
-                            )}
+                            <Maximize2 className="w-4 h-4 text-brand-sage" />
+                            <span>프로필 상세 보기</span>
                           </button>
 
-                          {/* Direct Reservation Link */}
+                          {/* 2. Direct Reservation Link */}
                           <Link 
                             to="/reservation"
                             onClick={(e) => e.stopPropagation()}
@@ -469,6 +403,26 @@ export default function Counselors() {
                             <span>1:1 상담 예약하기</span>
                             <ArrowRight className="w-3.5 h-3.5" />
                           </Link>
+
+                          {/* 3. Inline Quick Drawer Toggle */}
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleExpand(counselor.id);
+                            }}
+                            aria-expanded={isExpanded}
+                            aria-controls={`counselor-details-${counselor.id}`}
+                            className="px-3.5 py-3 rounded-xl text-xs sm:text-sm font-medium bg-brand-beige/50 hover:bg-brand-beige text-brand-brown border border-brand-green/40 transition-all flex items-center justify-center gap-1.5 cursor-pointer shrink-0"
+                            title={isExpanded ? '상세 정보 접기' : '이 페이지에서 바로 펼쳐보기'}
+                          >
+                            <span>{isExpanded ? '간략히' : '펼쳐보기'}</span>
+                            {isExpanded ? (
+                              <ChevronUp className="w-4 h-4" />
+                            ) : (
+                              <ChevronDown className="w-4 h-4 text-brand-sage" />
+                            )}
+                          </button>
                         </div>
                       </div>
                     </div>
@@ -529,20 +483,11 @@ export default function Counselors() {
 
                           {/* 전문 임상 영역 카드 */}
                           <div>
-                            <div className="flex items-center justify-between mb-4">
-                              <div className="flex items-center gap-2">
-                                <Sparkles className="w-4 h-4 text-brand-sage" />
-                                <h4 className="text-sm font-bold text-brand-brown font-serif">
-                                  주요 전문 임상 영역 및 치료 기법
-                                </h4>
-                              </div>
-                              <button
-                                type="button"
-                                onClick={() => openDetailModal(counselor, 'specialties')}
-                                className="text-xs font-bold text-brand-sage hover:underline cursor-pointer"
-                              >
-                                모달에서 자세히 보기 →
-                              </button>
+                            <div className="flex items-center gap-2 mb-4">
+                              <Sparkles className="w-4 h-4 text-brand-sage" />
+                              <h4 className="text-sm font-bold text-brand-brown font-serif">
+                                주요 전문 임상 영역 및 치료 기법
+                              </h4>
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
@@ -613,18 +558,17 @@ export default function Counselors() {
                             </span>
 
                             <div className="flex items-center gap-2 w-full sm:w-auto">
-                              <button
-                                type="button"
-                                onClick={() => openDetailModal(counselor, 'about')}
+                              <Link
+                                to="/reservation"
                                 className="flex-1 sm:flex-none px-4 py-2 rounded-xl bg-brand-sage text-white text-xs font-bold hover:bg-brand-sage/90 transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
                               >
-                                <Maximize2 className="w-3.5 h-3.5" />
-                                <span>상세 소개(About) 모달 열기</span>
-                              </button>
+                                <Calendar className="w-3.5 h-3.5" />
+                                <span>1:1 예약하기</span>
+                              </Link>
                               <button
                                 type="button"
                                 onClick={() => toggleExpand(counselor.id)}
-                                className="px-3 py-2 rounded-xl bg-white hover:bg-brand-beige text-xs font-semibold text-brand-brown border border-brand-green/30 transition-colors cursor-pointer"
+                                className="px-3.5 py-2 rounded-xl bg-white hover:bg-brand-beige text-xs font-semibold text-brand-brown border border-brand-green/30 transition-colors cursor-pointer"
                               >
                                 접기
                               </button>
