@@ -78,7 +78,7 @@ export default function CounselingCenterMap({
   };
 
   const naverMapUrl = `https://map.naver.com/p/search/${encodeURIComponent(roadAddress)}`;
-  const naverDirectionsUrl = `https://map.naver.com/p/entry/address?lng=${lng}&lat=${lat}&title=${encodeURIComponent(placeName)}`;
+  const naverDirectionsUrl = `https://map.naver.com/p/directions/-,/-/${lng},${lat},${encodeURIComponent(placeName)}/-/car`;
   const naverAppUrl = `nmap://search?query=${encodeURIComponent(roadAddress)}&appname=com.happywind.counseling`;
 
   const kakaoMapUrl = `https://map.kakao.com/link/search/${encodeURIComponent(roadAddress)}`;
@@ -603,7 +603,7 @@ export default function CounselingCenterMap({
                 자가용 &amp; 무료 주차
               </strong>
               <p className="text-xs text-brand-brown/70 leading-relaxed font-serif">
-                내비게이션에 <span className="font-semibold text-brand-brown">'도호1길 23'</span> 검색. 건물 상가 전용 지하 및 지상 주차장에 무료 주차가 지원됩니다.
+                내비게이션에 <span className="font-semibold text-brand-brown">'도호1길 23'</span> 검색. 자가운전 방문 시 건물 지하주차장(B1, B2)에 주차하시기 바랍니다.
               </p>
             </div>
           </div>

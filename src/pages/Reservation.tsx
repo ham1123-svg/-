@@ -800,10 +800,14 @@ export default function Reservation() {
                   <p className="text-brand-brown/80">1일 5회 사전 예약제 (09:00, 10:30, 14:00, 15:30, 19:00)</p>
                 </div>
               </div>
-              <div className="mt-8 p-4 bg-white/50 rounded-2xl">
-                <p className="text-xs text-brand-brown/60 font-medium">
+              <div className="mt-8 p-4 bg-white/60 rounded-2xl space-y-2.5 border border-brand-green/20">
+                <p className="text-xs text-brand-brown/75 font-medium leading-relaxed">
                   <span className="text-brand-sage font-bold">[대중교통 이용 시]</span> <br />
                   KTX 울산역(통도사)에서 대중교통 이용 시 편리하게 방문하실 수 있습니다.
+                </p>
+                <p className="text-xs text-brand-brown/75 font-medium leading-relaxed pt-2 border-t border-brand-green/15">
+                  <span className="text-brand-sage font-bold">[자가운전 방문 시]</span> <br />
+                  자가운전 방문시 건물 지하주차장( B1, B2)에 주차하시기 바랍니다.
                 </p>
               </div>
 
@@ -814,28 +818,31 @@ export default function Reservation() {
                 </span>
                 <div className="grid grid-cols-3 gap-2">
                   <a
-                    href="https://map.naver.com/p/search/%EC%9A%B8%EC%82%B0%EA%B4%91%EC%97%AD%EC%8B%9C%20%EC%9A%B8%EC%83%8C%EA%B5%B0%20%EC%82%BC%EB%82%A8%EC%9D%8D%20%EB%8F%84%ED%98%B81%EA%B8%B8%2023"
+                    href="https://map.naver.com/p/search/%EC%9A%B8%EC%82%B0%EA%B4%91%EC%97%AD%EC%8B%9C%20%EC%9A%B8%EC%A3%BC%EA%B5%B0%20%EC%82%BC%EB%82%A8%EC%9D%8D%20%EB%8F%84%ED%98%B81%EA%B8%B8%2023"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="px-2.5 py-2 rounded-xl bg-white hover:bg-emerald-50 text-emerald-800 text-xs font-bold border border-emerald-300 shadow-2xs flex items-center justify-center gap-1 transition-all"
+                    title="네이버 지도에서 울산 울주군 삼남읍 도호1길 23 찾기"
                   >
                     <span>네이버 지도</span>
                     <ExternalLink className="w-3 h-3 text-emerald-600" />
                   </a>
                   <a
-                    href="https://map.kakao.com/link/search/%EC%9A%B8%EC%82%B0%EA%B4%91%EC%97%AD%EC%8B%9C%20%EC%9A%B8%EC%83%8C%EA%B5%B0%20%EC%82%BC%EB%82%A8%EC%9D%8D%20%EB%8F%84%ED%98%B81%EA%B8%B8%2023"
+                    href="https://map.kakao.com/link/search/%EC%9A%B8%EC%82%B0%EA%B4%91%EC%97%AD%EC%8B%9C%20%EC%9A%B8%EC%A3%BC%EA%B5%B0%20%EC%82%BC%EB%82%A8%EC%9D%8D%20%EB%8F%84%ED%98%B81%EA%B8%B8%2023"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="px-2.5 py-2 rounded-xl bg-[#FEE500] hover:bg-[#FEDC00] text-[#191919] text-xs font-bold shadow-2xs flex items-center justify-center gap-1 transition-all"
+                    title="카카오맵에서 울산 울주군 삼남읍 도호1길 23 찾기"
                   >
                     <span>카카오맵</span>
                     <ExternalLink className="w-3 h-3 text-amber-800" />
                   </a>
                   <a
-                    href="https://maps.google.com/maps?q=%EC%9A%B8%EC%82%B0%EA%B4%91%EC%97%AD%EC%8B%9C%20%EC%9A%B8%EC%83%8C%EA%B5%B0%20%EC%82%BC%EB%82%A8%EC%9D%8D%20%EB%8F%84%ED%98%B81%EA%B8%B8%2023"
+                    href="https://maps.google.com/maps?q=%EC%9A%B8%EC%82%B0%EA%B4%91%EC%97%AD%EC%8B%9C%20%EC%9A%B8%EC%A3%BC%EA%B5%B0%20%EC%82%BC%EB%82%A8%EC%9D%8D%20%EB%8F%84%ED%98%B81%EA%B8%B8%2023"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="px-2.5 py-2 rounded-xl bg-white hover:bg-blue-50 text-blue-800 text-xs font-bold border border-blue-300 shadow-2xs flex items-center justify-center gap-1 transition-all"
+                    title="Google 지도에서 울산 울주군 삼남읍 도호1길 23 찾기"
                   >
                     <span>구글 맵</span>
                     <ExternalLink className="w-3 h-3 text-blue-600" />

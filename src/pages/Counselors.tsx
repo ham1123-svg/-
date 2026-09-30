@@ -105,14 +105,13 @@ export default function Counselors() {
           <h1 className="text-3xl md:text-4xl font-serif font-bold text-brand-brown mb-3">
             상담 소장 프로필 <span className="text-brand-sage font-normal text-2xl md:text-3xl">(Executive Profile)</span>
           </h1>
-          <p className="text-brand-brown/80 font-serif text-sm sm:text-base max-w-4xl mx-auto leading-relaxed break-keep text-center">
-            <span>
-              국가공인 및 공인 학회 1급 전문 자격과{' '}
-              <strong className="text-brand-sage font-bold">30,000시간 이상의 총 상담 시간(누적 임상 상담 시간)</strong>을 갖춘
-            </span>
-            <br />
-            <span className="text-brand-brown/75 mt-1 inline-block">
-              <strong className="text-brand-brown font-bold">박미경 상담 소장(대표 원장)</strong>이 내담자 한 분 한 분의 상처 회복과 평온을 위해 온 마음으로 함께합니다.
+          <p className="text-brand-brown/85 font-serif text-sm sm:text-base max-w-3xl mx-auto leading-relaxed break-keep text-center px-2">
+            <span className="inline-block">
+              <strong className="text-brand-sage font-bold">16년 동안 30,000시간이 넘도록</strong> 수많은 내담자의 아픔과 마주해 왔습니다.
+            </span>{' '}
+            <span className="inline-block mt-0.5 sm:mt-1">
+              국가공인 및 학회 1급 자격이 증명하는 탄탄한 전문성을 바탕으로,{' '}
+              <strong className="text-brand-brown font-bold">박미경 소장(대표원장)</strong>이 내담자 한 분의 상처 회복과 평온한 일상을 온 마음을 다해 이끌어드립니다.
             </span>
           </p>
         </div>
