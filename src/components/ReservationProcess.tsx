@@ -476,7 +476,7 @@ export default function ReservationProcess({ className }: { className?: string }
               <span aria-hidden="true" className="text-brand-brown/30">·</span>
               <span className="flex items-center gap-1">
                 <Car className="w-3.5 h-3.5 text-brand-sage" />
-                <span>지상 무료 전용 주차</span>
+                <span>무료 주차(B1, B2)</span>
               </span>
               <span aria-hidden="true" className="text-brand-brown/30">·</span>
               <span className="flex items-center gap-1">

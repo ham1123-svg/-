@@ -361,8 +361,8 @@ export default function QuickReservationModal({ isOpen, onClose }: QuickReservat
                   </div>
 
                   {/* Privacy Reassurance Note */}
-                  <div className="p-3 bg-brand-beige/40 rounded-xl border border-brand-green/20 flex items-start gap-2 text-[11px] text-brand-brown/70 leading-relaxed font-serif">
-                    <Lock className="w-3.5 h-3.5 text-brand-sage shrink-0 mt-0.5" />
+                  <div className="p-3 bg-brand-beige/60 rounded-xl border border-brand-green/30 flex items-start gap-2.5 text-xs text-brand-brown/85 leading-relaxed font-sans">
+                    <Lock className="w-4 h-4 text-brand-sage shrink-0 mt-0.5" />
                     <span>
                       기재하신 성함과 연락처는 전화 상담 및 일정 조율 목적으로만 사용되며, 
                       상담 윤리강령에 따라 <strong>100% 안전하게 보호</strong>됩니다.

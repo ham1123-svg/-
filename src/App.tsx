@@ -64,9 +64,16 @@ export default function App() {
         <KeyboardShortcutsProvider>
           <ScrollToTopOnNavigate />
           <div className="flex flex-col min-h-screen">
+            {/* Skip Navigation for Keyboard & Screen Reader Accessibility (KWCAG 2.2 / WCAG 2.4.1) */}
+            <a
+              href="#main-content"
+              className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[9999] focus:px-4 focus:py-2.5 focus:bg-brand-sage focus:text-white focus:rounded-xl focus:shadow-xl focus:font-bold focus:outline-none focus:ring-4 focus:ring-emerald-300 transition-all"
+            >
+              본문 콘텐츠 바로가기
+            </a>
             <Navbar />
             <ReadingProgressBar />
-            <main className="flex-grow pt-16">
+            <main id="main-content" tabIndex={-1} className="flex-grow pt-16 focus:outline-none">
               <Breadcrumb />
               <AnimatePresence mode="wait">
                 <Routes>

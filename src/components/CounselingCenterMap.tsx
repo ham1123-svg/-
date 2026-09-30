@@ -549,7 +549,7 @@ export default function CounselingCenterMap({
               <div className="relative z-10 flex items-end justify-between text-xs text-brand-brown/75">
                 <div className="p-2.5 px-3 bg-white/90 rounded-xl border border-brand-green/30 flex items-center gap-2">
                   <Car className="w-4 h-4 text-brand-sage" />
-                  <span className="font-semibold text-[11px]">상가 지하 및 지상 주차장 이용 가능</span>
+                  <span className="font-semibold text-[11px]">건물 지하(B1, B2) 무료 주차 가능</span>
                 </div>
 
                 <div className="p-2 px-3 bg-brand-green/30 rounded-xl border border-brand-green/40 font-mono text-[11px] font-bold text-brand-brown">

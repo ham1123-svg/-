@@ -207,7 +207,7 @@ export default function Navbar() {
                 aria-label={isHighContrast ? "고대비 모드 끄기 (현재 켜짐, 일반 모드로 전환)" : "고대비 모드 켜기 (현재 꺼짐, 텍스트 가독성 및 명도 대비 강화)"}
                 title={isHighContrast ? "고대비 모드 켜짐 (일반 모드로 전환)" : "고대비 모드 (텍스트 가독성 강화)"}
                 className={cn(
-                  "w-8 h-8 rounded-full flex items-center justify-center border transition-all cursor-pointer active:scale-95",
+                  "w-9 h-9 min-w-[36px] min-h-[36px] rounded-full flex items-center justify-center border transition-all cursor-pointer active:scale-95",
                   isHighContrast
                     ? "bg-brand-sage text-white border-brand-sage ring-2 ring-brand-sage/40 shadow-xs"
                     : "bg-brand-green/35 text-brand-brown border-brand-green/50 hover:bg-brand-sage hover:text-white"
@@ -218,8 +218,9 @@ export default function Navbar() {
 
               {/* 모바일 전체 메뉴 토글 버튼 */}
               <button
+                type="button"
                 onClick={() => setIsOpen(!isOpen)}
-                className="text-brand-brown hover:text-brand-sage transition-colors p-1 cursor-pointer"
+                className="w-10 h-10 min-w-[40px] min-h-[40px] flex items-center justify-center rounded-xl text-brand-brown hover:text-brand-sage hover:bg-brand-green/30 transition-colors cursor-pointer active:scale-95"
                 aria-label={isOpen ? "모바일 전체 메뉴 닫기" : "모바일 전체 메뉴 열기"}
                 aria-expanded={isOpen}
                 aria-controls="mobile-nav-menu"
