@@ -806,8 +806,8 @@ export default function Reservation() {
                   KTX 울산역(통도사)에서 대중교통 이용 시 편리하게 방문하실 수 있습니다.
                 </p>
                 <p className="text-xs text-brand-brown/75 font-medium leading-relaxed pt-2 border-t border-brand-green/15">
-                  <span className="text-brand-sage font-bold">[자가운전 방문 시]</span> <br />
-                  자가운전 방문시 건물 지하주차장( B1, B2)에 주차하시기 바랍니다.
+                  <span className="text-brand-sage font-bold">[자가 운전 방문 시]</span> <br />
+                  자가 운전의 경우 건물 지하 주차장(B1, B2)를 이용하시기 바랍니다.
                 </p>
               </div>
 

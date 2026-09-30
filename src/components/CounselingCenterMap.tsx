@@ -588,7 +588,7 @@ export default function CounselingCenterMap({
                 기차 / KTX·SRT
               </strong>
               <p className="text-xs text-brand-brown/70 leading-relaxed font-serif">
-                <span className="font-semibold text-brand-brown">울산역(통도사)</span> 하차 시 차량/택시로 약 5~7분 거리 (택시 기본요금 수준), 시내버스 환승 시 10분 내외 소요
+                <span className="font-semibold text-brand-brown">울산역(통도사)</span> 하차 시 도보 10분 내외, 차량/택시로 약 5~7분 거리 (택시 기본요금 수준), 시내버스 환승 시 10분 내외 소요
               </p>
             </div>
           </div>
@@ -603,7 +603,7 @@ export default function CounselingCenterMap({
                 자가용 &amp; 무료 주차
               </strong>
               <p className="text-xs text-brand-brown/70 leading-relaxed font-serif">
-                내비게이션에 <span className="font-semibold text-brand-brown">'도호1길 23'</span> 검색. 자가운전 방문 시 건물 지하주차장(B1, B2)에 주차하시기 바랍니다.
+                내비게이션에 <span className="font-semibold text-brand-brown">'도호1길 23'</span> 검색. 자가 운전의 경우 건물 지하 주차장(B1, B2)를 이용하시기 바랍니다.
               </p>
             </div>
           </div>
