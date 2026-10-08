@@ -59,10 +59,12 @@ export default function Navbar() {
             {/* Brand Logo */}
             <Link 
               to="/" 
-              className="text-brand-brown font-serif text-lg sm:text-xl font-bold flex items-center gap-1.5 shrink-0"
+              className="flex items-center gap-2 shrink-0 group py-1 transition-transform duration-200 hover:scale-[1.01]"
               aria-label="행복바람 심리상담연구소 홈으로 이동"
             >
-              <span>행복바람<span className="text-brand-sage">심리상담연구소</span></span>
+              <span className="text-xl sm:text-2xl font-serif font-bold text-brand-brown tracking-tight">
+                행복바람<span className="text-brand-sage">심리상담연구소</span>
+              </span>
             </Link>
 
             {/* Desktop Navigation (소개 -> 상담사 -> 프로그램 -> 자가진단 -> 커뮤니티 -> 예약 / 오시는 길) */}

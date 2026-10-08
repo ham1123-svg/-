@@ -3,6 +3,7 @@ import { motion } from 'motion/react';
 import { ShieldCheck, Heart, Sparkles, MessageCircle, Phone, ArrowUpRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import SelfDiagnosis from '../components/SelfDiagnosis';
+import DailyMoodTrackerDashboard from '../components/DailyMoodTrackerDashboard';
 
 export default function SelfDiagnosisPage() {
   return (
@@ -26,6 +27,11 @@ export default function SelfDiagnosisPage() {
 
         {/* Interactive Self Diagnosis Questionnaire & Results Dashboard */}
         <SelfDiagnosis />
+
+        {/* Daily Mood Tracker Dashboard: Weekly & Monthly Emotional Change Trends */}
+        <div className="mt-16 max-w-4xl mx-auto">
+          <DailyMoodTrackerDashboard defaultPeriod="weekly" />
+        </div>
 
         {/* Informational Guidance Footer Box */}
         <div className="mt-14 max-w-4xl mx-auto bg-white rounded-3xl p-6 sm:p-8 border border-brand-green/30 shadow-xs">

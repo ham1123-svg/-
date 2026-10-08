@@ -7,11 +7,12 @@ import {
 import { Link, useNavigate } from 'react-router-dom';
 import { cn } from '../lib/utils';
 import ClientTestimonial from '../components/ClientTestimonial';
+import AnonymousReviewBoard from '../components/AnonymousReviewBoard';
 import FrequentlyAskedQuestions from '../components/FrequentlyAskedQuestions';
 import CounselingCenterMap from '../components/CounselingCenterMap';
 import CounselingInsights from '../components/CounselingInsights';
 import NewsletterSubscription from '../components/NewsletterSubscription';
-import ReservationProcess from '../components/ReservationProcess';
+import CounselingProcessInfographic from '../components/CounselingProcessInfographic';
 import MentalHealthQuickPoll from '../components/MentalHealthQuickPoll';
 import VirtualOfficeTour from '../components/VirtualOfficeTour';
 
@@ -28,6 +29,40 @@ const hashtags = [
 export default function Home() {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
+
+  useEffect(() => {
+    // Handle direct link with hash anchor
+    if (
+      window.location.hash === '#testimonials-section' || 
+      window.location.hash === '#client-testimonials-section' ||
+      window.location.hash === '#anonymous-review-board-section'
+    ) {
+      const el = 
+        document.getElementById('anonymous-review-board-section') || 
+        document.getElementById('testimonials-section') || 
+        document.getElementById('client-testimonials-section');
+      if (el) {
+        const timer = setTimeout(() => {
+          el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 150);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, []);
+
+  const scrollToTestimonials = (e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+    }
+    const target = 
+      document.getElementById('anonymous-review-board-section') || 
+      document.getElementById('testimonials-section') || 
+      document.getElementById('client-testimonials-section');
+    if (target) {
+      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      window.history.pushState(null, '', '#anonymous-review-board-section');
+    }
+  };
 
   const handleTagClick = (tag: string) => {
     navigate(`/counselors?search=${encodeURIComponent(tag)}`);
@@ -90,9 +125,12 @@ export default function Home() {
                 </div>
                 <a
                   href="#testimonials-section"
-                  className="text-xs text-brand-sage underline font-semibold hover:text-brand-brown transition-colors cursor-pointer"
+                  onClick={scrollToTestimonials}
+                  className="text-xs text-brand-sage underline font-semibold hover:text-brand-brown transition-colors cursor-pointer inline-flex items-center gap-1 group py-0.5"
+                  aria-label="내담자 실제 후기 섹션으로 바로 이동"
                 >
-                  내담자 실제 후기 보기 ↓
+                  <span>내담자 실제 후기 보기</span>
+                  <span className="transition-transform group-hover:translate-y-0.5" aria-hidden="true">↓</span>
                 </a>
               </div>
             </motion.div>
@@ -263,8 +301,8 @@ export default function Home() {
       {/* Virtual Office Tour: High-Quality Interior Carousel for Client Comfort */}
       <VirtualOfficeTour />
 
-      {/* Reservation Process: Step-by-Step Visual Guide for First-time Visitors */}
-      <ReservationProcess />
+      {/* Counseling Process Infographic: Step-by-Step Visual Journey (예약 -> 초기상담 -> 진행 -> 종결) */}
+      <CounselingProcessInfographic />
 
       {/* Counseling Insights (Expert Clinical Column & Blog Posts) */}
       <CounselingInsights />
@@ -281,6 +319,9 @@ export default function Home() {
 
       {/* Client Testimonial Carousel of Positive Counseling Feedback Cards */}
       <ClientTestimonial />
+
+      {/* Anonymous Client Review Board: Interactive Board for Real Client Testimonials */}
+      <AnonymousReviewBoard />
 
       {/* Counseling Center Location & Directions Map */}
       <section className="py-20 bg-brand-beige/25 border-t border-brand-green/20">

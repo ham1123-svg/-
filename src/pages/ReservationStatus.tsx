@@ -178,9 +178,12 @@ export default function ReservationStatus() {
       case 'pending':
       default:
         return (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-800 border border-amber-300">
-            <Clock3 className="w-3.5 h-3.5 animate-spin" style={{ animationDuration: '4s' }} />
-            <span>접수 완료 (확인 중)</span>
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-900 border border-amber-300 shadow-2xs">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-500 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-600"></span>
+            </span>
+            <span>예약 확정 대기 중 (실시간 검토)</span>
           </span>
         );
     }

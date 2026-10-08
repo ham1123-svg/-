@@ -7,11 +7,13 @@ import {
 } from 'lucide-react';
 import FAQ, { FAQCategory } from '../components/FAQ';
 import CounselingTimeline from '../components/CounselingTimeline';
+import CounselingProcessInfographic from '../components/CounselingProcessInfographic';
 
 export default function Guide() {
   const location = useLocation();
   const [activeFaqCategory, setActiveFaqCategory] = useState<FAQCategory>('ALL');
   const [targetFaqId, setTargetFaqId] = useState<string | null>(null);
+  const [processViewMode, setProcessViewMode] = useState<'infographic' | 'timeline'>('infographic');
 
   useEffect(() => {
     if (location.hash) {
@@ -80,9 +82,43 @@ export default function Guide() {
           </div>
         </div>
 
-        {/* Process Visualization - Step-by-Step Visual Timeline */}
-        <section id="process" className="mb-24 scroll-mt-24">
-          <CounselingTimeline onSelectFaqCategory={handleTimelineFaqSelect} />
+        {/* Process Visualization - Step-by-Step Infographic & Timeline */}
+        <section id="process" className="mb-24 scroll-mt-24 space-y-6">
+          {/* View Mode Switcher */}
+          <div className="flex items-center justify-center">
+            <div className="inline-flex items-center p-1 bg-white rounded-2xl border border-brand-green/30 shadow-2xs">
+              <button
+                type="button"
+                onClick={() => setProcessViewMode('infographic')}
+                className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-serif font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                  processViewMode === 'infographic'
+                    ? 'bg-brand-sage text-white shadow-2xs'
+                    : 'text-brand-brown/70 hover:text-brand-brown hover:bg-brand-green/10'
+                }`}
+              >
+                <ClipboardCheck className="w-4 h-4" />
+                <span>4단계 인포그래픽 (예약 ➔ 초기상담 ➔ 진행 ➔ 종결)</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setProcessViewMode('timeline')}
+                className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-serif font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                  processViewMode === 'timeline'
+                    ? 'bg-brand-sage text-white shadow-2xs'
+                    : 'text-brand-brown/70 hover:text-brand-brown hover:bg-brand-green/10'
+                }`}
+              >
+                <Clock className="w-4 h-4" />
+                <span>6단계 상세 로드맵 타임라인</span>
+              </button>
+            </div>
+          </div>
+
+          {processViewMode === 'infographic' ? (
+            <CounselingProcessInfographic className="border-0 shadow-none py-4" showTitle={false} />
+          ) : (
+            <CounselingTimeline onSelectFaqCategory={handleTimelineFaqSelect} />
+          )}
         </section>
 
         {/* Self-Diagnosis Callout Banner */}

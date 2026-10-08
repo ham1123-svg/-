@@ -6,7 +6,7 @@ import {
   Filter, Lock, KeyRound, LogOut, ArrowUpRight, X,
   MessageSquareText, Send, BellRing, Info, Check, PhoneCall,
   CalendarCheck, Edit3, Plus, HelpCircle, Mail, Building2, Bell,
-  TrendingUp, BarChart3
+  TrendingUp, BarChart3, MessageSquareHeart
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { cn } from '../lib/utils';
@@ -15,6 +15,9 @@ import AdminScheduleManager from '../components/AdminScheduleManager';
 import AdminCommunityManager from '../components/AdminCommunityManager';
 import AdminForgotPasswordModal from '../components/AdminForgotPasswordModal';
 import AdminReservationTrendChart from '../components/AdminReservationTrendChart';
+import AdminReviewManager from '../components/AdminReviewManager';
+import VirtualPushFeedbackHub from '../components/VirtualPushFeedbackHub';
+import { commentPushService } from '../services/commentPushService';
 
 const TIME_SLOTS = [...RESERVATION_TIME_SLOTS];
 
@@ -31,9 +34,19 @@ export default function Admin() {
   const [loginLoading, setLoginLoading] = useState(false);
   const [showForgotModal, setShowForgotModal] = useState(false);
 
-  // View Mode: 'calendar' (Timetable) or 'table' (List) or 'analytics' (6-Month Trends) or 'eap' (B2B EAP Inquiries) or 'qna' (Community Q&A) or 'community' (Community Posts/Notices)
-  const [viewMode, setViewMode] = useState<'calendar' | 'table' | 'analytics' | 'eap' | 'qna' | 'community'>('calendar');
+  // View Mode: 'calendar' (Timetable) or 'table' (List) or 'analytics' (6-Month Trends) or 'eap' (B2B EAP Inquiries) or 'qna' (Community Q&A) or 'community' (Community Posts/Notices) or 'testimonials' (Client Reviews) or 'push_feedback' (Comment Push Notifications)
+  const [viewMode, setViewMode] = useState<'calendar' | 'table' | 'analytics' | 'eap' | 'qna' | 'community' | 'testimonials' | 'push_feedback'>('calendar');
   const [programs, setPrograms] = useState<Program[]>([]);
+
+  // Comment Push Notifications unread counter
+  const [unreadPushCount, setUnreadPushCount] = useState<number>(() => commentPushService.getUnreadCount('admin'));
+
+  useEffect(() => {
+    const unsub = commentPushService.subscribe(() => {
+      setUnreadPushCount(commentPushService.getUnreadCount('admin'));
+    });
+    return () => unsub();
+  }, []);
 
   // EAP Inquiries state
   const [eapInquiries, setEapInquiries] = useState<any[]>([]);
@@ -683,6 +696,33 @@ export default function Admin() {
           </div>
 
           <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+            {/* 댓글 가상 푸시 알림 피드백 버튼 */}
+            <button
+              onClick={() => setViewMode('push_feedback')}
+              className={cn(
+                "flex items-center gap-2 px-3.5 py-2.5 rounded-xl border text-sm font-semibold shadow-xs transition-all cursor-pointer",
+                viewMode === 'push_feedback'
+                  ? "bg-rose-600 text-white border-rose-600"
+                  : "bg-rose-50 hover:bg-rose-100/80 border-rose-300 text-rose-950"
+              )}
+              title="내담자 후기글 댓글 실시간 가상 푸시 알림 피드백 허브"
+            >
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500"></span>
+              </span>
+              <BellRing className={cn("w-4 h-4", viewMode === 'push_feedback' ? "text-white" : "text-rose-600")} />
+              <span>댓글 푸시 알림</span>
+              {unreadPushCount > 0 && (
+                <span className={cn(
+                  "px-1.5 py-0.2 rounded-full text-[10px] font-bold font-mono",
+                  viewMode === 'push_feedback' ? "bg-white text-rose-600" : "bg-rose-600 text-white"
+                )}>
+                  {unreadPushCount}
+                </span>
+              )}
+            </button>
+
             {/* 알림톡 & 문자 연동 관리 버튼 */}
             <button
               onClick={() => {
@@ -948,6 +988,42 @@ export default function Admin() {
             >
               <Bell className="w-4 h-4" />
               <span>커뮤니티 글 관리 ({communityNotices.length})</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setViewMode('testimonials');
+              }}
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                viewMode === 'testimonials'
+                  ? 'bg-brand-sage text-white shadow-xs'
+                  : 'text-brand-brown/70 hover:bg-brand-beige/40'
+              }`}
+            >
+              <MessageSquareHeart className="w-4 h-4" />
+              <span>내담자 후기 관리</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setViewMode('push_feedback');
+              }}
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                viewMode === 'push_feedback'
+                  ? 'bg-rose-600 text-white shadow-xs'
+                  : 'text-brand-brown/70 hover:bg-brand-beige/40'
+              }`}
+            >
+              <BellRing className="w-4 h-4" />
+              <span>댓글 푸시 알림 피드백</span>
+              {unreadPushCount > 0 && (
+                <span className={cn(
+                  "px-1.5 py-0.2 rounded-full text-[10px] font-bold font-mono",
+                  viewMode === 'push_feedback' ? "bg-white text-rose-600" : "bg-rose-500 text-white"
+                )}>
+                  {unreadPushCount}
+                </span>
+              )}
             </button>
           </div>
 
@@ -1448,6 +1524,20 @@ export default function Admin() {
               onRefresh={loadCommunityNotices}
               onShowToast={showToast}
             />
+          </div>
+        )}
+
+        {/* VIEW 6: Client Testimonials Management */}
+        {viewMode === 'testimonials' && (
+          <div className="mb-8">
+            <AdminReviewManager onShowToast={showToast} />
+          </div>
+        )}
+
+        {/* VIEW 7: Client Comment Virtual Push Feedback Hub */}
+        {viewMode === 'push_feedback' && (
+          <div className="mb-8">
+            <VirtualPushFeedbackHub />
           </div>
         )}
 

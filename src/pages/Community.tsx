@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   HelpCircle, 
@@ -39,7 +39,13 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { cn } from '../lib/utils';
 import FAQ from '../components/FAQ';
 import ClientSatisfactionAnalytics from '../components/ClientSatisfactionAnalytics';
+import AnonymousReviewBoard from '../components/AnonymousReviewBoard';
+import ReviewEmotionWordCloud from '../components/ReviewEmotionWordCloud';
+import PostCommentSection from '../components/PostCommentSection';
 import { TESTIMONIALS_DATA } from '../data/testimonialsData';
+import { testimonialService } from '../services/testimonialService';
+import ClientReviewWriteModal from '../components/ClientReviewWriteModal';
+import { Testimonial } from '../types';
 
 // Types
 export type CommunityTab = 'faq' | 'column' | 'review' | 'all' | 'notice' | 'qna';
@@ -269,11 +275,13 @@ const reviewCategories = [
 export default function Community() {
   const [searchParams, setSearchParams] = useSearchParams();
   const rawTab = searchParams.get('tab');
+  const initialSearchTerm = searchParams.get('q') || searchParams.get('search') || '';
+  const [selectedWordCloudKeyword, setSelectedWordCloudKeyword] = useState<string>('');
   const currentTab: CommunityTab = rawTab === 'qna'
     ? 'faq'
     : rawTab && ['faq', 'column', 'review', 'all', 'notice'].includes(rawTab as CommunityTab)
     ? (rawTab as CommunityTab)
-    : 'faq';
+    : (initialSearchTerm ? 'review' : 'faq');
 
   const setTab = (tab: CommunityTab) => {
     setSearchParams(tab === 'faq' ? {} : { tab });
@@ -606,9 +614,31 @@ export default function Community() {
     ? columns 
     : columns.filter(col => col.category === selectedColumnCategory);
 
+  const [communityTestimonials, setCommunityTestimonials] = useState<Testimonial[]>(TESTIMONIALS_DATA);
+  const [isReviewWriteModalOpen, setIsReviewWriteModalOpen] = useState(false);
+
+  const loadCommunityReviews = useCallback(async () => {
+    try {
+      const data = await testimonialService.getTestimonials(false);
+      if (data && data.length > 0) {
+        setCommunityTestimonials(data);
+      }
+    } catch (e) {
+      console.error("Failed to load community testimonials:", e);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadCommunityReviews();
+    const unsub = testimonialService.subscribe(() => {
+      loadCommunityReviews();
+    });
+    return () => unsub();
+  }, [loadCommunityReviews]);
+
   const filteredReviews = selectedReviewCategory === 'all'
-    ? TESTIMONIALS_DATA
-    : TESTIMONIALS_DATA.filter(t => t.category === selectedReviewCategory);
+    ? communityTestimonials
+    : communityTestimonials.filter(t => t.category === selectedReviewCategory);
 
   // Handle Q&A submit
   const handleQnaSubmit = async (e: React.FormEvent) => {
@@ -1321,160 +1351,25 @@ export default function Community() {
         )}
 
         {/* ========================================================================= */}
-        {/* REARRANGED ORDER 3: 내담자 상담 후기 (Stories & Reviews) */}
+        {/* REARRANGED ORDER 3: 내담자 상담 후기 (Stories & Reviews) & 감정 키워드 워드 클라우드 */}
         {/* ========================================================================= */}
         {(currentTab === 'all' || currentTab === 'review') && (
-          <section className="mb-20">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 pb-3 border-b border-brand-green/20">
-              <div className="flex items-center gap-3">
-                <div className="p-2.5 bg-rose-50 rounded-2xl text-rose-500">
-                  <Heart className="w-5 h-5 fill-current" />
-                </div>
-                <div>
-                  <h2 className="text-xl sm:text-2xl font-serif font-bold text-brand-brown flex items-center gap-2">
-                    <span>내담자 상담 후기</span>
-                    <span className="text-xs px-2.5 py-0.5 rounded-full bg-rose-100 text-rose-800 font-sans font-bold">
-                      100% 익명 보장
-                    </span>
-                  </h2>
-                  <p className="text-xs sm:text-sm text-brand-brown/65">
-                    어둠 속에서 다시 한 걸음을 내딛은 소중한 분들의 실제 치유와 변화의 기록입니다.
-                  </p>
-                </div>
-              </div>
+          <div className="mb-20 space-y-12">
+            {/* 상담 후기 본문 감정 키워드 분석 워드 클라우드 */}
+            <ReviewEmotionWordCloud
+              onSelectKeyword={(kw) => {
+                setSelectedWordCloudKeyword(kw);
+              }}
+              testimonials={communityTestimonials}
+            />
 
-              {/* Review Category Filter */}
-              <div className="flex flex-wrap gap-1.5 p-1 bg-white/80 rounded-xl border border-brand-green/20 self-start sm:self-auto">
-                {reviewCategories.map((cat) => (
-                  <button
-                    key={cat.id}
-                    onClick={() => setSelectedReviewCategory(cat.id)}
-                    className={cn(
-                      "px-3 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer",
-                      selectedReviewCategory === cat.id
-                        ? "bg-brand-sage text-white shadow-xs"
-                        : "text-brand-brown/60 hover:text-brand-brown hover:bg-brand-beige/50"
-                    )}
-                  >
-                    {cat.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Clinical Ethics & Confidentiality Notice Banner */}
-            <div className="p-4 sm:p-5 rounded-2xl bg-emerald-50/90 border border-emerald-200/90 mb-6 flex items-start gap-3.5 text-xs text-emerald-950 font-serif leading-relaxed shadow-2xs">
-              <ShieldCheck className="w-5 h-5 text-emerald-700 shrink-0 mt-0.5" />
-              <div>
-                <strong className="block text-sm font-bold text-emerald-900 mb-1">
-                  한국상담심리학회 윤리강령 제1조 [비밀보장 및 사생활 보호] 원칙 준수 안내
-                </strong>
-                <p className="text-emerald-900/85">
-                  행복바람심리상담연구소의 모든 상담 후기는 내담자 본인의 자발적 공유 동의를 받았으며, 내담자의 인격과 사생활을 철저히 보호하기 위해 <strong>모든 성명(영문 이니셜 및 가명 처리), 직무, 세부 정황을 100% 비식별 가명화 및 재구성</strong>하여 게시하고 있습니다.
-                </p>
-              </div>
-            </div>
-
-            {/* Visual Client Satisfaction Analytics with Radar & Bar Chart */}
-            <ClientSatisfactionAnalytics />
-
-            <div className="grid md:grid-cols-2 gap-6">
-              {(currentTab === 'all' ? filteredReviews.slice(0, 4) : filteredReviews).map((rev) => (
-                <div 
-                  key={rev.id}
-                  className="bg-white rounded-3xl p-6 sm:p-7 border border-brand-green/20 shadow-xs flex flex-col justify-between"
-                >
-                  <div>
-                    {/* Header */}
-                    <div className="flex items-start justify-between gap-2 mb-3">
-                      <div>
-                        <div className="flex items-center gap-1.5 mb-1">
-                          <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-brand-sage/10 text-brand-sage">
-                            {rev.categoryLabel}
-                          </span>
-                          <span className="text-[11px] text-brand-brown/50">{rev.programTaken}</span>
-                        </div>
-                        <h4 className="font-bold text-sm text-brand-brown flex items-center gap-1.5 flex-wrap">
-                          <span>{rev.clientName}</span>
-                          <span className="text-[10px] px-1.5 py-0.2 rounded-md bg-slate-100 text-slate-700 font-bold border border-slate-200 font-sans">
-                            가명 보호
-                          </span>
-                          <span className="text-xs font-normal text-brand-brown/60">({rev.ageGroupAndRole})</span>
-                        </h4>
-                      </div>
-
-                      <div className="flex items-center text-amber-400 gap-0.5 shrink-0">
-                        {[...Array(5)].map((_, i) => (
-                          <Star key={i} className="w-3.5 h-3.5 fill-current" />
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Headline */}
-                    <p className="text-sm font-bold font-serif text-brand-brown leading-snug mb-3">
-                      {rev.headline}
-                    </p>
-
-                    {/* Story */}
-                    <p className="text-xs sm:text-sm text-brand-brown/75 leading-relaxed mb-4">
-                      {rev.story}
-                    </p>
-
-                    {/* Before & After comparison */}
-                    <div className="grid sm:grid-cols-2 gap-2.5 p-3 rounded-2xl bg-brand-beige/40 border border-brand-green/15 text-xs mb-4">
-                      <div>
-                        <span className="font-bold text-rose-700 block mb-0.5">상담 전 상태</span>
-                        <p className="text-brand-brown/70 leading-relaxed text-[11px]">{rev.beforeState}</p>
-                      </div>
-                      <div className="sm:border-l sm:border-brand-green/20 sm:pl-3">
-                        <span className="font-bold text-emerald-700 block mb-0.5">상담 후 변화</span>
-                        <p className="text-brand-brown/70 leading-relaxed text-[11px]">{rev.afterState}</p>
-                      </div>
-                    </div>
-
-                    {/* Counselor Insight */}
-                    <div className="p-3 rounded-xl bg-brand-sage/5 border-l-3 border-brand-sage text-[11px] text-brand-brown/80 mb-4">
-                      <strong className="text-brand-brown font-semibold block mb-0.5">
-                        박미경 소장의 임상 코멘트
-                      </strong>
-                      <p className="leading-relaxed">{rev.counselorInsight}</p>
-                    </div>
-                  </div>
-
-                  {/* Footer & Tags */}
-                  <div className="pt-3 border-t border-brand-beige/60 flex items-center justify-between text-xs">
-                    <div className="flex flex-wrap gap-1">
-                      {rev.tags.slice(0, 3).map((tag, idx) => (
-                        <span key={idx} className="text-[10px] text-brand-brown/50">
-                          {tag}
-                        </span>
-                      ))}
-                    </div>
-                    <Link
-                      to="/reservation"
-                      className="font-bold text-brand-sage hover:underline flex items-center gap-1 shrink-0"
-                    >
-                      <span>상담 신청하기</span>
-                      <ArrowRight className="w-3.5 h-3.5" />
-                    </Link>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {currentTab === 'all' && (
-              <div className="text-center mt-6">
-                <button
-                  type="button"
-                  onClick={() => setTab('review')}
-                  className="px-6 py-2.5 bg-white border border-brand-green/30 text-brand-brown rounded-xl text-xs font-bold hover:bg-brand-beige/40 transition-all inline-flex items-center gap-1.5 cursor-pointer shadow-xs"
-                >
-                  <span>내담자 후기 더보기 (총 {TESTIMONIALS_DATA.length}건)</span>
-                  <ChevronRight className="w-4 h-4" />
-                </button>
-              </div>
-            )}
-          </section>
+            {/* 내담자 익명 상담 후기 게시판 */}
+            <AnonymousReviewBoard
+              title="내담자 익명 상담 후기 게시판"
+              subtitle="행복바람에서 마음의 평온을 되찾은 내담자들이 직접 남겨주신 솔직한 치유와 회복의 기록입니다."
+              initialSearchTerm={selectedWordCloudKeyword || initialSearchTerm}
+            />
+          </div>
         )}
 
         {/* ========================================================================= */}
@@ -1765,6 +1660,12 @@ export default function Community() {
                   </div>
                 </div>
               )}
+
+              {/* Encouragement & Empathy Comments */}
+              <PostCommentSection
+                postId={`notice-${activeNotice.id}`}
+                postTitle={activeNotice.title}
+              />
 
               <div className="flex items-center justify-end gap-3 pt-4 border-t border-brand-beige/80">
                 <button
@@ -2107,6 +2008,12 @@ export default function Community() {
                       </span>
                     </div>
                   )}
+
+                  {/* Encouragement & Empathy Comments */}
+                  <PostCommentSection
+                    postId={`qna-${verifyModalItem.id}`}
+                    postTitle={verifyModalItem.title}
+                  />
 
                   <div className="flex items-center justify-between pt-3 border-t border-brand-beige/80">
                     <button
@@ -2648,6 +2555,13 @@ export default function Community() {
           </div>
         )}
       </AnimatePresence>
+
+      {/* Client Review Write Modal Form */}
+      <ClientReviewWriteModal
+        isOpen={isReviewWriteModalOpen}
+        onClose={() => setIsReviewWriteModalOpen(false)}
+        onSuccess={() => loadCommunityReviews()}
+      />
 
     </div>
   );

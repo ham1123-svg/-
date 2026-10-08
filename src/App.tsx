@@ -15,6 +15,7 @@ import FloatingButtons from './components/FloatingButtons';
 import KeyboardShortcutsModal from './components/KeyboardShortcutsModal';
 import Breadcrumb from './components/Breadcrumb';
 import ReadingProgressBar from './components/ReadingProgressBar';
+import FloatingCommentPushToast from './components/FloatingCommentPushToast';
 import { HighContrastProvider } from './context/HighContrastContext';
 import { KeyboardShortcutsProvider } from './context/KeyboardShortcutsContext';
 
@@ -28,6 +29,7 @@ import Community from './pages/Community';
 import Reservation from './pages/Reservation';
 import ReservationStatus from './pages/ReservationStatus';
 import SelfDiagnosisPage from './pages/SelfDiagnosisPage';
+import MoodTrackerPage from './pages/MoodTrackerPage';
 import Confidentiality from './pages/Confidentiality';
 import Privacy from './pages/Privacy';
 import Terms from './pages/Terms';
@@ -83,6 +85,8 @@ export default function App() {
                   <Route path="/programs" element={<Programs />} />
                   <Route path="/guide" element={<Guide />} />
                   <Route path="/self-diagnosis" element={<SelfDiagnosisPage />} />
+                  <Route path="/mood-tracker" element={<MoodTrackerPage />} />
+                  <Route path="/daily-mood" element={<MoodTrackerPage />} />
                   <Route path="/community" element={<Community />} />
                   <Route path="/reservation" element={<Reservation />} />
                   <Route path="/reservation/status" element={<ReservationStatus />} />
@@ -98,6 +102,7 @@ export default function App() {
             </main>
             <Footer />
             <FloatingButtons />
+            <FloatingCommentPushToast />
           </div>
           <KeyboardShortcutsModal />
         </KeyboardShortcutsProvider>

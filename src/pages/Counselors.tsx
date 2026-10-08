@@ -221,9 +221,9 @@ export default function Counselors() {
 
                         {/* Specialty Tags Cloud on Image */}
                         <div className="flex flex-wrap gap-1.5">
-                          {rawTags.slice(0, 6).map(tag => (
+                          {rawTags.slice(0, 6).map((tag, tIdx) => (
                             <button
-                              key={tag}
+                              key={`counselor-${counselor.id}-tag-${tIdx}-${tag}`}
                               type="button"
                               onClick={(e) => {
                                 e.stopPropagation();

@@ -11,6 +11,7 @@ import {
   sendAdminTestAlimtalk
 } from "./src/server/notificationService.ts";
 import nodemailer from "nodemailer";
+import { TESTIMONIALS_DATA } from "./src/data/testimonialsData.ts";
 
 const rootDir = process.cwd();
 
@@ -161,6 +162,50 @@ db.exec(`
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     mood_id TEXT NOT NULL,
     voted_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+
+  CREATE TABLE IF NOT EXISTS daily_mood_logs (
+    id TEXT PRIMARY KEY,
+    date TEXT UNIQUE NOT NULL,
+    mood_id TEXT NOT NULL,
+    score INTEGER NOT NULL DEFAULT 7,
+    intensity INTEGER NOT NULL DEFAULT 7,
+    tags TEXT,
+    note TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+
+  CREATE TABLE IF NOT EXISTS post_comments (
+    id TEXT PRIMARY KEY,
+    post_id TEXT NOT NULL,
+    author_nickname TEXT NOT NULL,
+    badge TEXT DEFAULT '따뜻한 응원',
+    content TEXT NOT NULL,
+    like_count INTEGER DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+
+  CREATE TABLE IF NOT EXISTS client_testimonials (
+    id TEXT PRIMARY KEY,
+    client_name TEXT NOT NULL,
+    initial TEXT,
+    age_group_and_role TEXT,
+    category TEXT NOT NULL,
+    category_label TEXT,
+    program_taken TEXT,
+    rating INTEGER DEFAULT 5,
+    headline TEXT NOT NULL,
+    story TEXT NOT NULL,
+    before_state TEXT,
+    after_state TEXT,
+    counselor_insight TEXT,
+    period TEXT,
+    tags TEXT,
+    recommend_count INTEGER DEFAULT 0,
+    date TEXT,
+    is_best INTEGER DEFAULT 0,
+    status TEXT DEFAULT 'pending',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   );
 `);
 
@@ -598,6 +643,48 @@ try {
   }
 } catch (e) {
   console.error("Error seeding extra insights:", e);
+}
+
+// Seed client testimonials from TESTIMONIALS_DATA if empty
+try {
+  const testimonialsCount = (db.prepare("SELECT COUNT(*) as count FROM client_testimonials").get() as any).count;
+  if (testimonialsCount === 0 && Array.isArray(TESTIMONIALS_DATA)) {
+    const insertTestimonial = db.prepare(`
+      INSERT INTO client_testimonials (
+        id, client_name, initial, age_group_and_role, category, category_label,
+        program_taken, rating, headline, story, before_state, after_state,
+        counselor_insight, period, tags, recommend_count, date, is_best, status, created_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+
+    for (const t of TESTIMONIALS_DATA) {
+      insertTestimonial.run(
+        t.id,
+        t.clientName,
+        t.initial || (t.clientName ? t.clientName.slice(0, 1) : '익명'),
+        t.ageGroupAndRole,
+        t.category,
+        t.categoryLabel,
+        t.programTaken,
+        t.rating || 5,
+        t.headline,
+        t.story,
+        t.beforeState,
+        t.afterState,
+        t.counselorInsight || '',
+        t.period,
+        JSON.stringify(t.tags || []),
+        t.recommendCount || 0,
+        t.date || '2026-09-01',
+        t.isBest ? 1 : 0,
+        'approved', // Default seeded items are approved
+        `${t.date || '2026-09-01'} 12:00:00`
+      );
+    }
+    console.log(`Seeded ${TESTIMONIALS_DATA.length} client testimonials into database.`);
+  }
+} catch (e) {
+  console.error("Error seeding client testimonials:", e);
 }
 
 async function startServer() {
@@ -1289,6 +1376,179 @@ async function startServer() {
     }
   });
 
+  // --- Client Testimonials Endpoints ---
+  app.get("/api/testimonials", (req, res) => {
+    try {
+      const includeAll = req.query.includeAll === "true" || req.query.admin === "true";
+      const query = includeAll 
+        ? "SELECT * FROM client_testimonials ORDER BY is_best DESC, created_at DESC, id DESC"
+        : "SELECT * FROM client_testimonials WHERE status = 'approved' ORDER BY is_best DESC, created_at DESC, id DESC";
+      const rows = db.prepare(query).all() as any[];
+
+      const result = rows.map(r => {
+        let parsedTags: string[] = [];
+        try {
+          if (r.tags) {
+            if (typeof r.tags === 'string' && r.tags.startsWith('[')) {
+              parsedTags = JSON.parse(r.tags);
+            } else if (typeof r.tags === 'string') {
+              parsedTags = r.tags.split(',').map((t: string) => t.trim()).filter(Boolean);
+            }
+          }
+        } catch (e) {
+          parsedTags = [];
+        }
+
+        return {
+          id: r.id,
+          clientName: r.client_name,
+          initial: r.initial,
+          ageGroupAndRole: r.age_group_and_role,
+          category: r.category,
+          categoryLabel: r.category_label,
+          programTaken: r.program_taken,
+          rating: r.rating || 5,
+          headline: r.headline,
+          story: r.story,
+          beforeState: r.before_state,
+          afterState: r.after_state,
+          counselorInsight: r.counselor_insight,
+          period: r.period,
+          tags: parsedTags,
+          recommendCount: r.recommend_count || 0,
+          date: r.date,
+          isBest: r.is_best === 1,
+          status: r.status || 'pending',
+          created_at: r.created_at
+        };
+      });
+
+      res.json(result);
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.post("/api/testimonials", (req, res) => {
+    try {
+      const body = req.body;
+      const id = body.id || `t-user-${Date.now()}`;
+      const status = body.status || 'pending'; // Client submissions start as pending
+      const tags = Array.isArray(body.tags) ? JSON.stringify(body.tags) : (body.tags || '[]');
+      const date = body.date || new Date().toISOString().split('T')[0];
+      const initial = body.initial || (body.clientName ? body.clientName.replace(/[^a-zA-Z가-힣]/g, '').slice(0, 1) : '익명');
+
+      db.prepare(`
+        INSERT INTO client_testimonials (
+          id, client_name, initial, age_group_and_role, category, category_label,
+          program_taken, rating, headline, story, before_state, after_state,
+          counselor_insight, period, tags, recommend_count, date, is_best, status, created_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `).run(
+        id,
+        body.clientName || '내담자 익명',
+        initial,
+        body.ageGroupAndRole || '내담자',
+        body.category || 'adult',
+        body.categoryLabel || '일반 심리상담',
+        body.programTaken || '개인 심리상담',
+        Number(body.rating) || 5,
+        body.headline || '',
+        body.story || '',
+        body.beforeState || '',
+        body.afterState || '',
+        body.counselorInsight || '',
+        body.period || `${date.slice(0, 7)} 완료`,
+        tags,
+        Number(body.recommendCount) || 0,
+        date,
+        body.isBest ? 1 : 0,
+        status,
+        new Date().toISOString().replace('T', ' ').slice(0, 19)
+      );
+
+      res.status(201).json({ 
+        success: true, 
+        id, 
+        status, 
+        message: status === 'approved' 
+          ? "후기가 등록되었습니다." 
+          : "소중한 후기가 안전하게 접수되었습니다. 개인정보 보호 검토 및 관리자 승인 후 게시됩니다." 
+      });
+    } catch (err: any) {
+      console.error("Testimonial submit error:", err);
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.put("/api/testimonials/:id", (req, res) => {
+    try {
+      const { id } = req.params;
+      const body = req.body;
+      const current = db.prepare("SELECT * FROM client_testimonials WHERE id = ?").get(id) as any;
+      if (!current) {
+        return res.status(404).json({ error: "후기를 찾을 수 없습니다." });
+      }
+
+      const clientName = body.clientName !== undefined ? body.clientName : current.client_name;
+      const initial = body.initial !== undefined ? body.initial : current.initial;
+      const ageGroupAndRole = body.ageGroupAndRole !== undefined ? body.ageGroupAndRole : current.age_group_and_role;
+      const category = body.category !== undefined ? body.category : current.category;
+      const categoryLabel = body.categoryLabel !== undefined ? body.categoryLabel : current.category_label;
+      const programTaken = body.programTaken !== undefined ? body.programTaken : current.program_taken;
+      const rating = body.rating !== undefined ? Number(body.rating) : current.rating;
+      const headline = body.headline !== undefined ? body.headline : current.headline;
+      const story = body.story !== undefined ? body.story : current.story;
+      const beforeState = body.beforeState !== undefined ? body.beforeState : current.before_state;
+      const afterState = body.afterState !== undefined ? body.afterState : current.after_state;
+      const counselorInsight = body.counselorInsight !== undefined ? body.counselorInsight : current.counselor_insight;
+      const period = body.period !== undefined ? body.period : current.period;
+      const tags = body.tags !== undefined ? (Array.isArray(body.tags) ? JSON.stringify(body.tags) : body.tags) : current.tags;
+      const isBest = body.isBest !== undefined ? (body.isBest ? 1 : 0) : current.is_best;
+      const status = body.status !== undefined ? body.status : current.status;
+
+      db.prepare(`
+        UPDATE client_testimonials SET
+          client_name = ?, initial = ?, age_group_and_role = ?, category = ?, category_label = ?,
+          program_taken = ?, rating = ?, headline = ?, story = ?, before_state = ?, after_state = ?,
+          counselor_insight = ?, period = ?, tags = ?, is_best = ?, status = ?
+        WHERE id = ?
+      `).run(
+        clientName, initial, ageGroupAndRole, category, categoryLabel,
+        programTaken, rating, headline, story, beforeState, afterState,
+        counselorInsight, period, tags, isBest, status, id
+      );
+
+      res.json({ success: true, message: "후기가 업데이트되었습니다." });
+    } catch (err: any) {
+      console.error("Testimonial update error:", err);
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.post("/api/testimonials/:id/like", (req, res) => {
+    try {
+      const { id } = req.params;
+      db.prepare("UPDATE client_testimonials SET recommend_count = COALESCE(recommend_count, 0) + 1 WHERE id = ?").run(id);
+      const row = db.prepare("SELECT recommend_count FROM client_testimonials WHERE id = ?").get(id) as any;
+      res.json({ success: true, count: row?.recommend_count || 0 });
+    } catch (err: any) {
+      console.error("Testimonial like error:", err);
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.delete("/api/testimonials/:id", (req, res) => {
+    try {
+      const { id } = req.params;
+      db.prepare("DELETE FROM client_testimonials WHERE id = ?").run(id);
+      res.json({ success: true, message: "후기가 성공적으로 삭제되었습니다." });
+    } catch (err: any) {
+      console.error("Testimonial delete error:", err);
+      res.status(500).json({ error: err.message });
+    }
+  });
+
   // --- Counseling Insights (Expert Blog Posts) Endpoints ---
   app.get("/api/insights/categories", (req, res) => {
     try {
@@ -1428,6 +1688,114 @@ async function startServer() {
         userVotedMood: mood_id,
         ...stats,
       });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // --- Daily Mood Tracker Endpoints ---
+  app.get("/api/mood/logs", (req, res) => {
+    try {
+      const logs = db.prepare("SELECT * FROM daily_mood_logs ORDER BY date DESC LIMIT 60").all() as any[];
+      const formatted = logs.map(l => ({
+        ...l,
+        tags: l.tags ? JSON.parse(l.tags) : [],
+      }));
+      res.json({ logs: formatted });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.post("/api/mood/log", (req, res) => {
+    try {
+      const { id, date, moodId, score, intensity, tags, note } = req.body;
+      if (!date || !moodId) {
+        return res.status(400).json({ error: "날짜와 감정 항목은 필수입니다." });
+      }
+
+      const logId = id || `mood-${date}-${Date.now()}`;
+      const tagsJson = JSON.stringify(Array.isArray(tags) ? tags : []);
+      const finalScore = Number(score) || 7;
+      const finalIntensity = Number(intensity) || 7;
+
+      db.prepare(`
+        INSERT INTO daily_mood_logs (id, date, mood_id, score, intensity, tags, note)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT(date) DO UPDATE SET
+          mood_id = excluded.mood_id,
+          score = excluded.score,
+          intensity = excluded.intensity,
+          tags = excluded.tags,
+          note = excluded.note
+      `).run(logId, date, moodId, finalScore, finalIntensity, tagsJson, note || '');
+
+      res.json({ success: true, message: "감정 기록이 안전하게 저장되었습니다." });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.delete("/api/mood/log/:date", (req, res) => {
+    try {
+      const { date } = req.params;
+      db.prepare("DELETE FROM daily_mood_logs WHERE date = ?").run(date);
+      res.json({ success: true });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // --- Community Post Comments (응원 & 공감) Endpoints ---
+  app.get("/api/community/comments", (req, res) => {
+    try {
+      const { post_id } = req.query;
+      if (!post_id) {
+        return res.status(400).json({ error: "post_id가 필요합니다." });
+      }
+      const rows = db.prepare("SELECT * FROM post_comments WHERE post_id = ? ORDER BY created_at DESC").all(String(post_id)) as any[];
+      const comments = rows.map(r => ({
+        id: r.id,
+        postId: r.post_id,
+        authorNickname: r.author_nickname,
+        badge: r.badge,
+        content: r.content,
+        likeCount: r.like_count || 0,
+        createdAt: r.created_at,
+      }));
+      res.json({ comments });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.post("/api/community/comments", (req, res) => {
+    try {
+      const { id, postId, authorNickname, badge, content } = req.body;
+      if (!postId || !content || !content.trim()) {
+        return res.status(400).json({ error: "게시글 ID와 댓글 내용은 필수입니다." });
+      }
+      const commentId = id || `comm-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
+      const nickname = (authorNickname && authorNickname.trim()) ? authorNickname.trim() : '익명의 내담자';
+      const commentBadge = badge || '따뜻한 응원';
+
+      db.prepare(`
+        INSERT INTO post_comments (id, post_id, author_nickname, badge, content, like_count)
+        VALUES (?, ?, ?, ?, ?, 0)
+      `).run(commentId, postId, nickname, commentBadge, content.trim());
+
+      res.status(201).json({ success: true, id: commentId, message: "따뜻한 응원 댓글이 등록되었습니다." });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.post("/api/community/comments/:id/like", (req, res) => {
+    try {
+      const { id } = req.params;
+      db.prepare("UPDATE post_comments SET like_count = like_count + 1 WHERE id = ?").run(id);
+      const row = db.prepare("SELECT like_count FROM post_comments WHERE id = ?").get(id) as any;
+      res.json({ success: true, likeCount: row ? row.like_count : 1 });
     } catch (err: any) {
       res.status(500).json({ error: err.message });
     }
@@ -1836,6 +2204,104 @@ async function startServer() {
 
       res.json({ success: true, message: "예약 취소 요청이 정상 처리되었습니다." });
     } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // Dedicated endpoint: Get real-time reservation status and notification logs
+  app.get("/api/reservations/:id/status", (req, res) => {
+    try {
+      const { id } = req.params;
+      const reservation = db.prepare(`
+        SELECT r.*, p.title as program_title, p.category as program_category 
+        FROM reservations r 
+        LEFT JOIN programs p ON r.program_id = p.id 
+        WHERE r.id = ?
+      `).get(id) as any;
+
+      if (!reservation) {
+        return res.status(404).json({ error: "예약 내역을 찾을 수 없습니다." });
+      }
+
+      const logs = db.prepare(`
+        SELECT channel, template_title, status, message_content, created_at 
+        FROM notification_logs 
+        WHERE reservation_id = ? 
+        ORDER BY id DESC
+      `).all(id);
+
+      res.json({
+        success: true,
+        id: reservation.id,
+        status: reservation.status, // 'pending' | 'confirmed' | 'cancelled'
+        name: reservation.name,
+        phone: reservation.phone,
+        preferred_date: reservation.preferred_date,
+        preferred_time: reservation.preferred_time,
+        program_id: reservation.program_id,
+        program_title: reservation.program_title || '맞춤 심리상담',
+        program_category: reservation.program_category || '일반상담',
+        admin_notes: reservation.admin_notes,
+        created_at: reservation.created_at,
+        notificationLogs: logs
+      });
+    } catch (err: any) {
+      console.error("Failed to query reservation status:", err);
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // Dedicated endpoint: Resend Kakao Alimtalk for reservation
+  app.post("/api/reservations/:id/resend-alimtalk", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const reservation = db.prepare(`
+        SELECT r.*, p.title as program_title, p.category as program_category 
+        FROM reservations r 
+        LEFT JOIN programs p ON r.program_id = p.id 
+        WHERE r.id = ?
+      `).get(id) as any;
+
+      if (!reservation) {
+        return res.status(404).json({ error: "예약 내역을 찾을 수 없습니다." });
+      }
+
+      const programTitle = reservation.program_title 
+        ? `[${reservation.program_category || '상담'}] ${reservation.program_title}` 
+        : '맞춤 심리상담';
+
+      const isConfirmed = reservation.status === 'confirmed';
+      const notificationResult = await sendReservationNotification({
+        reservationId: Number(reservation.id),
+        recipientName: reservation.name,
+        recipientPhone: reservation.phone,
+        programTitle,
+        preferredDate: reservation.preferred_date,
+        preferredTime: reservation.preferred_time,
+        type: isConfirmed ? 'CONFIRMED' : 'RECEIVED'
+      });
+
+      db.prepare(`
+        INSERT INTO notification_logs 
+        (reservation_id, recipient_name, recipient_phone, channel, template_title, message_content, status) 
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+      `).run(
+        reservation.id,
+        reservation.name,
+        reservation.phone,
+        notificationResult.channel,
+        notificationResult.templateTitle,
+        notificationResult.content,
+        notificationResult.status
+      );
+
+      res.json({
+        success: true,
+        message: "카카오 알림톡이 정상적으로 재발송되었습니다.",
+        notification: notificationResult
+      });
+    } catch (err: any) {
+      console.error("Failed to resend Alimtalk:", err);
       res.status(500).json({ error: err.message });
     }
   });

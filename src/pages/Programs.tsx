@@ -356,8 +356,8 @@ export default function Programs() {
                 
                 <div>
                   <div className="flex flex-wrap gap-2 mb-6">
-                    {program.tags.split(' ').map(tag => (
-                      <span key={tag} className="text-xs text-brand-brown/60 bg-brand-beige px-2.5 py-1 rounded-md">
+                    {program.tags.split(/\s+/).filter(Boolean).map((tag, tIdx) => (
+                      <span key={`${program.id}-tag-${tIdx}-${tag}`} className="text-xs text-brand-brown/60 bg-brand-beige px-2.5 py-1 rounded-md">
                         {tag}
                       </span>
                     ))}

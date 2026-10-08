@@ -17,6 +17,9 @@ import {
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { useHighContrast } from '../context/HighContrastContext';
+import DailyMoodTrackerDashboard from './DailyMoodTrackerDashboard';
+import { saveMoodLog, formatDateKey } from '../lib/moodTrackerStorage';
+import { MoodId } from '../types/moodTracker';
 
 export interface MoodOption {
   id: string;
@@ -110,6 +113,7 @@ const LOCAL_STORAGE_KEY = 'happywind_quick_poll_voted';
 
 export default function MentalHealthQuickPoll({ className }: { className?: string }) {
   const { isHighContrast } = useHighContrast();
+  const [activeTab, setActiveTab] = useState<'poll' | 'dashboard'>('poll');
   const [votedMoodId, setVotedMoodId] = useState<string | null>(null);
   const [percentages, setPercentages] = useState<Record<string, number>>({});
   const [counts, setCounts] = useState<Record<string, number>>({});
@@ -141,6 +145,24 @@ export default function MentalHealthQuickPoll({ className }: { className?: strin
     setVotedMoodId(mood.id);
     setHasVoted(true);
     localStorage.setItem(LOCAL_STORAGE_KEY, mood.id);
+
+    // Synchronize vote to Daily Mood Tracker history
+    const scoreMap: Record<string, number> = {
+      happy: 9,
+      peaceful: 8,
+      confused: 5,
+      tired: 4,
+      anxious: 3,
+      heavy: 2,
+    };
+    saveMoodLog({
+      date: formatDateKey(new Date()),
+      moodId: mood.id as MoodId,
+      score: scoreMap[mood.id] || 7,
+      intensity: 8,
+      tags: ['데일리체크인', '마음날씨'],
+      note: mood.label,
+    });
 
     try {
       const res = await fetch('/api/poll/vote', {
@@ -184,11 +206,55 @@ export default function MentalHealthQuickPoll({ className }: { className?: strin
 
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
         
-        {/* Main Poll Card Container */}
-        <div className="rounded-3xl bg-white border border-brand-green/30 shadow-xl p-6 sm:p-10 relative overflow-hidden">
-          
-          {/* Header Block */}
-          <div className="text-center max-w-2xl mx-auto mb-8 sm:mb-10">
+        {/* Navigation Switcher: 3초 체크인 vs 주간/월간 감정 변화 대시보드 */}
+        <div className="flex items-center justify-center mb-6">
+          <div className="inline-flex p-1.5 rounded-2xl bg-white/90 backdrop-blur-xs border border-brand-green/40 shadow-xs text-xs sm:text-sm font-serif font-bold">
+            <button
+              type="button"
+              onClick={() => setActiveTab('poll')}
+              className={cn(
+                "px-4 py-2 rounded-xl transition-all cursor-pointer flex items-center gap-1.5",
+                activeTab === 'poll'
+                  ? "bg-brand-sage text-white shadow-xs"
+                  : "text-brand-brown/70 hover:text-brand-brown hover:bg-brand-beige/50"
+              )}
+            >
+              <Smile className="w-4 h-4" />
+              <span>3초 오늘의 마음 체크</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab('dashboard')}
+              className={cn(
+                "px-4 py-2 rounded-xl transition-all cursor-pointer flex items-center gap-1.5",
+                activeTab === 'dashboard'
+                  ? "bg-brand-sage text-white shadow-xs"
+                  : "text-brand-brown/70 hover:text-brand-brown hover:bg-brand-beige/50"
+              )}
+            >
+              <Activity className="w-4 h-4" />
+              <span>📈 주간/월간 감정 추이 대시보드</span>
+            </button>
+          </div>
+        </div>
+
+        {activeTab === 'dashboard' ? (
+          /* Render Full Dedicated Mood Tracker Dashboard with Weekly/Monthly charts */
+          <motion.div
+            key="dashboard-view"
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -15 }}
+            transition={{ duration: 0.3 }}
+          >
+            <DailyMoodTrackerDashboard />
+          </motion.div>
+        ) : (
+          /* Main Poll Card Container */
+          <div className="rounded-3xl bg-white border border-brand-green/30 shadow-xl p-6 sm:p-10 relative overflow-hidden">
+            
+            {/* Header Block */}
+            <div className="text-center max-w-2xl mx-auto mb-8 sm:mb-10">
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-brand-sage/10 text-brand-sage text-xs font-serif font-bold mb-3 border border-brand-sage/20">
               <MessageSquareHeart className="w-3.5 h-3.5" />
               <span>3-Second Daily Check-in</span>
@@ -305,6 +371,14 @@ export default function MentalHealthQuickPoll({ className }: { className?: strin
 
                   {/* Contextual Action Link */}
                   <div className="pt-1 flex flex-wrap items-center justify-end gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab('dashboard')}
+                      className="px-4 py-2 rounded-xl bg-brand-brown hover:bg-brand-brown/90 text-brand-beige text-xs font-serif font-bold shadow-xs transition-all flex items-center gap-1.5 active:scale-98 cursor-pointer"
+                    >
+                      <Activity className="w-3.5 h-3.5 text-emerald-400" />
+                      <span>주간/월간 감정 변화 대시보드 보기</span>
+                    </button>
                     <Link
                       to={selectedMoodData.actionLink}
                       className="px-4 py-2 rounded-xl bg-brand-sage hover:bg-brand-sage/90 text-white text-xs font-serif font-bold shadow-xs transition-all flex items-center gap-1.5 active:scale-98"
@@ -393,6 +467,7 @@ export default function MentalHealthQuickPoll({ className }: { className?: strin
           </div>
 
         </div>
+        )}
 
       </div>
     </section>

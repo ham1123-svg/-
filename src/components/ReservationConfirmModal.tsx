@@ -158,9 +158,10 @@ export default function ReservationConfirmModal({
                 <CheckCircle2 className="w-7 h-7 text-emerald-600 animate-pulse" />
               </div>
               <div>
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
-                    접수 & 알림톡 발송 완료
+                <div className="flex items-center gap-2 mb-1 flex-wrap">
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-300 flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping inline-block" />
+                    <span>실시간 상태: 예약 확정 대기 중</span>
                   </span>
                   <span className="text-[11px] text-brand-brown/60 flex items-center gap-1">
                     <ShieldCheck className="w-3.5 h-3.5 text-brand-sage" />

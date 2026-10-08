@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Link } from 'react-router-dom';
 import { 
@@ -12,21 +12,24 @@ import {
   ChevronLeft, 
   ChevronRight, 
   Pause, 
-  Play,
+  Play, 
   Lock, 
   Award, 
   Calendar, 
-  MessageSquareHeart,
+  MessageSquareHeart, 
   X, 
   User, 
-  Clock, 
-  ExternalLink,
-  PhoneCall
+  PhoneCall, 
+  Tag, 
+  Layers,
+  Edit3
 } from 'lucide-react';
 import { TESTIMONIALS_DATA, TRUST_STATS } from '../data/testimonialsData';
 import { Testimonial } from '../types';
 import { cn } from '../lib/utils';
 import { useHighContrast } from '../context/HighContrastContext';
+import { testimonialService } from '../services/testimonialService';
+import ClientReviewWriteModal from './ClientReviewWriteModal';
 
 const CATEGORIES = [
   { id: 'all', label: '전체 후기' },
@@ -36,13 +39,98 @@ const CATEGORIES = [
   { id: 'anxiety', label: '불안·자존감' },
 ];
 
+// Counseling Field Category Theme Styles
+const CATEGORY_THEMES: Record<string, { bg: string; text: string; border: string; label: string; icon: typeof User }> = {
+  adult: {
+    bg: 'bg-amber-50/90',
+    text: 'text-amber-900',
+    border: 'border-amber-200/90',
+    label: '성인·번아웃',
+    icon: User
+  },
+  couple: {
+    bg: 'bg-rose-50/90',
+    text: 'text-rose-900',
+    border: 'border-rose-200/90',
+    label: '부부·가족',
+    icon: Heart
+  },
+  youth: {
+    bg: 'bg-sky-50/90',
+    text: 'text-sky-900',
+    border: 'border-sky-200/90',
+    label: '청소년·자녀',
+    icon: Sparkles
+  },
+  anxiety: {
+    bg: 'bg-teal-50/90',
+    text: 'text-teal-900',
+    border: 'border-teal-200/90',
+    label: '불안·자존감',
+    icon: ShieldCheck
+  },
+};
+
+// Slider Transition Variants for Smooth Slide Animation
+const slideVariants = {
+  enter: (direction: number) => ({
+    x: direction > 0 ? 80 : -80,
+    opacity: 0,
+  }),
+  center: {
+    x: 0,
+    opacity: 1,
+    transition: {
+      x: { type: 'spring' as const, stiffness: 280, damping: 28 },
+      opacity: { duration: 0.28 }
+    }
+  },
+  exit: (direction: number) => ({
+    x: direction > 0 ? -80 : 80,
+    opacity: 0,
+    transition: {
+      x: { type: 'spring' as const, stiffness: 280, damping: 28 },
+      opacity: { duration: 0.22 }
+    }
+  })
+};
+
 export default function ClientTestimonial({ className }: { className?: string }) {
   const { isHighContrast } = useHighContrast();
   const [activeCategory, setActiveCategory] = useState<string>('all');
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [direction, setDirection] = useState<number>(1);
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
   const [isHovering, setIsHovering] = useState(false);
   const [selectedStory, setSelectedStory] = useState<Testimonial | null>(null);
+
+  // Dynamic Testimonials List & Admin Auth State
+  const [testimonialsList, setTestimonialsList] = useState<Testimonial[]>(TESTIMONIALS_DATA);
+  const [isWriteModalOpen, setIsWriteModalOpen] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    setIsAdmin(sessionStorage.getItem('hbbr_admin_auth') === 'true');
+  }, []);
+
+  const loadTestimonials = useCallback(async () => {
+    try {
+      const data = await testimonialService.getTestimonials(false);
+      if (data && data.length > 0) {
+        setTestimonialsList(data);
+      }
+    } catch (e) {
+      console.error("Failed to load testimonials:", e);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadTestimonials();
+    const unsub = testimonialService.subscribe(() => {
+      loadTestimonials();
+    });
+    return () => unsub();
+  }, [loadTestimonials]);
 
   // Responsive cards per page calculation (1 on mobile, 2 on tablet, 3 on desktop)
   const [cardsPerPage, setCardsPerPage] = useState(3);
@@ -65,9 +153,9 @@ export default function ClientTestimonial({ className }: { className?: string })
 
   // Filter testimonials based on category
   const filteredTestimonials = useMemo(() => {
-    if (activeCategory === 'all') return TESTIMONIALS_DATA;
-    return TESTIMONIALS_DATA.filter(t => t.category === activeCategory);
-  }, [activeCategory]);
+    if (activeCategory === 'all') return testimonialsList;
+    return testimonialsList.filter(t => t.category === activeCategory);
+  }, [activeCategory, testimonialsList]);
 
   const maxIndex = Math.max(0, filteredTestimonials.length - cardsPerPage);
 
@@ -76,28 +164,29 @@ export default function ClientTestimonial({ className }: { className?: string })
     setCurrentIndex(0);
   }, [activeCategory, cardsPerPage]);
 
-  const nextSlide = useCallback(() => {
+  const handleNext = useCallback(() => {
+    setDirection(1);
     setCurrentIndex(prev => (prev >= maxIndex ? 0 : prev + 1));
   }, [maxIndex]);
 
-  const prevSlide = useCallback(() => {
+  const handlePrev = useCallback(() => {
+    setDirection(-1);
     setCurrentIndex(prev => (prev <= 0 ? maxIndex : prev - 1));
   }, [maxIndex]);
 
-  // Autoplay timer
+  // Autoplay timer with pause on hover
   useEffect(() => {
     if (!isAutoPlaying || isHovering || maxIndex <= 0) return;
 
     const interval = setInterval(() => {
-      nextSlide();
+      handleNext();
     }, 6000);
 
     return () => clearInterval(interval);
-  }, [isAutoPlaying, isHovering, maxIndex, nextSlide]);
+  }, [isAutoPlaying, isHovering, maxIndex, handleNext]);
 
-  // Visible items slice for carousel
+  // Visible items slice for current slide index
   const visibleCards = useMemo(() => {
-    // If we have fewer items than cardsPerPage, just show all
     if (filteredTestimonials.length <= cardsPerPage) {
       return filteredTestimonials;
     }
@@ -106,28 +195,32 @@ export default function ClientTestimonial({ className }: { className?: string })
 
   return (
     <section 
-      id="client-testimonials-section"
-      aria-label="내담자 상담 후기 캐러셀 섹션"
+      id="testimonials-section"
+      data-section="client-testimonials-section"
+      aria-label="내담자 상담 후기 슬라이더 섹션"
       className={cn(
-        "py-20 sm:py-24 relative overflow-hidden",
+        "py-20 sm:py-24 relative overflow-hidden scroll-mt-16 sm:scroll-mt-20",
         isHighContrast 
           ? "bg-neutral-950 text-white" 
-          : "bg-gradient-to-b from-white via-brand-beige/20 to-white",
+          : "bg-gradient-to-b from-white via-brand-beige/25 to-white",
         className
       )}
     >
+      {/* Anchor point for client-testimonials-section compatibility */}
+      <div id="client-testimonials-section" className="absolute -top-20 left-0 pointer-events-none" aria-hidden="true" />
+
       {/* Background Soft Ambience Glow */}
       <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-full max-w-6xl h-96 bg-brand-green/10 rounded-full blur-3xl pointer-events-none -z-10" />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
-        {/* Section Header: Clinical Trust & Warmth */}
+        {/* Section Header */}
         <div className="text-center max-w-3xl mx-auto mb-10 sm:mb-12">
-          <div className="flex items-center justify-center gap-2 text-xs font-serif text-brand-sage uppercase tracking-wider mb-2.5">
-            <MessageSquareHeart className="w-3.5 h-3.5" />
-            <span>Client Testimonials &amp; Healing Stories</span>
+          <div className="inline-flex items-center justify-center gap-2 px-3.5 py-1 rounded-full bg-brand-green/30 border border-brand-green/40 text-xs font-serif text-brand-sage uppercase tracking-wider mb-3">
+            <MessageSquareHeart className="w-3.5 h-3.5 text-brand-sage" />
+            <span className="font-semibold">Client Testimonials &amp; Healing Stories</span>
             <span aria-hidden="true" className="text-brand-brown/30">·</span>
-            <span>내담자가 전하는 진솔한 회복의 여정</span>
+            <span className="font-medium text-brand-brown/80">내담자가 전하는 진솔한 회복의 여정</span>
           </div>
 
           <h2 className="text-3xl sm:text-4xl font-serif font-bold text-brand-brown mb-4 leading-tight">
@@ -143,6 +236,28 @@ export default function ClientTestimonial({ className }: { className?: string })
             <ShieldCheck className="w-4 h-4 text-emerald-700 shrink-0" />
             <span>한국상담심리학회 윤리강령 준수 · 100% 철저한 비밀보장 및 개인식별정보 비식별 가명 처리</span>
           </div>
+
+          {/* Action buttons: Write Review & Admin Link */}
+          <div className="flex flex-wrap items-center justify-center gap-3 mt-5">
+            <button
+              type="button"
+              onClick={() => setIsWriteModalOpen(true)}
+              className="px-5 py-2.5 bg-brand-sage hover:bg-brand-sage/90 text-white text-xs sm:text-sm font-serif font-bold rounded-2xl shadow-sm hover:shadow-md transition-all flex items-center gap-2 cursor-pointer active:scale-95"
+            >
+              <Edit3 className="w-4 h-4" />
+              <span>내담자 치유 후기 작성하기</span>
+            </button>
+
+            {isAdmin && (
+              <Link
+                to="/admin"
+                className="px-4 py-2.5 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 text-xs font-serif font-bold rounded-2xl transition-all flex items-center gap-1.5 shadow-2xs"
+              >
+                <ShieldCheck className="w-4 h-4 text-amber-700" />
+                <span>관리자 모드 후기 관리 바로가기</span>
+              </Link>
+            )}
+          </div>
         </div>
 
         {/* 4 Trust Metrics Bar */}
@@ -150,7 +265,7 @@ export default function ClientTestimonial({ className }: { className?: string })
           {TRUST_STATS.map((stat, idx) => (
             <div 
               key={idx}
-              className="bg-white/85 backdrop-blur-xs p-3.5 sm:p-4 rounded-2xl border border-brand-green/25 text-center shadow-2xs"
+              className="bg-white/90 backdrop-blur-xs p-3.5 sm:p-4 rounded-2xl border border-brand-green/25 text-center shadow-2xs hover:border-brand-sage/40 transition-colors"
             >
               <div className="text-xl sm:text-2xl font-serif font-extrabold text-brand-sage mb-0.5">
                 {stat.value}
@@ -166,56 +281,79 @@ export default function ClientTestimonial({ className }: { className?: string })
         </div>
 
         {/* Category Controls & Carousel Navigation Bar */}
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-8">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-4">
           {/* Segmented Category Buttons */}
           <div className="flex flex-wrap items-center gap-1.5 p-1 bg-white/90 backdrop-blur-xs rounded-xl border border-brand-green/30 w-full sm:w-auto shadow-2xs">
             {CATEGORIES.map((cat) => {
               const isActive = activeCategory === cat.id;
+              const count = cat.id === 'all' 
+                ? testimonialsList.length 
+                : testimonialsList.filter(t => t.category === cat.id).length;
+
               return (
                 <button
                   key={cat.id}
                   type="button"
-                  onClick={() => setActiveCategory(cat.id)}
+                  onClick={() => {
+                    setDirection(1);
+                    setActiveCategory(cat.id);
+                  }}
                   className={cn(
-                    "px-3 py-1.5 text-xs font-serif font-semibold rounded-lg transition-all cursor-pointer whitespace-nowrap",
+                    "px-3 py-1.5 text-xs font-serif font-semibold rounded-lg transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5",
                     isActive
                       ? "bg-brand-sage text-white shadow-xs"
                       : "text-brand-brown/70 hover:text-brand-brown hover:bg-brand-beige/50"
                   )}
                 >
-                  {cat.label}
+                  <span>{cat.label}</span>
+                  <span className={cn(
+                    "text-[10px] px-1.5 py-0.2 rounded-full",
+                    isActive ? "bg-white/20 text-white" : "bg-brand-green/30 text-brand-brown/60"
+                  )}>
+                    {count}
+                  </span>
                 </button>
               );
             })}
           </div>
 
-          {/* Carousel Controls: Autoplay Toggle, Prev / Next Buttons */}
+          {/* Carousel Navigation Controls */}
           <div className="flex items-center gap-2">
             <button
               type="button"
               onClick={() => setIsAutoPlaying(prev => !prev)}
               aria-label={isAutoPlaying ? "자동 슬라이드 일시정지" : "자동 슬라이드 재생"}
               title={isAutoPlaying ? "자동 슬라이드 일시정지" : "자동 슬라이드 재생"}
-              className="p-2 rounded-xl bg-white border border-brand-green/30 text-brand-brown hover:text-brand-sage hover:bg-brand-beige/40 transition-colors shadow-2xs cursor-pointer"
+              className={cn(
+                "p-2 rounded-xl border transition-colors shadow-2xs cursor-pointer flex items-center gap-1 text-xs font-serif",
+                isAutoPlaying
+                  ? "bg-emerald-50 border-emerald-300 text-emerald-800"
+                  : "bg-white border-brand-green/30 text-brand-brown hover:text-brand-sage"
+              )}
             >
               {isAutoPlaying ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
+              <span className="hidden md:inline text-[11px] font-medium">
+                {isAutoPlaying ? "자동 넘김 ON" : "자동 넘김 OFF"}
+              </span>
             </button>
 
             <button
               type="button"
-              onClick={prevSlide}
+              onClick={handlePrev}
               aria-label="이전 후기 보기"
               disabled={maxIndex <= 0}
               className={cn(
-                "p-2 rounded-xl bg-white border border-brand-green/30 text-brand-brown transition-colors shadow-2xs cursor-pointer",
-                maxIndex <= 0 ? "opacity-40 cursor-not-allowed" : "hover:text-brand-sage hover:bg-brand-beige/40 active:scale-95"
+                "p-2 rounded-xl bg-white border border-brand-green/30 text-brand-brown transition-all shadow-2xs cursor-pointer",
+                maxIndex <= 0 
+                  ? "opacity-40 cursor-not-allowed" 
+                  : "hover:text-brand-sage hover:border-brand-sage/40 hover:bg-brand-beige/40 active:scale-95"
               )}
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
 
             {/* Slide Index Counter */}
-            <div className="px-2.5 text-xs font-mono font-bold text-brand-brown/70">
+            <div className="px-2.5 text-xs font-mono font-bold text-brand-brown/70 select-none">
               <span className="text-brand-sage font-extrabold">{currentIndex + 1}</span>
               <span className="mx-1 text-brand-brown/40">/</span>
               <span>{Math.max(1, maxIndex + 1)}</span>
@@ -223,12 +361,14 @@ export default function ClientTestimonial({ className }: { className?: string })
 
             <button
               type="button"
-              onClick={nextSlide}
+              onClick={handleNext}
               aria-label="다음 후기 보기"
               disabled={maxIndex <= 0}
               className={cn(
-                "p-2 rounded-xl bg-white border border-brand-green/30 text-brand-brown transition-colors shadow-2xs cursor-pointer",
-                maxIndex <= 0 ? "opacity-40 cursor-not-allowed" : "hover:text-brand-sage hover:bg-brand-beige/40 active:scale-95"
+                "p-2 rounded-xl bg-white border border-brand-green/30 text-brand-brown transition-all shadow-2xs cursor-pointer",
+                maxIndex <= 0 
+                  ? "opacity-40 cursor-not-allowed" 
+                  : "hover:text-brand-sage hover:border-brand-sage/40 hover:bg-brand-beige/40 active:scale-95"
               )}
             >
               <ChevronRight className="w-4 h-4" />
@@ -236,154 +376,260 @@ export default function ClientTestimonial({ className }: { className?: string })
           </div>
         </div>
 
-        {/* Carousel Multi-Card Track */}
+        {/* Autoplay Subtle Progress Indicator */}
+        {isAutoPlaying && maxIndex > 0 && (
+          <div className="w-full bg-brand-green/20 h-1 rounded-full overflow-hidden mb-6">
+            <motion.div
+              key={`${currentIndex}-${activeCategory}-${isAutoPlaying}-${isHovering}`}
+              initial={{ width: "0%" }}
+              animate={{ width: isHovering ? "0%" : "100%" }}
+              transition={{ duration: 6, ease: "linear" }}
+              className="h-full bg-brand-sage/80"
+            />
+          </div>
+        )}
+
+        {/* Carousel Multi-Card Track with Directional Slider Animation */}
         <div 
           onMouseEnter={() => setIsHovering(true)}
           onMouseLeave={() => setIsHovering(false)}
-          className="relative mb-10"
+          className="relative mb-8"
         >
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
-            <AnimatePresence mode="popLayout" initial={false}>
-              {visibleCards.map((card) => (
-                <motion.article
-                  key={card.id}
-                  layout
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.95 }}
-                  transition={{ duration: 0.3 }}
-                  whileHover={{ y: -5 }}
-                  onClick={() => setSelectedStory(card)}
-                  className={cn(
-                    "rounded-3xl border p-6 flex flex-col justify-between transition-all duration-300 group cursor-pointer relative",
-                    isHighContrast
-                      ? "bg-neutral-900 border-white/40 text-white"
-                      : "bg-white hover:border-brand-sage/60 border-brand-green/25 shadow-sm hover:shadow-xl"
-                  )}
-                >
-                  <div>
-                    {/* Card Top: Stars & Verified Badge */}
-                    <div className="flex items-center justify-between gap-2 mb-4 pb-3.5 border-b border-brand-green/15">
-                      <div className="flex items-center gap-1">
-                        <div className="flex text-amber-400">
-                          {[...Array(card.rating)].map((_, i) => (
-                            <Star key={i} className="w-3.5 h-3.5 fill-amber-400 stroke-none" />
+          {/* Floating Left Arrow (Desktop) */}
+          {maxIndex > 0 && (
+            <button
+              type="button"
+              onClick={handlePrev}
+              aria-label="이전 후기 슬라이드"
+              className="hidden lg:flex absolute -left-4 xl:-left-6 top-1/2 -translate-y-1/2 z-20 w-11 h-11 rounded-full bg-white/95 backdrop-blur-xs border border-brand-green/40 text-brand-brown hover:text-brand-sage hover:border-brand-sage hover:bg-white shadow-md hover:shadow-lg items-center justify-center transition-all cursor-pointer active:scale-95 group"
+            >
+              <ChevronLeft className="w-5 h-5 transition-transform group-hover:-translate-x-0.5" />
+            </button>
+          )}
+
+          {/* Floating Right Arrow (Desktop) */}
+          {maxIndex > 0 && (
+            <button
+              type="button"
+              onClick={handleNext}
+              aria-label="다음 후기 슬라이드"
+              className="hidden lg:flex absolute -right-4 xl:-right-6 top-1/2 -translate-y-1/2 z-20 w-11 h-11 rounded-full bg-white/95 backdrop-blur-xs border border-brand-green/40 text-brand-brown hover:text-brand-sage hover:border-brand-sage hover:bg-white shadow-md hover:shadow-lg items-center justify-center transition-all cursor-pointer active:scale-95 group"
+            >
+              <ChevronRight className="w-5 h-5 transition-transform group-hover:translate-x-0.5" />
+            </button>
+          )}
+
+          {/* Slide Track with Framer Motion AnimatePresence */}
+          <div className="overflow-hidden px-1 py-2">
+            <AnimatePresence custom={direction} mode="wait">
+              <motion.div
+                key={`${currentIndex}-${activeCategory}`}
+                custom={direction}
+                variants={slideVariants}
+                initial="enter"
+                animate="center"
+                exit="exit"
+                drag="x"
+                dragConstraints={{ left: 0, right: 0 }}
+                dragElastic={0.15}
+                onDragEnd={(_, info) => {
+                  if (info.offset.x < -45) {
+                    handleNext();
+                  } else if (info.offset.x > 45) {
+                    handlePrev();
+                  }
+                }}
+                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6 cursor-grab active:cursor-grabbing"
+              >
+                {visibleCards.map((card, cardIndex) => {
+                  const theme = CATEGORY_THEMES[card.category] || CATEGORY_THEMES.adult;
+                  const ThemeIcon = theme.icon;
+
+                  return (
+                    <article
+                      key={`${card.id}-${cardIndex}`}
+                      onClick={() => setSelectedStory(card)}
+                      className={cn(
+                        "rounded-3xl border p-5 sm:p-6 flex flex-col justify-between transition-all duration-300 group cursor-pointer relative",
+                        isHighContrast
+                          ? "bg-neutral-900 border-white/40 text-white"
+                          : "bg-white hover:border-brand-sage/60 border-brand-green/25 shadow-xs hover:shadow-xl"
+                      )}
+                    >
+                      <div>
+                        {/* 1. Card Top: Counseling Field Category Badge & Stars & Verified */}
+                        <div className="flex items-center justify-between gap-2 mb-3.5 pb-3 border-b border-brand-green/15">
+                          {/* Counseling Field Category Badge */}
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className={cn(
+                              "text-[11px] px-2.5 py-1 rounded-full font-serif font-bold border flex items-center gap-1 shadow-2xs tracking-tight",
+                              theme.bg, theme.text, theme.border
+                            )}>
+                              <ThemeIcon className="w-3 h-3 shrink-0" />
+                              <span>{theme.label}</span>
+                            </span>
+
+                            {card.isBest && (
+                              <span className="text-[10px] px-2 py-0.5 rounded-full bg-gradient-to-r from-amber-500 to-amber-600 text-white font-serif font-extrabold shadow-2xs flex items-center gap-0.5">
+                                <Sparkles className="w-2.5 h-2.5" />
+                                <span>BEST 회복</span>
+                              </span>
+                            )}
+                          </div>
+
+                          {/* Star Rating & Verified */}
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            <div className="flex text-amber-400">
+                              {[...Array(card.rating)].map((_, i) => (
+                                <Star key={i} className="w-3 h-3 fill-amber-400 stroke-none" />
+                              ))}
+                            </div>
+                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-800 font-serif font-bold border border-emerald-200/80 flex items-center gap-0.5">
+                              <CheckCircle2 className="w-2.5 h-2.5 text-emerald-600" />
+                              <span>종결</span>
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* 2. Client Identity Header */}
+                        <div className="flex items-center gap-3 mb-3.5">
+                          <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-brand-sage to-brand-brown text-white font-serif font-bold text-xs flex items-center justify-center shadow-2xs border border-white/60 shrink-0 tracking-wider">
+                            {card.initial || card.clientName.slice(0, 1)}
+                          </div>
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <h3 className="text-sm font-serif font-bold text-brand-brown">
+                                {card.clientName}
+                              </h3>
+                              <span className="text-[11px] font-serif text-brand-brown/60">
+                                {card.ageGroupAndRole}
+                              </span>
+                            </div>
+                            <div className="text-[11px] font-serif text-brand-sage font-semibold truncate flex items-center gap-1">
+                              <span>{card.programTaken}</span>
+                              <span aria-hidden="true" className="text-brand-brown/30">·</span>
+                              <span className="text-brand-brown/50 font-normal">{card.period}</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* 3. Headline / Quote */}
+                        <h4 className="text-sm sm:text-base font-serif font-bold text-brand-brown mb-2.5 leading-snug line-clamp-2 group-hover:text-brand-sage transition-colors">
+                          {card.headline}
+                        </h4>
+
+                        {/* 4. Excerpt Story */}
+                        <p className="text-xs sm:text-sm text-brand-brown/75 font-serif leading-relaxed line-clamp-3 mb-3.5">
+                          {card.story}
+                        </p>
+
+                        {/* 5. Before & After Transformation Tags */}
+                        <div className="space-y-1.5 pt-3 border-t border-brand-green/15 mb-3.5">
+                          <div className="flex items-start gap-2 text-xs font-serif">
+                            <span className="px-1.5 py-0.5 rounded bg-rose-50 text-rose-800 text-[10px] font-bold border border-rose-200 shrink-0">
+                              상담 전
+                            </span>
+                            <span className="text-brand-brown/70 line-clamp-1">
+                              {card.beforeState}
+                            </span>
+                          </div>
+                          <div className="flex items-start gap-2 text-xs font-serif">
+                            <span className="px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-800 text-[10px] font-bold border border-emerald-200 shrink-0">
+                              상담 후
+                            </span>
+                            <span className="text-emerald-950 font-semibold line-clamp-1">
+                              {card.afterState}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* 6. 상담 분야별 상세 태그 칩 (Counseling Field Tags) */}
+                        <div className="pt-2.5 pb-2 border-t border-brand-green/15 flex flex-wrap items-center gap-1.5">
+                          <div className="text-[10px] text-brand-brown/55 font-serif font-bold flex items-center gap-0.5 mr-0.5 shrink-0">
+                            <Tag className="w-3 h-3 text-brand-sage" />
+                            <span>분야 태그</span>
+                          </div>
+                          {card.tags && card.tags.map((tag, tIdx) => (
+                            <span
+                              key={`${card.id}-tag-${tIdx}`}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setActiveCategory(card.category);
+                              }}
+                              title={`'${tag}' 태그 상담 후기 보기`}
+                              className="text-[11px] px-2 py-0.5 rounded-lg bg-brand-green/25 text-brand-brown/85 font-serif font-medium border border-brand-green/40 hover:bg-brand-sage hover:text-white hover:border-brand-sage transition-all cursor-pointer shadow-2xs"
+                            >
+                              {tag}
+                            </span>
                           ))}
                         </div>
-                        <span className="text-[11px] font-bold text-amber-800 font-serif ml-1">
-                          5.0 만점
-                        </span>
                       </div>
 
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-[10px] px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-800 font-serif font-bold border border-emerald-200/80 flex items-center gap-1">
-                          <CheckCircle2 className="w-2.5 h-2.5 text-emerald-600" />
-                          <span>종결 인증</span>
-                        </span>
-                        <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-slate-100 text-slate-700 font-serif font-bold border border-slate-200 flex items-center gap-1">
-                          <ShieldCheck className="w-2.5 h-2.5 text-brand-sage" />
-                          <span>가명 보호</span>
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Client Identity Header */}
-                    <div className="flex items-center gap-3 mb-4">
-                      <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-sage to-brand-brown text-white font-serif font-bold text-xs flex items-center justify-center shadow-2xs border border-white/50 shrink-0 tracking-wider">
-                        {card.initial || card.clientName.slice(0, 1)}
-                      </div>
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          <h3 className="text-sm font-serif font-bold text-brand-brown">
-                            {card.clientName}
-                          </h3>
-                          <span className="text-[11px] font-serif text-brand-brown/60">
-                            {card.ageGroupAndRole}
-                          </span>
+                      {/* 7. Card Bottom: Clinical Insight Tag & Read More Action */}
+                      <div className="pt-3 border-t border-brand-green/15 flex items-center justify-between text-xs font-serif mt-1">
+                        <div className="flex items-center gap-1 text-[11px] text-brand-sage font-medium">
+                          {card.counselorInsight ? (
+                            <>
+                              <CheckCircle2 className="w-3.5 h-3.5 text-brand-sage shrink-0" />
+                              <span>소장 임상 코멘트 수록</span>
+                            </>
+                          ) : (
+                            <span className="text-brand-brown/50">{card.date}</span>
+                          )}
                         </div>
-                        <div className="text-[11px] font-serif text-brand-sage font-semibold truncate">
-                          {card.programTaken}
-                        </div>
+
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedStory(card);
+                          }}
+                          className="text-brand-sage font-bold flex items-center gap-1 group-hover:translate-x-1 transition-transform cursor-pointer"
+                        >
+                          <span>상세 후기 보기</span>
+                          <ArrowRight className="w-3.5 h-3.5" />
+                        </button>
                       </div>
-                    </div>
-
-                    {/* Headline / Quote */}
-                    <h4 className="text-sm sm:text-base font-serif font-bold text-brand-brown mb-3 leading-snug line-clamp-2 group-hover:text-brand-sage transition-colors">
-                      {card.headline}
-                    </h4>
-
-                    {/* Excerpt Story */}
-                    <p className="text-xs sm:text-sm text-brand-brown/75 font-serif leading-relaxed line-clamp-3 mb-4">
-                      {card.story}
-                    </p>
-
-                    {/* Before & After Transformation Tags */}
-                    <div className="space-y-1.5 pt-3 border-t border-brand-green/15 mb-4">
-                      <div className="flex items-start gap-2 text-xs font-serif">
-                        <span className="px-1.5 py-0.5 rounded bg-rose-50 text-rose-800 text-[10px] font-bold border border-rose-200 shrink-0">
-                          상담 전
-                        </span>
-                        <span className="text-brand-brown/70 line-clamp-1">
-                          {card.beforeState}
-                        </span>
-                      </div>
-                      <div className="flex items-start gap-2 text-xs font-serif">
-                        <span className="px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-800 text-[10px] font-bold border border-emerald-200 shrink-0">
-                          상담 후
-                        </span>
-                        <span className="text-emerald-900 font-semibold line-clamp-1">
-                          {card.afterState}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Card Bottom: Tags & Read More Action */}
-                  <div className="pt-3 border-t border-brand-green/10 flex items-center justify-between text-xs font-serif">
-                    <div className="text-[11px] text-brand-brown/50">
-                      {card.date}
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setSelectedStory(card);
-                      }}
-                      className="text-brand-sage font-bold flex items-center gap-1 group-hover:translate-x-1 transition-transform cursor-pointer"
-                    >
-                      <span>상세 후기 읽기</span>
-                      <ArrowRight className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                </motion.article>
-              ))}
+                    </article>
+                  );
+                })}
+              </motion.div>
             </AnimatePresence>
           </div>
         </div>
 
-        {/* Carousel Pagination Dots */}
-        {maxIndex > 0 && (
-          <div className="flex items-center justify-center gap-1.5 mb-14">
-            {Array.from({ length: maxIndex + 1 }).map((_, idx) => {
-              const isActive = idx === currentIndex;
-              return (
-                <button
-                  key={idx}
-                  type="button"
-                  onClick={() => setCurrentIndex(idx)}
-                  aria-label={`${idx + 1}번째 슬라이드로 이동`}
-                  className={cn(
-                    "h-2 rounded-full transition-all duration-300 cursor-pointer",
-                    isActive
-                      ? "w-6 bg-brand-sage"
-                      : "w-2 bg-brand-green/40 hover:bg-brand-sage/50"
-                  )}
-                />
-              );
-            })}
+        {/* Carousel Pagination Dots & Swipe Helper */}
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 mb-14 px-2">
+          <div className="text-[11px] text-brand-brown/55 font-serif flex items-center gap-1.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-brand-sage animate-ping" />
+            <span>카드를 좌우로 드래그(스와이프)하거나 화살표를 눌러 전체 후기를 편리하게 확인하실 수 있습니다.</span>
           </div>
-        )}
+
+          {maxIndex > 0 && (
+            <div className="flex items-center gap-1.5">
+              {Array.from({ length: maxIndex + 1 }).map((_, idx) => {
+                const isActive = idx === currentIndex;
+                return (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => {
+                      setDirection(idx > currentIndex ? 1 : -1);
+                      setCurrentIndex(idx);
+                    }}
+                    aria-label={`${idx + 1}번째 슬라이드로 이동`}
+                    className={cn(
+                      "h-2 rounded-full transition-all duration-300 cursor-pointer",
+                      isActive
+                        ? "w-7 bg-brand-sage"
+                        : "w-2 bg-brand-green/45 hover:bg-brand-sage/50"
+                    )}
+                  />
+                );
+              })}
+            </div>
+          )}
+        </div>
 
         {/* 4 Supportive Pillars of Happy Wind Institute */}
         <div className="mb-14">
@@ -558,6 +804,24 @@ export default function ClientTestimonial({ className }: { className?: string })
                   </div>
                 </div>
 
+                {/* Counseling Field Tags in Modal */}
+                {selectedStory.tags && selectedStory.tags.length > 0 && (
+                  <div className="flex flex-wrap items-center gap-1.5 p-3 rounded-2xl bg-brand-beige/50 border border-brand-green/25">
+                    <div className="text-xs font-serif font-bold text-brand-brown/60 flex items-center gap-1 mr-1">
+                      <Tag className="w-3.5 h-3.5 text-brand-sage" />
+                      <span>상담 분야별 태그:</span>
+                    </div>
+                    {selectedStory.tags.map((tag, idx) => (
+                      <span 
+                        key={`modal-tag-${selectedStory.id}-${idx}`}
+                        className="text-xs px-2.5 py-1 rounded-lg bg-white text-brand-sage font-serif font-semibold border border-brand-green/30 shadow-2xs"
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                )}
+
                 {/* Headline */}
                 <h3 id="testimonial-modal-title" className="text-xl sm:text-2xl font-serif font-bold text-brand-brown leading-snug">
                   {selectedStory.headline}
@@ -639,6 +903,13 @@ export default function ClientTestimonial({ className }: { className?: string })
           </div>
         )}
       </AnimatePresence>
+
+      {/* Client Review Write Modal Form */}
+      <ClientReviewWriteModal
+        isOpen={isWriteModalOpen}
+        onClose={() => setIsWriteModalOpen(false)}
+        onSuccess={() => loadTestimonials()}
+      />
     </section>
   );
 }

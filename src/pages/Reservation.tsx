@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
-import { motion } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
 import { 
   MapPin, Phone, Mail, Clock, Send, CheckCircle, 
   CalendarCheck2, PhoneCall, HeartHandshake, Sparkles, ChevronRight, ShieldCheck,
@@ -10,11 +10,14 @@ import {
 import { cn } from '../lib/utils';
 import { Program, NotificationResult, ScheduleBlock, Reservation as ReservationType, RESERVATION_TIME_SLOTS, TIME_SLOT_DETAILS } from '../types';
 import WeeklyScheduleCalendar from '../components/WeeklyScheduleCalendar';
+import InteractiveReservationCalendar from '../components/InteractiveReservationCalendar';
 import ReservationConfirmModal from '../components/ReservationConfirmModal';
+import ReservationConfirmationCard from '../components/ReservationConfirmationCard';
 
 export default function Reservation() {
   const [searchParams] = useSearchParams();
   const formRef = useRef<HTMLDivElement>(null);
+  const [calendarView, setCalendarView] = useState<'interactive' | 'weekly'>('interactive');
   const [programs, setPrograms] = useState<Program[]>([]);
   const [formData, setFormData] = useState({
     name: '',
@@ -33,6 +36,16 @@ export default function Reservation() {
   const [existingReservations, setExistingReservations] = useState<ReservationType[]>([]);
   const [formError, setFormError] = useState<string>('');
   const [copiedAddress, setCopiedAddress] = useState(false);
+  const [recentReservation, setRecentReservation] = useState<{
+    id: number;
+    name: string;
+    phone: string;
+    preferred_date: string;
+    preferred_time: string;
+    program_id: string;
+    status?: string;
+  } | null>(null);
+  const [recentStatus, setRecentStatus] = useState<string>('pending');
 
   const handleCopyAddress = async () => {
     const address = "울산광역시 울주군 삼남읍 도호1길 23 상가 408호";
@@ -100,6 +113,23 @@ export default function Reservation() {
     }
 
     loadScheduleData();
+
+    // Check recently submitted reservation from localStorage
+    try {
+      const stored = localStorage.getItem('hbbr_last_reservation');
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (parsed.id && parsed.timestamp && (Date.now() - parsed.timestamp < 48 * 60 * 60 * 1000)) {
+          setRecentReservation(parsed);
+          fetch(`/api/reservations/${parsed.id}/status`)
+            .then(res => res.json())
+            .then(data => {
+              if (data.status) setRecentStatus(data.status);
+            })
+            .catch(() => {});
+        }
+      }
+    } catch {}
   }, [searchParams]);
 
   // Sunday & Saturday check for preferred_date
@@ -193,12 +223,37 @@ export default function Reservation() {
         if (result.notification) {
           setNotificationResult(result.notification);
         }
-        if (result.id) {
-          setSubmittedReservationId(result.id);
+        const reservationId = result.id || Date.now();
+        setSubmittedReservationId(reservationId);
+        
+        try {
+          const saveObj = {
+            id: reservationId,
+            name: formData.name,
+            phone: formData.phone,
+            preferred_date: formData.preferred_date,
+            preferred_time: formData.preferred_time,
+            program_id: formData.program_id,
+            status: result.status || 'pending',
+            timestamp: Date.now()
+          };
+          localStorage.setItem('hbbr_last_reservation', JSON.stringify(saveObj));
+          setRecentReservation(saveObj);
+          setRecentStatus(result.status || 'pending');
+        } catch (e) {
+          console.error('Failed to save recent reservation to localStorage:', e);
         }
+
         setSubmitted(true);
-        setShowConfirmModal(true);
         loadScheduleData();
+
+        // Smoothly scroll to the integrated confirmation section
+        setTimeout(() => {
+          const el = document.getElementById('reservation-form-section');
+          if (el) {
+            el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
+        }, 120);
       } else {
         const errData = await response.json().catch(() => ({}));
         setFormError(errData.error || '예약 신청 중 오류가 발생했습니다. 다시 시도해 주세요.');
@@ -277,6 +332,74 @@ export default function Reservation() {
           </div>
         </div>
 
+        {/* Real-time Status Tracking Banner for Recent Reservation */}
+        {recentReservation && !submitted && (
+          <motion.div
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-8 p-4 sm:p-5 rounded-3xl bg-gradient-to-r from-amber-50 via-white to-amber-50/80 border border-amber-200/90 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-left"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-[#FEE500] text-[#371D1E] flex items-center justify-center shrink-0 shadow-xs font-bold text-xs">
+                <MessageSquareText className="w-5 h-5 fill-[#371D1E]" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-xs font-bold text-amber-950">
+                    최근 신청 예약 (#RES-{recentReservation.id})
+                  </span>
+                  <span className="text-brand-brown/40">·</span>
+                  <span className="text-xs text-amber-900 font-serif">
+                    {recentReservation.preferred_date} {recentReservation.preferred_time} ({recentReservation.name} 님)
+                  </span>
+                </div>
+                <div className="text-[11px] text-amber-800/80 mt-0.5 flex items-center gap-1.5">
+                  <Clock className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                  <span>원장님 일정 확인 후 카카오 알림톡으로 최종 확정 안내됩니다.</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2.5 self-start sm:self-auto flex-wrap">
+              <div className={cn(
+                "px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1.5 border shadow-2xs",
+                recentStatus === 'confirmed'
+                  ? "bg-emerald-100 text-emerald-900 border-emerald-300"
+                  : "bg-amber-100 text-amber-900 border-amber-300"
+              )}>
+                <span className={cn(
+                  "w-2 h-2 rounded-full",
+                  recentStatus === 'confirmed' ? "bg-emerald-600" : "bg-amber-500 animate-ping"
+                )} />
+                <span>실시간 상태: {recentStatus === 'confirmed' ? '예약 확정 완료 ✔' : '예약 확정 대기 중 ⏳'}</span>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setSubmittedReservationId(recentReservation.id);
+                  setFormData({
+                    name: recentReservation.name,
+                    phone: recentReservation.phone,
+                    preferred_date: recentReservation.preferred_date,
+                    preferred_time: recentReservation.preferred_time,
+                    program_id: recentReservation.program_id,
+                  });
+                  setSubmitted(true);
+                  setTimeout(() => {
+                    const el = document.getElementById('reservation-form-section');
+                    if (el) el.scrollIntoView({ behavior: 'smooth' });
+                  }, 50);
+                }}
+                className="px-3.5 py-1.5 bg-white hover:bg-amber-100/60 text-amber-950 font-bold text-xs rounded-xl border border-amber-300 shadow-2xs transition-all cursor-pointer flex items-center gap-1"
+              >
+                <span>알림톡 &amp; 상태 확인</span>
+                <ChevronRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </motion.div>
+        )}
+
         {/* Step-by-Step Reservation Guide */}
         <motion.section 
           initial={{ opacity: 0, y: 15 }}
@@ -353,163 +476,168 @@ export default function Reservation() {
                   <strong>비밀보장, 진료기록 여부, 결제 및 일정 변경</strong> 등 상담 전 자주 묻는 질문이 정리되어 있습니다.
                 </span>
               </div>
-              <Link
-                to="/guide#faq"
-                className="inline-flex items-center gap-1 text-xs font-bold text-brand-sage hover:text-brand-brown bg-white px-3 py-1.5 rounded-xl border border-brand-green/30 transition-all shadow-2xs hover:shadow-xs shrink-0"
-              >
-                <span>자주 묻는 질문 (FAQ) 보러가기</span>
-                <ChevronRight className="w-3.5 h-3.5" />
-              </Link>
+              <div className="flex flex-wrap items-center gap-2 shrink-0">
+                <Link
+                  to="/guide#process"
+                  className="inline-flex items-center gap-1 text-xs font-bold text-brand-sage hover:text-brand-brown bg-white px-3 py-1.5 rounded-xl border border-brand-green/30 transition-all shadow-2xs hover:shadow-xs"
+                >
+                  <span>4단계 상담 이용 절차 인포그래픽</span>
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </Link>
+                <Link
+                  to="/guide#faq"
+                  className="inline-flex items-center gap-1 text-xs font-semibold text-brand-brown/70 hover:text-brand-brown bg-white px-3 py-1.5 rounded-xl border border-brand-green/30 transition-all shadow-2xs hover:shadow-xs"
+                >
+                  <span>FAQ 보러가기</span>
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </Link>
+              </div>
             </div>
           </div>
         </motion.section>
 
-        {/* Weekly Schedule Availability Calendar */}
+        {/* Interactive Reservation Calendar & Schedule Switcher */}
         <motion.div
+          id="interactive-calendar-section"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.1 }}
-          className="mb-6 sm:mb-8"
+          className="mb-8 scroll-mt-20"
         >
-          <WeeklyScheduleCalendar
-            selectedDate={formData.preferred_date}
-            selectedTime={formData.preferred_time}
-            onSelectSlot={(date, time) => {
-              setFormData(prev => ({
-                ...prev,
-                preferred_date: date,
-                preferred_time: time
-              }));
-            }}
-            formRef={formRef}
-          />
+          {/* Calendar View Switcher Header */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+            <div>
+              <span className="text-xs font-bold text-brand-sage tracking-wider uppercase">
+                Interactive Schedule Picker
+              </span>
+              <h2 className="text-xl sm:text-2xl font-serif font-bold text-brand-brown">
+                상담 예약 일정 및 잔여 시간 선택
+              </h2>
+            </div>
+
+            {/* View Switcher: Interactive Monthly vs Weekly View */}
+            <div className="inline-flex items-center p-1 rounded-2xl bg-white border border-brand-green/30 shadow-2xs self-start sm:self-auto">
+              <button
+                type="button"
+                onClick={() => setCalendarView('interactive')}
+                className={cn(
+                  "px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer",
+                  calendarView === 'interactive'
+                    ? "bg-brand-sage text-white shadow-2xs"
+                    : "text-brand-brown/70 hover:text-brand-brown hover:bg-brand-beige/30"
+                )}
+              >
+                <CalendarDays className="w-3.5 h-3.5" />
+                <span>대화형 캘린더 (날짜별 슬롯 확인)</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setCalendarView('weekly')}
+                className={cn(
+                  "px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer",
+                  calendarView === 'weekly'
+                    ? "bg-brand-sage text-white shadow-2xs"
+                    : "text-brand-brown/70 hover:text-brand-brown hover:bg-brand-beige/30"
+                )}
+              >
+                <Clock className="w-3.5 h-3.5" />
+                <span>주간 시간표 (전체 보기)</span>
+              </button>
+            </div>
+          </div>
+
+          <AnimatePresence mode="wait">
+            {calendarView === 'interactive' ? (
+              <motion.div
+                key="interactive-calendar-view"
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.2 }}
+              >
+                <InteractiveReservationCalendar
+                  selectedDate={formData.preferred_date}
+                  selectedTime={formData.preferred_time}
+                  onSelectDate={(date) => {
+                    setFormData(prev => ({
+                      ...prev,
+                      preferred_date: date
+                    }));
+                  }}
+                  onSelectSlot={(date, time) => {
+                    setFormData(prev => ({
+                      ...prev,
+                      preferred_date: date,
+                      preferred_time: time
+                    }));
+                  }}
+                  formRef={formRef}
+                />
+              </motion.div>
+            ) : (
+              <motion.div
+                key="weekly-calendar-view"
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.2 }}
+              >
+                <WeeklyScheduleCalendar
+                  selectedDate={formData.preferred_date}
+                  selectedTime={formData.preferred_time}
+                  onSelectSlot={(date, time) => {
+                    setFormData(prev => ({
+                      ...prev,
+                      preferred_date: date,
+                      preferred_time: time
+                    }));
+                  }}
+                  formRef={formRef}
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>
         </motion.div>
 
-        <div className="grid lg:grid-cols-2 gap-12 scroll-mt-24" ref={formRef} id="reservation-form-section">
-          {/* Reservation Form */}
+        <div 
+          className={cn(
+            "grid gap-10 lg:gap-12 scroll-mt-24",
+            submitted ? "lg:grid-cols-12" : "lg:grid-cols-2"
+          )} 
+          ref={formRef} 
+          id="reservation-form-section"
+        >
+          {/* Reservation Form or Confirmation Card */}
           <motion.div 
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
-            className="bg-white rounded-3xl p-8 shadow-xl border border-brand-green/10"
+            className={cn(
+              "bg-white rounded-3xl p-6 sm:p-8 shadow-xl border border-brand-green/10",
+              submitted && "lg:col-span-7"
+            )}
           >
-            {submitted ? (
-              <div className="h-full flex flex-col items-center justify-center py-8 text-center">
-                <div className="w-16 h-16 bg-brand-green/30 rounded-full flex items-center justify-center text-brand-sage mb-4 ring-8 ring-brand-green/10">
-                  <CheckCircle className="w-8 h-8" />
-                </div>
-                <h2 className="text-2xl font-serif font-bold text-brand-brown mb-2">예약 신청이 정상 접수되었습니다!</h2>
-                <p className="text-sm text-brand-brown/70 mb-6 max-w-md leading-relaxed">
-                  소중한 마음을 나누어 주셔서 감사합니다. 담당 상담사가 접수 내용을 확인 후 <strong className="text-brand-brown">24시간 이내 유선 전화</strong>로 일정을 최종 확정해 드립니다.
-                </p>
-
-                {/* Kakao Alimtalk / SMS Notification Preview Card */}
-                <div className="w-full max-w-md bg-amber-50/80 border border-amber-200/90 rounded-3xl p-5 text-left mb-6 shadow-sm">
-                  <div className="flex items-center justify-between gap-2 pb-3 mb-3 border-b border-amber-200/60">
-                    <div className="flex items-center gap-2">
-                      <div className="w-7 h-7 bg-[#FEE500] rounded-xl flex items-center justify-center text-[#371D1E] font-bold text-xs shadow-xs">
-                        <MessageSquareText className="w-4 h-4 fill-[#371D1E]" />
-                      </div>
-                      <div>
-                        <span className="text-xs font-bold text-amber-950 flex items-center gap-1.5">
-                          카카오 알림톡 & 문자 자동 발송
-                          <span className="px-1.5 py-0.2 bg-emerald-100 text-emerald-800 text-[10px] font-semibold rounded-full">
-                            전송 완료
-                          </span>
-                        </span>
-                        <div className="text-[11px] text-amber-800/80">
-                          수신 번호: {formData.phone} ({formData.name} 님)
-                        </div>
-                      </div>
-                    </div>
-                    <span className="text-[10px] text-amber-700/60 font-mono">
-                      {new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}
-                    </span>
-                  </div>
-
-                  {/* Kakao Talk Speech Bubble Mockup */}
-                  <div className="bg-white rounded-2xl p-4 border border-amber-100 shadow-xs space-y-3">
-                    <div className="text-xs font-bold text-amber-900 border-b border-amber-100 pb-2 flex items-center justify-between">
-                      <span>[행복바람심리상담연구소]</span>
-                      <span className="text-[10px] text-amber-600 font-normal">알림톡 안내</span>
-                    </div>
-
-                    <p className="text-xs text-brand-brown/90 leading-relaxed">
-                      안녕하세요, <strong className="text-brand-brown font-bold">{formData.name}</strong> 님.<br />
-                      마음의 평온을 찾는 행복바람심리상담연구소입니다.<br />
-                      신청하신 상담 예약이 안전하게 접수되었습니다.
-                    </p>
-
-                    <div className="bg-brand-beige/30 rounded-xl p-3 text-xs space-y-1.5 text-brand-brown/80 border border-brand-green/20">
-                      <div className="flex justify-between">
-                        <span className="text-brand-brown/60">신청 프로그램:</span>
-                        <span className="font-semibold text-brand-brown">
-                          {selectedProgram ? `[${selectedProgram.category}] ${selectedProgram.title}` : '맞춤 심리상담'}
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-brand-brown/60">희망 방문일:</span>
-                        <span className="font-semibold text-brand-brown">{formData.preferred_date}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-brand-brown/60">희망 시간:</span>
-                        <span className="font-semibold text-brand-brown">{formData.preferred_time}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-brand-brown/60">상담소 위치:</span>
-                        <span className="font-semibold text-brand-brown text-[11px]">도호1길 23 상가 408호</span>
-                      </div>
-                    </div>
-
-                    <div className="pt-1 space-y-1.5">
-                      <a
-                        href="tel:052-254-0230"
-                        className="w-full py-2 bg-[#FEE500] hover:bg-[#FADB00] text-[#371D1E] font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 transition-all shadow-xs"
-                      >
-                        <PhoneCall className="w-3.5 h-3.5" />
-                        <span>상담소 유선 문의 (052-254-0230)</span>
-                      </a>
-                    </div>
-                  </div>
-
-                  <p className="mt-3 text-[11px] text-amber-900/70 leading-relaxed text-center">
-                    💡 카카오톡 미설치 또는 알림 차단 시 <strong className="font-semibold">일반 장문 문자(LMS)</strong>로 자동 전환 발송됩니다.
-                  </p>
-                </div>
-
-                <div className="flex flex-wrap items-center justify-center gap-3">
-                  <button 
-                    type="button"
-                    onClick={() => setShowConfirmModal(true)}
-                    className="inline-flex items-center gap-1.5 px-5 py-2.5 bg-[#FEE500] hover:bg-[#FADB00] text-[#371D1E] text-xs font-bold rounded-xl transition-all shadow-xs cursor-pointer"
-                  >
-                    <MessageSquareText className="w-3.5 h-3.5 fill-[#371D1E]" />
-                    <span>알림톡 확인창 다시 열기</span>
-                  </button>
-                  <button 
-                    onClick={() => {
-                      setSubmitted(false);
-                      setFormData({
-                        name: '',
-                        phone: '',
-                        program_id: '',
-                        preferred_date: '',
-                        preferred_time: '',
-                      });
-                    }}
-                    className="inline-flex items-center gap-1.5 px-5 py-2.5 bg-brand-sage text-white text-xs font-bold rounded-xl hover:bg-brand-sage/90 transition-all shadow-sm"
-                  >
-                    <RotateCcw className="w-3.5 h-3.5" />
-                    <span>새로운 예약 신청하기</span>
-                  </button>
-                  <Link
-                    to="/"
-                    className="inline-flex items-center gap-1.5 px-5 py-2.5 bg-brand-beige/50 text-brand-brown text-xs font-bold rounded-xl hover:bg-brand-beige/80 transition-all border border-brand-green/20"
-                  >
-                    <HomeIcon className="w-3.5 h-3.5" />
-                    <span>홈페이지 메인으로</span>
-                  </Link>
-                </div>
-              </div>
+            {submitted && submittedReservationId ? (
+              <ReservationConfirmationCard
+                reservationId={submittedReservationId}
+                initialName={formData.name}
+                initialPhone={formData.phone}
+                initialDate={formData.preferred_date}
+                initialTime={formData.preferred_time}
+                program={selectedProgram}
+                notificationResult={notificationResult}
+                onReset={() => {
+                  setSubmitted(false);
+                  setSubmittedReservationId(undefined);
+                  setFormData({
+                    name: '',
+                    phone: '',
+                    program_id: '',
+                    preferred_date: '',
+                    preferred_time: '',
+                  });
+                }}
+              />
             ) : (
               <>
                 <div className="flex items-center justify-between mb-8">
@@ -569,12 +697,25 @@ export default function Reservation() {
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
                         <label htmlFor="res-date" className="text-sm font-bold text-brand-brown/70 ml-1">희망 날짜</label>
-                        {formData.preferred_date && (
-                          <span className="text-[11px] font-semibold text-brand-sage bg-brand-sage/10 px-2 py-0.5 rounded-md flex items-center gap-1">
-                            <Check className="w-3 h-3 stroke-[2.5]" />
-                            시간표 연동됨
-                          </span>
-                        )}
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              document.getElementById('interactive-calendar-section')?.scrollIntoView({ behavior: 'smooth' });
+                            }}
+                            className="text-[11px] font-semibold text-brand-sage hover:text-brand-brown hover:underline flex items-center gap-1 cursor-pointer"
+                            title="상단 대화형 캘린더로 이동하여 날짜 및 시간 선택"
+                          >
+                            <CalendarDays className="w-3 h-3" />
+                            <span>대화형 캘린더로 선택</span>
+                          </button>
+                          {formData.preferred_date && (
+                            <span className="text-[11px] font-semibold text-brand-sage bg-brand-sage/10 px-2 py-0.5 rounded-md flex items-center gap-1">
+                              <Check className="w-3 h-3 stroke-[2.5]" />
+                              연동됨
+                            </span>
+                          )}
+                        </div>
                       </div>
                       <input 
                         required
@@ -726,7 +867,7 @@ export default function Reservation() {
           </motion.div>
 
           {/* Map & Info */}
-          <div className="space-y-8">
+          <div className={cn("space-y-8", submitted && "lg:col-span-5")}>
             <motion.div 
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}

@@ -180,7 +180,7 @@ export interface Testimonial {
   clientName: string;
   initial?: string;
   ageGroupAndRole: string;
-  category: 'adult' | 'couple' | 'youth' | 'anxiety';
+  category: 'child' | 'youth' | 'adult' | 'couple' | 'anxiety' | string;
   categoryLabel: string;
   programTaken: string;
   rating: number;
@@ -194,6 +194,8 @@ export interface Testimonial {
   recommendCount?: number;
   date?: string;
   isBest?: boolean;
+  status?: 'approved' | 'pending' | 'rejected';
+  created_at?: string;
 }
 
 export interface CommunityNotice {

@@ -339,8 +339,8 @@ export default function TestimonialsSection() {
                 {/* Card Footer: Tags & Actions */}
                 <div className="flex flex-wrap items-center justify-between gap-4 pt-4 border-t border-brand-green/20">
                   <div className="flex flex-wrap gap-1.5 text-xs text-brand-brown/60">
-                    {currentTestimonial.tags.map(t => (
-                      <span key={t} className="px-2 py-0.5 rounded-md bg-brand-beige/70 font-medium">
+                    {currentTestimonial.tags.map((t, tIdx) => (
+                      <span key={`testi-tag-${tIdx}-${t}`} className="px-2 py-0.5 rounded-md bg-brand-beige/70 font-medium">
                         {t}
                       </span>
                     ))}
@@ -608,8 +608,8 @@ export default function TestimonialsSection() {
 
               <div className="flex items-center justify-between pt-4 border-t border-brand-green/20">
                 <div className="flex flex-wrap gap-1 text-xs text-brand-brown/60">
-                  {selectedStory.tags.map(t => (
-                    <span key={t} className="px-2 py-0.5 rounded bg-brand-beige">{t}</span>
+                  {selectedStory.tags.map((t, tIdx) => (
+                    <span key={`modal-tag-${tIdx}-${t}`} className="px-2 py-0.5 rounded bg-brand-beige">{t}</span>
                   ))}
                 </div>
                 <Link

@@ -1,46 +1,26 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
-  <defs>
-    <linearGradient id="breezeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#84A59D" />
-      <stop offset="100%" stop-color="#6B8E7B" />
-    </linearGradient>
-    <linearGradient id="leafGrad" x1="0%" y1="100%" x2="100%" y2="0%">
-      <stop offset="0%" stop-color="#4F772D" />
-      <stop offset="100%" stop-color="#90A955" />
-    </linearGradient>
-    <filter id="softShadow" x="-10%" y="-10%" width="120%" height="120%">
-      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#3D312A" flood-opacity="0.15" />
-    </filter>
-  </defs>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100" fill="none">
+  <!-- 부드러운 원형 배경 -->
+  <circle cx="50" cy="50" r="48" fill="#FDFBF7" stroke="#237A68" stroke-width="2" stroke-opacity="0.3" />
 
-  <!-- Background Circle with subtle warmth -->
-  <circle cx="50" cy="50" r="46" fill="#F4F1DE" stroke="#D8E2DC" stroke-width="2" />
+  <!-- 공식 클로버 심볼 마크 -->
+  <g fill="#237A68">
+    <!-- 상단 잎 -->
+    <path d="M 50 49 C 45 41, 31 35, 31 23 C 31 11.5, 42 9.5, 50 17.5 C 58 9.5, 69 11.5, 69 23 C 69 35, 55 41, 50 49 Z" />
+    
+    <!-- 좌하단 잎 -->
+    <path d="M 48 51 C 41 45, 33 32, 21 33 C 10 34, 9 46, 17 53 C 9 61, 12 72, 23 72 C 34 71, 41 57, 48 51 Z" />
+    
+    <!-- 우하단 잎 -->
+    <path d="M 52 51 C 59 45, 67 32, 79 33 C 90 34, 91 46, 83 53 C 91 61, 88 72, 77 72 C 66 71, 59 57, 52 51 Z" />
+    
+    <!-- 중심 결합 원 -->
+    <circle cx="50" cy="50" r="11" />
+    
+    <!-- 아래로 뻗는 자연 줄기 -->
+    <path d="M 49 57 C 47 70, 41 83, 25 91 C 31 84, 41 73, 45 60 Z" />
+  </g>
 
-  <!-- Gentle Wind Stream (행복바람) -->
-  <path d="M 22 56 C 30 42, 45 42, 58 48 C 68 53, 78 50, 80 43" 
-        fill="none" 
-        stroke="url(#breezeGrad)" 
-        stroke-width="5" 
-        stroke-linecap="round" 
-        filter="url(#softShadow)" />
-        
-  <path d="M 28 66 C 36 56, 48 56, 60 61 C 70 65, 75 62, 78 58" 
-        fill="none" 
-        stroke="url(#breezeGrad)" 
-        stroke-width="3" 
-        stroke-linecap="round" 
-        opacity="0.75" />
-
-  <!-- Healing Sprout / Leaf (마음 치유) -->
-  <path d="M 50 30 C 50 18, 68 18, 66 32 C 64 42, 50 48, 50 48 C 50 48, 42 38, 50 30 Z" 
-        fill="url(#leafGrad)" />
-        
-  <path d="M 50 48 C 50 38, 38 34, 38 24 C 38 18, 48 18, 50 26" 
-        fill="none" 
-        stroke="#90A955" 
-        stroke-width="2.5" 
-        stroke-linecap="round" />
-        
-  <!-- Center Heart-like Node of Peace -->
-  <circle cx="50" cy="48" r="3.5" fill="#3D312A" opacity="0.8" />
+  <!-- 상단 잎 사람 형상 음각 -->
+  <circle cx="50" cy="23.5" r="4.3" fill="#FFFFFF" />
+  <path d="M 47.8 29.8 C 46.5 35, 43.5 42, 40.8 48 C 45.8 46.2, 54.2 46.2, 59.2 48 C 56.5 42, 53.5 35, 52.2 29.8 Z" fill="#FFFFFF" />
 </svg>

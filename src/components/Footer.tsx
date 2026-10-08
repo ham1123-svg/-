@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import AdminLoginModal from './AdminLoginModal';
+import OfficialLogo from './OfficialLogo';
 
 export default function Footer() {
   const navigate = useNavigate();
@@ -22,7 +23,9 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-10 lg:gap-14">
           {/* Brand Info */}
           <div>
-            <h3 className="font-serif text-2xl font-bold mb-4">행복바람<span className="text-brand-sage">심리상담연구소</span></h3>
+            <div className="mb-4">
+              <OfficialLogo className="h-12 w-auto" inverted={true} />
+            </div>
             <p className="text-brand-beige/65 text-xs sm:text-sm leading-relaxed mb-6">
               모든 내담자가 자신의 삶에서 행복의 바람을 맞이할 수 있도록 돕습니다. 
               총 30,000시간 이상의 심층 상담 시간과 따뜻한 공감으로 함께하겠습니다.
@@ -69,6 +72,7 @@ export default function Footer() {
           <div>
             <h4 className="font-bold mb-5 text-brand-sage uppercase tracking-wider text-xs sm:text-sm">Customer &amp; Legal</h4>
             <ul className="space-y-3 text-xs sm:text-sm text-brand-beige/65">
+              <li><Link to="/mood-tracker" className="hover:text-brand-sage transition-colors text-emerald-300 font-medium">데일리 무드 트래커 (감정 분석)</Link></li>
               <li><Link to="/confidentiality" className="hover:text-brand-sage transition-colors">비밀보장원칙</Link></li>
               <li><Link to="/privacy" className="hover:text-brand-sage transition-colors">개인정보처리방침</Link></li>
               <li><Link to="/terms" className="hover:text-brand-sage transition-colors">이용약관</Link></li>
