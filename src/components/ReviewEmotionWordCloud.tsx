@@ -63,7 +63,9 @@ export default function ReviewEmotionWordCloud({
       try {
         const data = await testimonialService.getTestimonials(false);
         if (isMounted) {
-          setInternalTestimonials(data);
+          setInternalTestimonials(prev =>
+            prev.length === data.length && prev[0]?.id === data[0]?.id ? prev : data
+          );
         }
       } catch (e) {
         console.error('Error loading testimonials for emotion cloud:', e);

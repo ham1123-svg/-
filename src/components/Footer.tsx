@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import AdminLoginModal from './AdminLoginModal';
-import OfficialLogo from './OfficialLogo';
 
 export default function Footer() {
   const navigate = useNavigate();
@@ -24,7 +23,15 @@ export default function Footer() {
           {/* Brand Info */}
           <div>
             <div className="mb-4">
-              <OfficialLogo className="h-12 w-auto" inverted={true} />
+              <Link 
+                to="/" 
+                className="inline-block py-1 transition-transform duration-200 hover:scale-[1.01]"
+                aria-label="행복바람 심리상담연구소 홈으로 이동"
+              >
+                <span className="text-xl sm:text-2xl font-serif font-bold text-brand-beige tracking-tight">
+                  행복바람<span className="text-brand-sage">심리상담연구소</span>
+                </span>
+              </Link>
             </div>
             <p className="text-brand-beige/65 text-xs sm:text-sm leading-relaxed mb-6">
               모든 내담자가 자신의 삶에서 행복의 바람을 맞이할 수 있도록 돕습니다. 

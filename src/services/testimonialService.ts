@@ -42,6 +42,15 @@ function getInitialLocalTestimonials(): Testimonial[] {
   return seeded;
 }
 
+function syncLocalCacheOnly(list: Testimonial[]) {
+  try {
+    const deduped = deduplicateTestimonials(list);
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(deduped));
+  } catch (e) {
+    console.error("Error syncing testimonials cache to local storage:", e);
+  }
+}
+
 function saveLocalTestimonials(list: Testimonial[]) {
   try {
     const deduped = deduplicateTestimonials(list);
@@ -72,8 +81,8 @@ export const testimonialService = {
       if (res.ok) {
         const data = await res.json();
         if (Array.isArray(data) && data.length > 0) {
-          // Sync to local storage for instant offline fallback
-          saveLocalTestimonials(data);
+          // Sync to local storage for instant offline fallback silently without firing change event
+          syncLocalCacheOnly(data);
           return includeAll ? data : data.filter((t: Testimonial) => t.status === 'approved');
         }
       }

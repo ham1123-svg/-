@@ -242,33 +242,49 @@ if (!adminPhoneRow || adminPhoneRow.value === '010-8588-4663') {
   db.prepare("INSERT OR REPLACE INTO admin_settings (key, value) VALUES ('admin_phone', '010-7322-5676')").run();
 }
 
-// Seed data
-const existingCounselor = db.prepare("SELECT * FROM counselors WHERE name = ?").get("박미경") as any;
-if (!existingCounselor) {
-  const insertCounselor = db.prepare("INSERT INTO counselors (name, title, education, certifications, style, tags, image_url) VALUES (?, ?, ?, ?, ?, ?, ?)");
-  insertCounselor.run(
-    "박미경", 
-    "상담 소장 (대표 원장)", 
-    "교육학 박사 (상담 심리 및 교육 심리 전공)", 
-    "한국상담학회 공인 1급 수련감독자(슈퍼바이저)\n한국상담학회 전문상담사 1급 (No. 818)\n여성가족부 청소년상담사 1급 (국가공인)\n한국상담심리학회 정회원\n한국부부가족상담학회 정회원", 
-    "개인 심층 치유 / 기업 EAP / 부부·가족 갈등 / 종합심리평가 / 전문가 수련 지도", 
-    "#교육학박사 #1급슈퍼바이저 #총상담30000시간 #성인개인상담 #부부상담 #청소년심리 #심리검사 #기업EAP", 
-    "/images/counselor_park.jpg"
-  );
-} else {
-  db.prepare("UPDATE counselors SET title = ?, education = ?, certifications = ?, style = ?, tags = ?, image_url = ? WHERE name = ?").run(
-    "상담 소장 (대표 원장)",
-    "교육학 박사 (상담 심리 및 교육 심리 전공)",
-    "한국상담학회 공인 1급 수련감독자(슈퍼바이저)\n한국상담학회 전문상담사 1급 (No. 818)\n여성가족부 청소년상담사 1급 (국가공인)\n한국상담심리학회 정회원\n한국부부가족상담학회 정회원",
-    "개인 심층 치유 / 기업 EAP / 부부·가족 갈등 / 종합심리평가 / 전문가 수련 지도",
-    "#교육학박사 #1급슈퍼바이저 #총상담30000시간 #성인개인상담 #부부상담 #청소년심리 #심리검사 #기업EAP",
-    "/images/counselor_park.jpg",
-    "박미경"
-  );
-}
+// Seed counselors data
+const defaultCounselorsData = [
+  {
+    name: "박미경",
+    title: "상담 소장 (대표 원장)",
+    education: "교육학 박사 (상담 심리 및 교육 심리 전공)",
+    certifications: "한국상담학회 공인 1급 수련감독자(슈퍼바이저)\n한국상담학회 전문상담사 1급 (No. 818)\n여성가족부 청소년상담사 1급 (국가공인)\n한국상담심리학회 정회원\n한국부부가족상담학회 정회원",
+    style: "개인 심층 치유 / 기업 EAP / 부부·가족 갈등 / 종합심리평가 / 전문가 수련 지도",
+    tags: "#교육학박사 #1급슈퍼바이저 #총상담30000시간 #16년경력 #성인개인상담 #부부상담 #청소년심리 #심리검사 #기업EAP",
+    image_url: "/images/counselor_park.jpg"
+  },
+  {
+    name: "김지현",
+    title: "수석 상담사",
+    education: "상담심리학 석사 (부부 및 가족상담 전공)",
+    certifications: "한국상담심리학회 공인 상담심리사 1급\n한국부부가족상담학회 부부상담전문가\n여성가족부 국가공인 청소년상담사 2급\n국제공인 이마고(Imago) 부부치료 전문가",
+    style: "부부 및 커플 갈등 / 가족 대화 단절 / 정서중심치료(EFT) / 비폭력대화 / 성인 애착 회복",
+    tags: "#상담심리사1급 #부부상담전문가 #총상담5800시간 #10년경력 #부부관계 #가족갈등 #정서중심치료 #비폭력대화",
+    image_url: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=800&q=80"
+  },
+  {
+    name: "이진우",
+    title: "전문 상담사",
+    education: "임상 및 상담심리학 석사 (인지행동치료 전공)",
+    certifications: "보건복지부 국가공인 정신건강임상심리사 2급\n여성가족부 국가공인 청소년상담사 1급\n한국인지행동치료학회 CBT 전문가\n한국임상심리학회 정회원",
+    style: "청소년 심리 / 학업·시험불안 / 성인 ADHD / 공황·강박증 / 인지행동치료(CBT)",
+    tags: "#정신건강임상심리사 #청소년상담사1급 #총상담4600시간 #8년경력 #청소년상담 #성인ADHD #공황강박치료 #인지행동치료",
+    image_url: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=800&q=80"
+  }
+];
 
-// Keep only Director Park Mi-kyeong
-db.prepare("DELETE FROM counselors WHERE name != ?").run("박미경");
+for (const c of defaultCounselorsData) {
+  const existing = db.prepare("SELECT id FROM counselors WHERE name = ?").get(c.name);
+  if (!existing) {
+    db.prepare("INSERT INTO counselors (name, title, education, certifications, style, tags, image_url) VALUES (?, ?, ?, ?, ?, ?, ?)").run(
+      c.name, c.title, c.education, c.certifications, c.style, c.tags, c.image_url
+    );
+  } else {
+    db.prepare("UPDATE counselors SET title = ?, education = ?, certifications = ?, style = ?, tags = ?, image_url = ? WHERE name = ?").run(
+      c.title, c.education, c.certifications, c.style, c.tags, c.image_url, c.name
+    );
+  }
+}
 
 // Seed data
 const programCount = (db.prepare("SELECT COUNT(*) as count FROM programs").get() as any).count;
@@ -709,7 +725,7 @@ async function startServer() {
 
   // API Routes
   app.get("/api/counselors", (req, res) => {
-    const counselors = db.prepare("SELECT * FROM counselors WHERE name = ?").all("박미경");
+    const counselors = db.prepare("SELECT * FROM counselors ORDER BY id ASC").all();
     res.json(counselors);
   });
 

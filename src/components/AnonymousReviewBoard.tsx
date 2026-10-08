@@ -145,18 +145,29 @@ export default function AnonymousReviewBoard({
     }, 3000);
   }, []);
 
-  // Fetch reviews
-  const loadReviews = useCallback(async () => {
-    setLoading(true);
+  // Fetch reviews (only show full skeleton loading on cold start)
+  const loadReviews = useCallback(async (isInitial = false) => {
+    if (isInitial) {
+      setLoading(prev => (reviews.length === 0 ? true : prev));
+    }
     try {
       const data = await testimonialService.getTestimonials(false);
-      setReviews(data);
+      setReviews(prev => {
+        if (
+          prev.length === data.length &&
+          prev[0]?.id === data[0]?.id &&
+          prev[0]?.recommendCount === data[0]?.recommendCount
+        ) {
+          return prev;
+        }
+        return data;
+      });
     } catch (err) {
       console.error("Failed to load reviews:", err);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [reviews.length]);
 
   // Sync initialSearchTerm when changed from parent
   useEffect(() => {
@@ -167,9 +178,9 @@ export default function AnonymousReviewBoard({
   }, [initialSearchTerm]);
 
   useEffect(() => {
-    loadReviews();
+    loadReviews(true);
     const unsubscribe = testimonialService.subscribe(() => {
-      loadReviews();
+      loadReviews(false);
     });
     return unsubscribe;
   }, [loadReviews]);
@@ -285,9 +296,11 @@ export default function AnonymousReviewBoard({
   return (
     <section 
       id="anonymous-review-board-container" 
-      className={cn("py-20 sm:py-24 bg-brand-beige/25 border-t border-brand-green/20 relative", className)}
+      data-section="anonymous-review-board-section"
+      className={cn("py-20 sm:py-24 bg-brand-beige/25 border-t border-brand-green/20 relative scroll-mt-20", className)}
       aria-label="내담자 익명 상담 후기 게시판"
     >
+      <div id="anonymous-review-board-section" className="absolute -top-20 left-0 pointer-events-none" aria-hidden="true" />
       {/* Toast Notification */}
       <AnimatePresence>
         {toastMessage && (
@@ -736,9 +749,9 @@ export default function AnonymousReviewBoard({
               return (
                 <motion.article
                   key={review.id}
-                  layout
                   initial={{ opacity: 0, y: 15 }}
                   animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3 }}
                   className="bg-white rounded-3xl p-6 border border-brand-green/20 shadow-sm hover:shadow-md transition-all flex flex-col justify-between group relative overflow-hidden"
                 >
                   {/* Top Bar: Anonymous Client Profile & Category */}

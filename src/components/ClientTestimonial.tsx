@@ -117,7 +117,16 @@ export default function ClientTestimonial({ className }: { className?: string })
     try {
       const data = await testimonialService.getTestimonials(false);
       if (data && data.length > 0) {
-        setTestimonialsList(data);
+        setTestimonialsList(prev => {
+          if (
+            prev.length === data.length &&
+            prev[0]?.id === data[0]?.id &&
+            prev[0]?.recommendCount === data[0]?.recommendCount
+          ) {
+            return prev;
+          }
+          return data;
+        });
       }
     } catch (e) {
       console.error("Failed to load testimonials:", e);
@@ -419,8 +428,8 @@ export default function ClientTestimonial({ className }: { className?: string })
             </button>
           )}
 
-          {/* Slide Track with Framer Motion AnimatePresence */}
-          <div className="overflow-hidden px-1 py-2">
+          {/* Slide Track with Framer Motion AnimatePresence and stable min-height */}
+          <div className="overflow-hidden px-1 py-2 min-h-[420px] sm:min-h-[440px]">
             <AnimatePresence custom={direction} mode="wait">
               <motion.div
                 key={`${currentIndex}-${activeCategory}`}

@@ -179,12 +179,17 @@ export default function Counselors() {
                   }}
                   aria-label={`${counselor.name} ${counselor.title} 상세 프로필 보기`}
                   className={cn(
-                    "rounded-3xl overflow-hidden shadow-xl border transition-all duration-300 cursor-pointer group hover:shadow-2xl hover:border-brand-sage/80 hover:-translate-y-0.5 relative",
+                    "rounded-3xl overflow-hidden shadow-xl border cursor-pointer group relative",
+                    "transition-all duration-500 ease-out",
+                    "hover:shadow-2xl hover:border-brand-sage hover:-translate-y-1.5 hover:ring-4 hover:ring-brand-sage/15",
                     isHighContrast 
-                      ? 'bg-neutral-950 text-white border-2 border-white' 
+                      ? 'bg-neutral-950 text-white border-2 border-white hover:border-emerald-400' 
                       : 'bg-white text-brand-brown border-brand-green/30'
                   )}
                 >
+                  {/* Top animated accent shimmer bar on hover */}
+                  <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-brand-sage via-emerald-500 to-amber-500/80 opacity-0 group-hover:opacity-100 transition-opacity duration-500 z-30" />
+
                   {/* Main Profile Row: Image (Left) + Primary Summary (Right) */}
                   <div className="flex flex-col md:flex-row">
                     
@@ -193,7 +198,7 @@ export default function Counselors() {
                       <img 
                         src={counselor.image_url || '/images/counselor_park.jpg'} 
                         alt={`${counselor.name} ${counselor.title || '상담사'}`} 
-                        className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 cursor-pointer"
+                        className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-108 cursor-pointer"
                         onClick={(e) => {
                           e.stopPropagation();
                           openDetailModal(counselor, 'about');
@@ -209,8 +214,21 @@ export default function Counselors() {
                         }}
                       />
 
+                      {/* Top floating quick info badge on hover */}
+                      <div className="absolute top-4 left-4 right-4 z-20 pointer-events-none transition-all duration-400 ease-out opacity-0 -translate-y-2 group-hover:opacity-100 group-hover:translate-y-0">
+                        <div className="bg-white/95 backdrop-blur-md px-3.5 py-2 rounded-xl shadow-lg border border-brand-sage/30 flex items-center justify-between text-xs font-serif text-brand-brown">
+                          <span className="font-bold flex items-center gap-1.5 text-brand-brown">
+                            <Sparkles className="w-3.5 h-3.5 text-brand-sage shrink-0" />
+                            <span>박미경 대표원장 1:1 직접 상담</span>
+                          </span>
+                          <span className="text-[11px] font-semibold text-brand-sage bg-brand-sage/10 px-2 py-0.5 rounded-full">
+                            1일 5회기 정원제
+                          </span>
+                        </div>
+                      </div>
+
                       {/* Gradient overlay for badges */}
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/25 to-transparent pointer-events-none" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent pointer-events-none" />
                       
                       {/* Tags & Quick Metrics on image */}
                       <div className="relative z-10 p-5 space-y-2.5">
@@ -236,6 +254,14 @@ export default function Counselors() {
                             </button>
                           ))}
                         </div>
+
+                        {/* Clinical credentials info bar on image */}
+                        <div className="flex items-center text-white/90 text-[11px] pt-1.5 border-t border-white/20">
+                          <span className="flex items-center gap-1.5 font-medium">
+                            <FileText className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                            16년+ 임상 노하우 & 학술 연구 실적
+                          </span>
+                        </div>
                       </div>
                     </div>
                     
@@ -251,14 +277,15 @@ export default function Counselors() {
                                   e.stopPropagation();
                                   openDetailModal(counselor, 'about');
                                 }}
-                                className="text-2xl sm:text-3xl font-serif font-bold text-brand-brown hover:text-brand-sage transition-colors cursor-pointer"
+                                className="text-2xl sm:text-3xl font-serif font-bold text-brand-brown group-hover:text-brand-sage transition-colors duration-300 cursor-pointer flex items-center gap-2"
                               >
-                                {counselor.name}
+                                <span>{counselor.name}</span>
+                                <ArrowRight className="w-5 h-5 text-brand-sage opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300 hidden sm:inline-block" />
                               </h2>
                               <span className="px-3 py-1 bg-brand-sage/15 text-brand-sage font-bold text-xs sm:text-sm rounded-full">
                                 {counselor.title}
                               </span>
-                              <span className="px-2.5 py-0.5 bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-bold rounded-md flex items-center gap-1 shadow-2xs">
+                              <span className="px-2.5 py-0.5 bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-bold rounded-md flex items-center gap-1 shadow-2xs group-hover:bg-emerald-100 group-hover:border-emerald-300 group-hover:scale-105 transition-all duration-300">
                                 <Clock className="w-3 h-3 text-emerald-600" />
                                 <span>총 상담 30,000+ 시간</span>
                               </span>
@@ -270,7 +297,7 @@ export default function Counselors() {
                           </p>
 
                           {/* 1. 상담 철학 (Counseling Philosophy Snippet & Quick Link) */}
-                          <div className="mt-3 p-3 rounded-2xl bg-brand-beige/35 border border-brand-green/25">
+                          <div className="mt-3 p-3 rounded-2xl bg-brand-beige/35 border border-brand-green/25 group-hover:border-brand-sage/40 group-hover:bg-brand-beige/60 transition-all duration-300">
                             <div className="flex items-center justify-between mb-1.5">
                               <span className="text-[11px] font-bold text-rose-700 bg-rose-50 px-2 py-0.5 rounded-full flex items-center gap-1">
                                 <Heart className="w-3 h-3 text-rose-600" />
@@ -325,7 +352,7 @@ export default function Counselors() {
                             ))}
                             {certList.length > 3 && (
                               <li className="text-[11px] text-brand-brown/60 pl-5 pt-0.5 font-serif">
-                                외 {certList.length - 3}개 자격증 및 학회 등록 이력 (상세 보기에서 확인 가능)
+                                외 {certList.length - 3}개 자격증 및 학회 등록 이력 (프로필 상세 보기에서 확인 가능)
                               </li>
                             )}
                           </ul>
@@ -374,6 +401,59 @@ export default function Counselors() {
                             </div>
                           </div>
                         </div>
+
+                        {/* 4. 마우스 호버 시 부드럽게 강조 및 활성화되는 간단한 핵심 상세 정보 (Hover Quick Highlights) */}
+                        <div className={cn(
+                          "mb-6 p-4 rounded-2xl border transition-all duration-300 relative overflow-hidden",
+                          "bg-brand-beige/25 border-brand-green/25 group-hover:bg-brand-sage/[0.08] group-hover:border-brand-sage/60 group-hover:shadow-md",
+                          isHighContrast && "group-hover:border-white group-hover:bg-neutral-900"
+                        )}>
+                          {/* Ambient glow accent on hover */}
+                          <div className="absolute -right-8 -bottom-8 w-28 h-28 bg-brand-sage/15 rounded-full blur-xl pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+
+                          <div className="flex items-center justify-between mb-2.5 relative z-10">
+                            <div className="flex items-center gap-1.5 text-xs font-bold text-brand-sage group-hover:text-brand-brown transition-colors">
+                              <Sparkles className="w-3.5 h-3.5 text-brand-sage group-hover:rotate-12 transition-transform duration-300 shrink-0" />
+                              <span className="font-serif">핵심 진료 안내 & 임상 특징 (Quick Highlights)</span>
+                            </div>
+                            <span className="text-[11px] font-semibold text-brand-sage bg-white/80 group-hover:bg-brand-sage group-hover:text-white px-2.5 py-0.5 rounded-full border border-brand-sage/20 transition-all duration-300 shadow-2xs">
+                              1:1 맞춤 치유
+                            </span>
+                          </div>
+                          
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs font-serif text-brand-brown/85 relative z-10">
+                            <div className="flex items-start gap-2 bg-white/70 group-hover:bg-white/95 p-2 rounded-xl border border-brand-green/15 transition-colors">
+                              <Clock className="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5" />
+                              <div>
+                                <strong className="text-brand-brown block font-bold">운영 시간 & 예약 안내</strong>
+                                <span className="text-[11px] text-brand-brown/75 leading-tight block mt-0.5">
+                                  평일 09~20시(야간 19시) · 토 09~17시 (100% 사전 예약제)
+                                </span>
+                              </div>
+                            </div>
+                            <div className="flex items-start gap-2 bg-white/70 group-hover:bg-white/95 p-2 rounded-xl border border-brand-green/15 transition-colors">
+                              <ShieldCheck className="w-3.5 h-3.5 text-brand-sage shrink-0 mt-0.5" />
+                              <div>
+                                <strong className="text-brand-brown block font-bold">안전한 임상 원칙</strong>
+                                <span className="text-[11px] text-brand-brown/75 leading-tight block mt-0.5">
+                                  철저한 100% 비밀보장 · 1일 최대 5회기 집중제
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Hover micro-interaction cue */}
+                          <div className="mt-2.5 pt-2 border-t border-brand-green/20 flex items-center justify-between text-[11px] font-serif relative z-10">
+                            <span className="text-brand-brown/70 flex items-center gap-1 font-medium">
+                              <Award className="w-3 h-3 text-amber-600 shrink-0" />
+                              한국상담학회 1급 수련감독자 · 청소년상담사 1급
+                            </span>
+                            <span className="text-brand-sage font-bold flex items-center gap-1 group-hover:translate-x-1 transition-transform duration-300">
+                              카드 클릭 시 전체 상세 이력 열람
+                              <ArrowRight className="w-3 h-3" />
+                            </span>
+                          </div>
+                        </div>
                       </div>
                       
                       {/* Action Bar (Highlighted Modal Button + Inline Expand + Reservation CTA) */}
@@ -387,9 +467,9 @@ export default function Counselors() {
                               e.stopPropagation();
                               openDetailModal(counselor, 'about');
                             }}
-                            className="flex-1 py-3 px-4 rounded-xl text-xs sm:text-sm font-bold bg-white hover:bg-brand-green/20 text-brand-brown border-2 border-brand-sage/60 hover:border-brand-sage transition-all flex items-center justify-center gap-2 cursor-pointer shadow-xs active:scale-98"
+                            className="flex-1 py-3 px-4 rounded-xl text-xs sm:text-sm font-bold bg-white group-hover:bg-brand-sage group-hover:text-white group-hover:border-brand-sage text-brand-brown border-2 border-brand-sage/60 hover:border-brand-sage transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer shadow-xs active:scale-98"
                           >
-                            <Maximize2 className="w-4 h-4 text-brand-sage" />
+                            <Maximize2 className="w-4 h-4 text-brand-sage group-hover:text-white transition-colors duration-300" />
                             <span>프로필 상세 보기</span>
                           </button>
 
