@@ -263,6 +263,46 @@ export function getTimeSlotsForDate(dateStr: string): string[] {
   return getTimeSlotsForDay(d.getDay());
 }
 
+export interface PsychologicalPrepTip {
+  period: 'morning' | 'afternoon' | 'evening';
+  title: string;
+  shortTip: string;
+  detailTip: string;
+  recommendation: string;
+}
+
+export const PSYCHOLOGICAL_PREP_TIPS: Record<string, PsychologicalPrepTip> = {
+  morning: {
+    period: 'morning',
+    title: '차분한 아침 명상',
+    shortTip: '차분한 아침 명상과 심호흡으로 오늘 마주할 내면의 이야기를 맑게 열어보세요.',
+    detailTip: '이른 아침의 맑은 공기와 함께 3~5분간 가벼운 호흡 명상을 진행하면, 뇌의 긴장이 풀리고 자신의 진솔한 마음에 더욱 집중할 수 있습니다.',
+    recommendation: '따뜻한 미온수 한 잔과 가벼운 스트레칭 후 상담 참여를 권장합니다.'
+  },
+  afternoon: {
+    period: 'afternoon',
+    title: '일상 속 쉼표 & 차 한 잔',
+    shortTip: '바쁜 일과를 잠시 멈추고 따뜻한 차 한 잔과 함께 숨을 고르며 마음에 집중해 보세요.',
+    detailTip: '오후 시간대는 하루 일과로 분주할 수 있습니다. 상담 10분 전 스마트폰을 내려놓고 차 한 잔을 마시며 지금 내 감정에 머물러 보세요.',
+    recommendation: '일과와 상담 사이에 10분의 완충 시간을 두어 호흡을 정돈해 보세요.'
+  },
+  evening: {
+    period: 'evening',
+    title: '하루 정리 & 마음 비우기',
+    shortTip: '오늘 하루의 긴장과 분주함을 내려놓고 편안한 공간에서 하루를 차분히 정리해 보세요.',
+    detailTip: '하루를 마무리하는 저녁 시간에는 오늘 겪은 일들과 억눌렸던 감정을 편안하게 내려놓고, 온전히 나만의 안식처를 찾는 마음으로 참여해 보세요.',
+    recommendation: '오늘 느꼈던 감정 단어 1~2가지를 메모해 두시면 심층 상담에 큰 도움이 됩니다.'
+  }
+};
+
+export function getPsychologicalTipForTime(timeStr?: string): PsychologicalPrepTip | null {
+  if (!timeStr) return null;
+  if (timeStr === '09:00' || timeStr === '10:30') return PSYCHOLOGICAL_PREP_TIPS.morning;
+  if (timeStr === '14:00' || timeStr === '15:30') return PSYCHOLOGICAL_PREP_TIPS.afternoon;
+  if (timeStr === '19:00') return PSYCHOLOGICAL_PREP_TIPS.evening;
+  return null;
+}
+
 export interface CounselingInsight {
   id: number;
   title: string;

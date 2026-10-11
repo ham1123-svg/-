@@ -337,17 +337,17 @@ export default function WeeklyScheduleCalendar({
         <div className="flex flex-wrap items-center gap-3 text-xs text-brand-brown/70 shrink-0">
           <div className="flex items-center gap-1.5">
             <span className="w-3 h-3 rounded-md bg-emerald-50 border border-emerald-300"></span>
-            <span>예약 가능</span>
+            <span className="font-semibold text-emerald-900">예약 가능</span>
           </div>
           <div className="flex items-center gap-1.5">
             <span className="w-3 h-3 rounded-md bg-brand-sage text-white flex items-center justify-center">
               <Check className="w-2.5 h-2.5 stroke-[3]" />
             </span>
-            <span>선택됨</span>
+            <span className="font-semibold text-brand-sage">선택</span>
           </div>
           <div className="flex items-center gap-1.5">
             <span className="w-3 h-3 rounded-md bg-gray-100 border border-gray-200"></span>
-            <span>마감/휴진</span>
+            <span className="text-gray-500">종료 / 마감</span>
           </div>
         </div>
       </div>

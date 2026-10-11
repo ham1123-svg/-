@@ -8,7 +8,15 @@ import {
   CalendarDays, Check, HelpCircle, Search, Copy
 } from 'lucide-react';
 import { cn } from '../lib/utils';
-import { Program, NotificationResult, ScheduleBlock, Reservation as ReservationType, RESERVATION_TIME_SLOTS, TIME_SLOT_DETAILS } from '../types';
+import { 
+  Program, 
+  NotificationResult, 
+  ScheduleBlock, 
+  Reservation as ReservationType, 
+  RESERVATION_TIME_SLOTS, 
+  TIME_SLOT_DETAILS,
+  getPsychologicalTipForTime
+} from '../types';
 import WeeklyScheduleCalendar from '../components/WeeklyScheduleCalendar';
 import InteractiveReservationCalendar from '../components/InteractiveReservationCalendar';
 import ReservationConfirmModal from '../components/ReservationConfirmModal';
@@ -508,10 +516,10 @@ export default function Reservation() {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
             <div>
               <span className="text-xs font-bold text-brand-sage tracking-wider uppercase">
-                Interactive Schedule Picker
+                Reservation Schedule Table
               </span>
               <h2 className="text-xl sm:text-2xl font-serif font-bold text-brand-brown">
-                상담 예약 일정 및 잔여 시간 선택
+                상담 예약 일정표 (실시간 가능 현황)
               </h2>
             </div>
 
@@ -528,7 +536,7 @@ export default function Reservation() {
                 )}
               >
                 <CalendarDays className="w-3.5 h-3.5" />
-                <span>대화형 캘린더 (날짜별 슬롯 확인)</span>
+                <span>월간 일정표 (가능 / 종료 확인)</span>
               </button>
 
               <button
@@ -812,6 +820,30 @@ export default function Reservation() {
                           );
                         })}
                       </select>
+
+                      {/* Psychological Preparation Tip Tooltip for Selected Time */}
+                      {formData.preferred_time && (() => {
+                        const prepTip = getPsychologicalTipForTime(formData.preferred_time);
+                        if (!prepTip) return null;
+                        return (
+                          <motion.div
+                            initial={{ opacity: 0, y: -4 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="p-3 rounded-2xl bg-amber-50/90 border border-amber-200/90 text-amber-950 font-serif text-xs space-y-1 shadow-2xs mt-2"
+                          >
+                            <div className="flex items-center gap-1.5 font-bold text-amber-900">
+                              <Sparkles className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                              <span>💡 {formData.preferred_time} {prepTip.title} (심리 준비 팁)</span>
+                            </div>
+                            <p className="text-[11px] text-amber-900/90 leading-relaxed">
+                              {prepTip.shortTip}
+                            </p>
+                            <p className="text-[10px] text-amber-800/80 pt-0.5 font-sans">
+                              · {prepTip.recommendation}
+                            </p>
+                          </motion.div>
+                        );
+                      })()}
                     </div>
                   </div>
 
