@@ -23,6 +23,8 @@ export interface ReservationNotificationParams {
   preferredTime: string;
   type?: 'CONFIRMED' | 'RECEIVED' | 'CANCELLED';
   customNotes?: string;
+  clientType?: string;
+  symptoms?: string;
 }
 
 export interface AdminReservationNotificationParams {
@@ -34,6 +36,9 @@ export interface AdminReservationNotificationParams {
   preferredTime: string;
   reservationId?: number;
   isQuick?: boolean;
+  clientType?: string;
+  symptoms?: string;
+  notes?: string;
 }
 
 /**
@@ -142,6 +147,7 @@ export function buildAlimtalkMessage(params: ReservationNotificationParams): {
 ■ 예약 접수 상세 정보
 • 예약자명: ${params.recipientName} 님
 • 연락처: ${formattedPhone}
+• 상담 대상: ${params.clientType ? `[${params.clientType}]` : '맞춤 상담'}${params.symptoms ? ` (${params.symptoms})` : ''}
 • 상담 프로그램: ${params.programTitle || '맞춤 심리상담'}
 • 희망 일시: ${formattedDateTime}
 • 상담소 위치: 울산광역시 울주군 삼남읍 도호1길 23 상가 408호
@@ -347,9 +353,11 @@ export function buildAdminNewReservationMessage(params: AdminReservationNotifica
 ■ 신규 예약 신청 내역
 • 신청자명: ${params.applicantName} 님
 • 신청자 연락처: ${formattedApplicantPhone}
+• 대상자 유형: ${params.clientType ? `[${params.clientType}]` : '미지정'}
+• 주요 호소 문제: ${params.symptoms || '없음'}
 • 상담 프로그램: ${params.programTitle || '맞춤 심리상담'}
 • 희망 일시: ${formattedDateTime}
-${isCallback ? '• 접수 유형: 간편 전화상담(콜백) 요청' : '• 접수 유형: 온라인 정식 예약 신청'}
+${params.notes ? `• 사전 설문 메모: ${params.notes.length > 60 ? params.notes.slice(0, 60) + '...' : params.notes}\n` : ''}• 접수 유형: ${isCallback ? '간편 전화상담(콜백) 요청' : '온라인 정식 예약 신청'}
 
 ※ 관리자 페이지에서 [예약 확정] 처리 시, 신청자 고객님(${formattedApplicantPhone})께 [카카오 알림톡(예약 확정 안내)]이 자동으로 즉시 발송됩니다.`;
 

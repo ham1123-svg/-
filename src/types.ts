@@ -87,6 +87,18 @@ export interface Program {
   tags: string;
 }
 
+export type ClientTargetType = '아동' | '청소년' | '성인';
+
+export interface IntakeSurveyData {
+  targetType: ClientTargetType;
+  ageOrGrade?: string;
+  symptoms: string[];
+  accompanimentOrMotivation?: string;
+  priorExperience?: string;
+  consultFormat?: string;
+  notes?: string;
+}
+
 export interface Reservation {
   id?: number;
   name: string;
@@ -99,6 +111,10 @@ export interface Reservation {
   status?: string;
   admin_notes?: string;
   created_at?: string;
+  client_type?: string;
+  symptoms?: string;
+  survey_data?: string;
+  notes?: string;
 }
 
 export interface CategoryMonthlyTrend {

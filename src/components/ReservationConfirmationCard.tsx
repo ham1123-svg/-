@@ -49,6 +49,10 @@ interface ReservationConfirmationCardProps {
   notificationResult?: NotificationResult | null;
   onReset: () => void;
   className?: string;
+  initialClientType?: string;
+  initialSymptoms?: string;
+  initialSurveyData?: any;
+  initialNotes?: string;
 }
 
 export default function ReservationConfirmationCard({
@@ -60,9 +64,17 @@ export default function ReservationConfirmationCard({
   program,
   notificationResult,
   onReset,
-  className = ''
+  className = '',
+  initialClientType = '성인',
+  initialSymptoms = '',
+  initialSurveyData = null,
+  initialNotes = ''
 }: ReservationConfirmationCardProps) {
   const [currentStatus, setCurrentStatus] = useState<'pending' | 'confirmed' | 'cancelled'>('pending');
+  const [clientType, setClientType] = useState<string>(initialClientType);
+  const [symptoms, setSymptoms] = useState<string>(initialSymptoms);
+  const [surveyData, setSurveyData] = useState<any>(initialSurveyData);
+  const [notes, setNotes] = useState<string>(initialNotes);
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
   const [lastCheckedTime, setLastCheckedTime] = useState<string>('');
   const [showFullAlimtalk, setShowFullAlimtalk] = useState<boolean>(false);
@@ -99,6 +111,16 @@ export default function ReservationConfirmationCard({
         if (data.status) {
           setCurrentStatus(data.status);
         }
+        if (data.client_type) setClientType(data.client_type);
+        if (data.symptoms) setSymptoms(data.symptoms);
+        if (data.survey_data) {
+          try {
+            setSurveyData(typeof data.survey_data === 'string' ? JSON.parse(data.survey_data) : data.survey_data);
+          } catch (e) {
+            setSurveyData(data.survey_data);
+          }
+        }
+        if (data.notes) setNotes(data.notes);
         setLastCheckedTime(new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
       }
     } catch (err) {
@@ -436,7 +458,28 @@ export default function ReservationConfirmationCard({
           </p>
 
           {/* Core Reservation Details Grid in Alimtalk */}
-          <div className="bg-brand-beige/30 rounded-xl p-4 text-xs space-y-2 border border-brand-green/20">
+          <div className="bg-brand-beige/30 rounded-xl p-4 text-xs space-y-2.5 border border-brand-green/20">
+            {/* Target Client Type Badge */}
+            <div className="flex justify-between items-center pb-2 border-b border-brand-green/15">
+              <span className="text-brand-brown/70 flex items-center gap-1.5 font-medium">
+                <span className="w-2 h-2 rounded-full bg-brand-sage"></span>
+                상담 대상자:
+              </span>
+              <span className={cn(
+                "px-2.5 py-0.5 rounded-full text-xs font-bold border flex items-center gap-1 shadow-2xs",
+                clientType === '아동' 
+                  ? "bg-amber-100 text-amber-900 border-amber-300"
+                  : clientType === '청소년'
+                    ? "bg-indigo-100 text-indigo-900 border-indigo-300"
+                    : "bg-emerald-100 text-emerald-950 border-emerald-300"
+              )}>
+                {clientType === '아동' && '🧸 '}
+                {clientType === '청소년' && '🎒 '}
+                {clientType === '성인' && '☕ '}
+                <span>{clientType || '성인'} 상담</span>
+              </span>
+            </div>
+
             <div className="flex justify-between items-center">
               <span className="text-brand-brown/60 flex items-center gap-1.5">
                 <Sparkles className="w-3.5 h-3.5 text-brand-sage" />
@@ -457,7 +500,51 @@ export default function ReservationConfirmationCard({
               </span>
             </div>
 
-            <div className="flex justify-between items-center">
+            {/* Chief Complaints / Symptoms */}
+            {symptoms && (
+              <div className="pt-1.5 pb-1 border-t border-brand-green/10">
+                <div className="text-[11px] font-bold text-brand-brown/75 mb-1 flex items-center gap-1">
+                  <span>주요 고민 및 호소 증상:</span>
+                </div>
+                <div className="flex flex-wrap gap-1">
+                  {symptoms.split(',').map((s, idx) => (
+                    <span 
+                      key={idx} 
+                      className="px-2 py-0.5 rounded-md bg-white border border-brand-green/20 text-[11px] text-brand-brown font-medium shadow-2xs"
+                    >
+                      {s.trim()}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Sub-group / Accompaniment / Motivation if in surveyData */}
+            {surveyData && typeof surveyData === 'object' && (surveyData.subGroup || surveyData.accompanimentOrMotivation) && (
+              <div className="text-[11px] text-brand-brown/70 flex flex-wrap gap-x-3 gap-y-1 pt-1 border-t border-brand-green/10">
+                {surveyData.subGroup && (
+                  <span><strong>세부구분:</strong> {surveyData.subGroup}</span>
+                )}
+                {surveyData.accompanimentOrMotivation && (
+                  <span><strong>동반/희망방식:</strong> {surveyData.accompanimentOrMotivation}</span>
+                )}
+                {surveyData.priorExperience && (
+                  <span><strong>이전경험:</strong> {surveyData.priorExperience}</span>
+                )}
+              </div>
+            )}
+
+            {/* Client Notes / Message for Counselor */}
+            {notes && (
+              <div className="p-2.5 rounded-lg bg-white/80 border border-brand-green/20 text-[11px] text-brand-brown/85">
+                <div className="font-bold text-brand-sage mb-0.5 flex items-center gap-1">
+                  <span>상담사 사전 전달 메모:</span>
+                </div>
+                <p className="line-clamp-3 italic">"{notes}"</p>
+              </div>
+            )}
+
+            <div className="flex justify-between items-center pt-1 border-t border-brand-green/10">
               <span className="text-brand-brown/60 flex items-center gap-1.5">
                 <ShieldCheck className="w-3.5 h-3.5 text-brand-sage" />
                 진행 방식:

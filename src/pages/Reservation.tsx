@@ -15,22 +15,34 @@ import {
   Reservation as ReservationType, 
   RESERVATION_TIME_SLOTS, 
   TIME_SLOT_DETAILS,
-  getPsychologicalTipForTime
+  getPsychologicalTipForTime,
+  ClientTargetType
 } from '../types';
 import WeeklyScheduleCalendar from '../components/WeeklyScheduleCalendar';
 import InteractiveReservationCalendar from '../components/InteractiveReservationCalendar';
 import ReservationConfirmModal from '../components/ReservationConfirmModal';
 import ReservationConfirmationCard from '../components/ReservationConfirmationCard';
+import ReservationIntakeSurvey from '../components/ReservationIntakeSurvey';
 
 export default function Reservation() {
   const [searchParams] = useSearchParams();
   const formRef = useRef<HTMLDivElement>(null);
   const [calendarView, setCalendarView] = useState<'interactive' | 'weekly'>('interactive');
   const [programs, setPrograms] = useState<Program[]>([]);
+
+  // Pre-survey Intake State (아동, 청소년, 성인 대상자 유형)
+  const [clientType, setClientType] = useState<ClientTargetType>('성인');
+  const [selectedSymptoms, setSelectedSymptoms] = useState<string[]>([]);
+  const [subGroup, setSubGroup] = useState<string>('30대 (직장인 / 신혼 / 육아기)');
+  const [accompanimentOrMotivation, setAccompanimentOrMotivation] = useState<string>('1:1 개인 심층 심리상담');
+  const [priorExperience, setPriorExperience] = useState<string>('심리상담 처음');
+  const [detailedNote, setDetailedNote] = useState<string>('');
+
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
     program_id: '',
+    preferred_counselor: searchParams.get('counselor') || '',
     preferred_date: searchParams.get('date') || '',
     preferred_time: searchParams.get('time') || '',
   });
@@ -52,6 +64,9 @@ export default function Reservation() {
     preferred_time: string;
     program_id: string;
     status?: string;
+    client_type?: string;
+    symptoms?: string;
+    notes?: string;
   } | null>(null);
   const [recentStatus, setRecentStatus] = useState<string>('pending');
 
@@ -203,6 +218,43 @@ export default function Reservation() {
     }
   }, [formData.preferred_date, slotAvailability]);
 
+  // Client Type selection handler with automatic program recommendation
+  const handleSelectClientType = (type: ClientTargetType) => {
+    setClientType(type);
+    setSelectedSymptoms([]);
+    if (type === '아동') {
+      setSubGroup('초등 저학년 (1~3학년)');
+      setAccompanimentOrMotivation('부모님 모두 동반');
+      setPriorExperience('처음 상담 신청');
+      const childProg = programs.find(p => p.category.includes('아동') || p.title.includes('아동'));
+      if (childProg) {
+        setFormData(prev => ({ ...prev, program_id: childProg.id.toString() }));
+      }
+    } else if (type === '청소년') {
+      setSubGroup('중학교 1~2학년');
+      setAccompanimentOrMotivation('본인이 원해서 적극 신청');
+      setPriorExperience('처음 상담 신청');
+      const youthProg = programs.find(p => p.title.includes('청소년'));
+      if (youthProg) {
+        setFormData(prev => ({ ...prev, program_id: youthProg.id.toString() }));
+      }
+    } else {
+      setSubGroup('30대 (직장인 / 신혼 / 육아기)');
+      setAccompanimentOrMotivation('1:1 개인 심층 심리상담');
+      setPriorExperience('심리상담 처음');
+      const adultProg = programs.find(p => p.title.includes('성인') || p.category.includes('개인상담'));
+      if (adultProg) {
+        setFormData(prev => ({ ...prev, program_id: adultProg.id.toString() }));
+      }
+    }
+  };
+
+  const handleToggleSymptom = (symptom: string) => {
+    setSelectedSymptoms(prev => 
+      prev.includes(symptom) ? prev.filter(s => s !== symptom) : [...prev, symptom]
+    );
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormError('');
@@ -223,7 +275,22 @@ export default function Reservation() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...formData,
-          program_id: parseInt(formData.program_id)
+          program_id: parseInt(formData.program_id),
+          client_type: clientType,
+          symptoms: selectedSymptoms.join(', '),
+          counselor: formData.preferred_counselor,
+          survey_data: {
+            targetType: clientType,
+            subGroup,
+            accompanimentOrMotivation,
+            priorExperience,
+            symptoms: selectedSymptoms,
+            counselor: formData.preferred_counselor,
+            notes: detailedNote
+          },
+          notes: formData.preferred_counselor 
+            ? `[희망 상담사: ${formData.preferred_counselor}] ${detailedNote}` 
+            : detailedNote
         }),
       });
       if (response.ok) {
@@ -242,7 +309,11 @@ export default function Reservation() {
             preferred_date: formData.preferred_date,
             preferred_time: formData.preferred_time,
             program_id: formData.program_id,
+            counselor: formData.preferred_counselor,
             status: result.status || 'pending',
+            client_type: clientType,
+            symptoms: selectedSymptoms.join(', '),
+            notes: detailedNote,
             timestamp: Date.now()
           };
           localStorage.setItem('hbbr_last_reservation', JSON.stringify(saveObj));
@@ -389,6 +460,7 @@ export default function Reservation() {
                   setFormData({
                     name: recentReservation.name,
                     phone: recentReservation.phone,
+                    preferred_counselor: (recentReservation as any).counselor || '',
                     preferred_date: recentReservation.preferred_date,
                     preferred_time: recentReservation.preferred_time,
                     program_id: recentReservation.program_id,
@@ -504,7 +576,35 @@ export default function Reservation() {
           </div>
         </motion.section>
 
-        {/* Interactive Reservation Calendar & Schedule Switcher */}
+        {/* STEP 01 & 02: 대상자 유형 선택 및 맞춤 사전 설문 (상담 내용 구체화) */}
+        <motion.div
+          id="reservation-intake-section"
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.05 }}
+          className="mb-8 scroll-mt-20"
+        >
+          <ReservationIntakeSurvey
+            clientType={clientType}
+            onSelectClientType={handleSelectClientType}
+            selectedSymptoms={selectedSymptoms}
+            onToggleSymptom={handleToggleSymptom}
+            subGroup={subGroup}
+            onChangeSubGroup={setSubGroup}
+            accompanimentOrMotivation={accompanimentOrMotivation}
+            onChangeAccompaniment={setAccompanimentOrMotivation}
+            priorExperience={priorExperience}
+            onChangePriorExperience={setPriorExperience}
+            detailedNote={detailedNote}
+            onChangeDetailedNote={setDetailedNote}
+            recommendedProgramTitle={selectedProgram ? `[${selectedProgram.category}] ${selectedProgram.title}` : undefined}
+            onProceedToSchedule={() => {
+              document.getElementById('interactive-calendar-section')?.scrollIntoView({ behavior: 'smooth' });
+            }}
+          />
+        </motion.div>
+
+        {/* STEP 03: Interactive Reservation Calendar & Schedule Switcher */}
         <motion.div
           id="interactive-calendar-section"
           initial={{ opacity: 0, y: 20 }}
@@ -515,11 +615,16 @@ export default function Reservation() {
           {/* Calendar View Switcher Header */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
             <div>
-              <span className="text-xs font-bold text-brand-sage tracking-wider uppercase">
-                Reservation Schedule Table
-              </span>
+              <div className="flex items-center gap-2 mb-1">
+                <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-brand-sage text-white shadow-2xs">
+                  STEP 03
+                </span>
+                <span className="text-xs font-bold text-brand-sage tracking-wider uppercase">
+                  Schedule Selection
+                </span>
+              </div>
               <h2 className="text-xl sm:text-2xl font-serif font-bold text-brand-brown">
-                상담 예약 일정표 (실시간 가능 현황)
+                상담사별 대화형 예약 일정표 (희망 상담사 및 일시 선택)
               </h2>
             </div>
 
@@ -536,7 +641,7 @@ export default function Reservation() {
                 )}
               >
                 <CalendarDays className="w-3.5 h-3.5" />
-                <span>월간 일정표 (가능 / 종료 확인)</span>
+                <span>상담사별 대화형 달력 (가능 일시 확인)</span>
               </button>
 
               <button
@@ -567,17 +672,25 @@ export default function Reservation() {
                 <InteractiveReservationCalendar
                   selectedDate={formData.preferred_date}
                   selectedTime={formData.preferred_time}
+                  selectedCounselor={formData.preferred_counselor}
+                  onSelectCounselor={(counselor) => {
+                    setFormData(prev => ({
+                      ...prev,
+                      preferred_counselor: counselor
+                    }));
+                  }}
                   onSelectDate={(date) => {
                     setFormData(prev => ({
                       ...prev,
                       preferred_date: date
                     }));
                   }}
-                  onSelectSlot={(date, time) => {
+                  onSelectSlot={(date, time, counselor) => {
                     setFormData(prev => ({
                       ...prev,
                       preferred_date: date,
-                      preferred_time: time
+                      preferred_time: time,
+                      ...(counselor ? { preferred_counselor: counselor } : {})
                     }));
                   }}
                   formRef={formRef}
@@ -634,6 +747,17 @@ export default function Reservation() {
                 initialTime={formData.preferred_time}
                 program={selectedProgram}
                 notificationResult={notificationResult}
+                initialClientType={clientType}
+                initialSymptoms={selectedSymptoms.join(', ')}
+                initialSurveyData={{
+                  targetType: clientType,
+                  subGroup,
+                  accompanimentOrMotivation,
+                  priorExperience,
+                  symptoms: selectedSymptoms,
+                  notes: detailedNote
+                }}
+                initialNotes={detailedNote}
                 onReset={() => {
                   setSubmitted(false);
                   setSubmittedReservationId(undefined);
@@ -641,20 +765,78 @@ export default function Reservation() {
                     name: '',
                     phone: '',
                     program_id: '',
+                    preferred_counselor: '',
                     preferred_date: '',
                     preferred_time: '',
                   });
+                  setSelectedSymptoms([]);
+                  setDetailedNote('');
                 }}
               />
             ) : (
               <>
-                <div className="flex items-center justify-between mb-8">
-                  <h2 className="text-2xl font-serif font-bold text-brand-brown flex items-center gap-2">
-                    <Send className="w-6 h-6 text-brand-sage" /> 온라인 예약 신청
-                  </h2>
-                  <span className="px-2.5 py-1 bg-brand-green/30 text-brand-brown text-xs font-semibold rounded-full">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-6 pb-4 border-b border-brand-green/15">
+                  <div>
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-brand-sage text-white shadow-2xs">
+                        STEP 04
+                      </span>
+                      <span className="text-xs font-bold text-brand-sage tracking-wider uppercase">
+                        Applicant Information
+                      </span>
+                    </div>
+                    <h2 className="text-xl sm:text-2xl font-serif font-bold text-brand-brown flex items-center gap-2">
+                      <Send className="w-5 h-5 text-brand-sage" /> 온라인 예약 신청서 작성
+                    </h2>
+                  </div>
+                  <span className="px-2.5 py-1 bg-brand-green/30 text-brand-brown text-xs font-semibold rounded-full self-start sm:self-auto">
                     간편 1분 접수
                   </span>
+                </div>
+
+                {/* Active Intake Summary Box */}
+                <div className="mb-6 p-4 rounded-2xl bg-brand-beige/25 border border-brand-green/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-xs font-bold text-brand-brown/70">선택 대상자:</span>
+                      <span className={cn(
+                        "px-2.5 py-0.5 rounded-full text-xs font-bold border shadow-2xs",
+                        clientType === '아동' 
+                          ? "bg-amber-100 text-amber-900 border-amber-300"
+                          : clientType === '청소년'
+                            ? "bg-indigo-100 text-indigo-900 border-indigo-300"
+                            : "bg-emerald-100 text-emerald-950 border-emerald-300"
+                      )}>
+                        {clientType === '아동' && '🧸 '}
+                        {clientType === '청소년' && '🎒 '}
+                        {clientType === '성인' && '☕ '}
+                        <span>{clientType} 상담</span>
+                      </span>
+                      {subGroup && (
+                        <span className="text-xs text-brand-brown/55 font-medium">({subGroup})</span>
+                      )}
+                    </div>
+                    <div className="text-xs text-brand-brown/80 flex items-center gap-1.5 flex-wrap">
+                      <span className="font-medium text-brand-brown/60">선택 고민 ({selectedSymptoms.length}개):</span>
+                      {selectedSymptoms.length > 0 ? (
+                        <span className="font-semibold text-brand-sage">
+                          {selectedSymptoms.slice(0, 3).join(', ')}{selectedSymptoms.length > 3 ? ` 외 ${selectedSymptoms.length - 3}건` : ''}
+                        </span>
+                      ) : (
+                        <span className="text-brand-brown/50 italic">상단 사전 설문에서 고민 증상을 선택해 주세요</span>
+                      )}
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      document.getElementById('reservation-intake-section')?.scrollIntoView({ behavior: 'smooth' });
+                    }}
+                    className="text-xs font-bold text-brand-sage hover:text-brand-brown hover:underline flex items-center gap-1 cursor-pointer shrink-0"
+                  >
+                    <span>사전 설문 다시 확인</span>
+                    <ChevronRight className="w-3.5 h-3.5" />
+                  </button>
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-6">
@@ -685,6 +867,45 @@ export default function Reservation() {
                     </div>
                   </div>
                   
+                  {/* Preferred Counselor Selection */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <label htmlFor="res-counselor" className="text-sm font-bold text-brand-brown/70 ml-1">
+                        희망 상담사 선택
+                      </label>
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            document.getElementById('interactive-calendar-section')?.scrollIntoView({ behavior: 'smooth' });
+                          }}
+                          className="text-[11px] font-semibold text-brand-sage hover:text-brand-brown hover:underline flex items-center gap-1 cursor-pointer"
+                          title="상단 대화형 캘린더에서 상담사별 일정 확인"
+                        >
+                          <CalendarDays className="w-3 h-3" />
+                          <span>상담사 일정 확인</span>
+                        </button>
+                        {formData.preferred_counselor && (
+                          <span className="text-[11px] font-semibold text-brand-sage bg-brand-sage/10 px-2 py-0.5 rounded-md flex items-center gap-1">
+                            <Check className="w-3 h-3 stroke-[2.5]" />
+                            선택됨
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <select
+                      id="res-counselor"
+                      className="w-full px-4 py-3 rounded-xl border border-brand-green/30 focus:border-brand-sage outline-none bg-brand-beige/10 appearance-none text-sm cursor-pointer"
+                      value={formData.preferred_counselor}
+                      onChange={e => setFormData({ ...formData, preferred_counselor: e.target.value })}
+                    >
+                      <option value="">지정 안 함 (상담 고민 분야에 따른 최적 전문의 배정)</option>
+                      <option value="박미경 소장 (대표 원장)">박미경 대표 원장 (교육학 박사 · 1급 수련감독자 / 성인·부부·기업EAP)</option>
+                      <option value="김지현 수석 상담사">김지현 수석 상담사 (상담심리사 1급 · 부부상담전문가 / 부부·가족 갈등)</option>
+                      <option value="이진우 전문 상담사">이진우 전문 상담사 (정신건강임상심리사 2급 · 청소년상담사 1급 / CBT·ADHD)</option>
+                    </select>
+                  </div>
+                  
                   <div className="space-y-2">
                     <label htmlFor="res-program" className="text-sm font-bold text-brand-brown/70 ml-1">상담 프로그램 선택</label>
                     <select 
@@ -694,10 +915,17 @@ export default function Reservation() {
                       value={formData.program_id}
                       onChange={e => setFormData({...formData, program_id: e.target.value})}
                     >
-                      <option value="">프로그램을 선택해 주세요</option>
-                      {programs.map(p => (
-                        <option key={p.id} value={p.id}>{`[${p.category}] ${p.title}`}</option>
-                      ))}
+                      <option value="">상담 프로그램을 선택해 주세요</option>
+                      {programs.map(p => {
+                        const isRecommended = (clientType === '아동' && (p.category.includes('아동') || p.title.includes('아동'))) ||
+                                              (clientType === '청소년' && p.title.includes('청소년')) ||
+                                              (clientType === '성인' && (p.title.includes('성인') || p.category.includes('개인상담')));
+                        return (
+                          <option key={p.id} value={p.id}>
+                            {`[${p.category}] ${p.title}${isRecommended ? ` (${clientType} 맞춤 추천 ★)` : ''}`}
+                          </option>
+                        );
+                      })}
                     </select>
                   </div>
                   
@@ -1043,6 +1271,7 @@ export default function Reservation() {
           preferred_date: formData.preferred_date,
           preferred_time: formData.preferred_time,
           program_id: formData.program_id,
+          counselor: formData.preferred_counselor,
         }}
         program={selectedProgram}
         notificationResult={notificationResult}
@@ -1052,6 +1281,7 @@ export default function Reservation() {
             name: '',
             phone: '',
             program_id: '',
+            preferred_counselor: '',
             preferred_date: '',
             preferred_time: '',
           });

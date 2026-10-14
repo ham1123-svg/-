@@ -1235,9 +1235,23 @@ export default function AdminScheduleManager({
                                   <Edit3 className="w-3 h-3" />
                                 </button>
                               </div>
-                              <div className="font-bold text-brand-brown text-xs flex items-center gap-1">
+                              <div className="font-bold text-brand-brown text-xs flex items-center gap-1 flex-wrap">
                                 <User className="w-3 h-3 text-brand-sage" />
                                 <span>{a.name}</span>
+                                {a.client_type && (
+                                  <span className={`px-1.5 py-0.2 rounded-full text-[9px] font-bold border shadow-2xs ${
+                                    a.client_type === '아동'
+                                      ? 'bg-amber-100 text-amber-900 border-amber-300'
+                                      : a.client_type === '청소년'
+                                        ? 'bg-indigo-100 text-indigo-900 border-indigo-300'
+                                        : 'bg-emerald-100 text-emerald-950 border-emerald-300'
+                                  }`}>
+                                    {a.client_type === '아동' && '🧸 '}
+                                    {a.client_type === '청소년' && '🎒 '}
+                                    {a.client_type === '성인' && '☕ '}
+                                    {a.client_type}
+                                  </span>
+                                )}
                               </div>
                               <div className="text-[11px] text-brand-brown/70 font-mono">
                                 {a.phone}
@@ -1245,6 +1259,11 @@ export default function AdminScheduleManager({
                               <div className="text-[10px] text-brand-sage font-medium truncate mt-0.5">
                                 {a.program_title || '맞춤상담'}
                               </div>
+                              {a.symptoms && (
+                                <div className="text-[9px] text-brand-brown/70 truncate mt-0.5" title={a.symptoms}>
+                                  고민: {a.symptoms}
+                                </div>
+                              )}
                               {a.admin_notes && (
                                 <div className="mt-1 p-1 bg-white/70 rounded text-[9px] text-brand-brown/70 italic line-clamp-1">
                                   "{a.admin_notes}"
@@ -1332,6 +1351,38 @@ export default function AdminScheduleManager({
                   <X className="w-5 h-5" />
                 </button>
               </div>
+
+              {/* Intake Survey Pre-read Banner */}
+              {(editingReservation.client_type || editingReservation.symptoms || editingReservation.notes) && (
+                <div className="mb-4 p-3 bg-brand-beige/25 border border-brand-green/20 rounded-2xl text-xs space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-brand-brown/70">대상자 구분:</span>
+                    <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold border shadow-2xs ${
+                      editingReservation.client_type === '아동' 
+                        ? 'bg-amber-100 text-amber-900 border-amber-300'
+                        : editingReservation.client_type === '청소년'
+                          ? 'bg-indigo-100 text-indigo-900 border-indigo-300'
+                          : 'bg-emerald-100 text-emerald-950 border-emerald-300'
+                    }`}>
+                      {editingReservation.client_type === '아동' && '🧸 '}
+                      {editingReservation.client_type === '청소년' && '🎒 '}
+                      {editingReservation.client_type === '성인' && '☕ '}
+                      <span>{editingReservation.client_type || '성인'} 상담</span>
+                    </span>
+                  </div>
+                  {editingReservation.symptoms && (
+                    <div className="text-[11px] text-brand-brown/85">
+                      <span className="font-bold text-brand-brown/60">주요 호소 문제: </span>
+                      <span className="font-medium text-brand-sage">{editingReservation.symptoms}</span>
+                    </div>
+                  )}
+                  {editingReservation.notes && (
+                    <div className="text-[11px] text-brand-brown/80 italic bg-white/80 p-2 rounded-lg border border-brand-green/15">
+                      "{editingReservation.notes}"
+                    </div>
+                  )}
+                </div>
+              )}
 
               <form onSubmit={handleSaveEdit} className="space-y-4">
                 <div className="grid grid-cols-2 gap-3">

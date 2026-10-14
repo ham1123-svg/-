@@ -216,6 +216,23 @@ try {
   // Column already exists
 }
 
+// Safe migrations for target client type and intake survey columns in reservations table
+try {
+  db.exec("ALTER TABLE reservations ADD COLUMN client_type TEXT");
+} catch (e) {}
+
+try {
+  db.exec("ALTER TABLE reservations ADD COLUMN symptoms TEXT");
+} catch (e) {}
+
+try {
+  db.exec("ALTER TABLE reservations ADD COLUMN survey_data TEXT");
+} catch (e) {}
+
+try {
+  db.exec("ALTER TABLE reservations ADD COLUMN notes TEXT");
+} catch (e) {}
+
 // Safe migration for updated_at column in community_notices table
 try {
   db.exec("ALTER TABLE community_notices ADD COLUMN updated_at DATETIME");
@@ -294,8 +311,21 @@ if (programCount === 0) {
   insertProgram.run("부부상담", "부부 및 가족 관계 개선", "부부 갈등 해결, 의사소통 개선 및 관계 회복을 위한 전문적인 심리 지원을 제공합니다.", "#부부갈등 #관계회복 #의사소통");
   insertProgram.run("심리검사", "종합 심리검사 및 해석", "객관적인 검사를 통해 자기 이해를 돕고 현재의 심리적 상태를 정밀하게 파악합니다.", "#자기이해 #정밀진단 #성격검사");
   insertProgram.run("기업상담", "EAP (근로자 지원 프로그램)", "직장 내 스트레스 관리 및 조직 적응을 위한 임직원 맞춤형 상담 서비스를 제공합니다.", "#직장스트레스 #조직적응 #EAP");
-  insertProgram.run("집단/교육", "집단상담 및 심리교육", "특정 주제를 가진 소그룹 상담과 마음 건강을 위한 다양한 교육 프로그램을 운영합니다.", "#집단상담 #심리교육 #워크숍");
+  insertProgram.run("아동상담", "아동 놀이치료 및 발달·정서 코칭", "놀이평가와 정서안정을 통해 유아·초등학생의 심리적 안정과 건강한 성장을 돕고 양육자 훈육 코칭을 제공합니다.", "#아동상담 #놀이치료 #발달평가 #양육코칭");
 }
+
+// Ensure child consultation program exists even if table was already populated
+try {
+  const childProg = db.prepare("SELECT id FROM programs WHERE title LIKE '%아동%' OR category LIKE '%아동%'").get();
+  if (!childProg) {
+    db.prepare("INSERT INTO programs (category, title, description, tags) VALUES (?, ?, ?, ?)").run(
+      "아동상담",
+      "아동 놀이치료 및 발달·정서 코칭",
+      "놀이평가와 정서안정을 통해 유아·초등학생의 심리적 안정과 건강한 성장을 돕고 양육자 훈육 코칭을 제공합니다.",
+      "#아동상담 #놀이치료 #발달평가 #양육코칭"
+    );
+  }
+} catch (e) {}
 
 // Seed 6-month historical reservation data for analytics if reservations count is low
 const reservationCount = (db.prepare("SELECT COUNT(*) as count FROM reservations").get() as any).count;
@@ -1035,7 +1065,17 @@ async function startServer() {
 
   app.post("/api/reservations", async (req, res) => {
     try {
-      const { name, phone, program_id, preferred_date, preferred_time } = req.body;
+      const { 
+        name, 
+        phone, 
+        program_id, 
+        preferred_date, 
+        preferred_time,
+        client_type,
+        symptoms,
+        survey_data,
+        notes
+      } = req.body;
 
       if (!preferred_date || !preferred_time) {
         return res.status(400).json({ error: "희망 날짜와 시간을 모두 선택해 주세요." });
@@ -1079,7 +1119,21 @@ async function startServer() {
       }
 
       // Initial status is 'pending' waiting for admin confirmation
-      const info = db.prepare("INSERT INTO reservations (name, phone, program_id, preferred_date, preferred_time, status) VALUES (?, ?, ?, ?, ?, 'pending')").run(name, phone, program_id, preferred_date, preferred_time);
+      const info = db.prepare(`
+        INSERT INTO reservations 
+        (name, phone, program_id, preferred_date, preferred_time, status, client_type, symptoms, survey_data, notes) 
+        VALUES (?, ?, ?, ?, ?, 'pending', ?, ?, ?, ?)
+      `).run(
+        name, 
+        phone, 
+        program_id, 
+        preferred_date, 
+        preferred_time, 
+        client_type || '성인', 
+        symptoms || '', 
+        typeof survey_data === 'object' ? JSON.stringify(survey_data) : (survey_data || ''), 
+        notes || ''
+      );
       const reservationId = Number(info.lastInsertRowid);
 
       // Look up program title for notification template
@@ -1105,7 +1159,10 @@ async function startServer() {
           preferredDate: preferred_date,
           preferredTime: preferred_time,
           reservationId,
-          isQuick: false
+          isQuick: false,
+          clientType: client_type || '성인',
+          symptoms: symptoms || '',
+          notes: notes || ''
         });
 
         db.prepare(`
@@ -1135,7 +1192,9 @@ async function startServer() {
           programTitle,
           preferredDate: preferred_date,
           preferredTime: preferred_time,
-          type: 'RECEIVED'
+          type: 'RECEIVED',
+          clientType: client_type || '성인',
+          symptoms: symptoms || ''
         });
 
         db.prepare(`
@@ -2259,6 +2318,10 @@ async function startServer() {
         program_category: reservation.program_category || '일반상담',
         admin_notes: reservation.admin_notes,
         created_at: reservation.created_at,
+        client_type: reservation.client_type,
+        symptoms: reservation.symptoms,
+        survey_data: reservation.survey_data,
+        notes: reservation.notes,
         notificationLogs: logs
       });
     } catch (err: any) {

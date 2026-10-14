@@ -1175,10 +1175,30 @@ export default function Admin() {
                         </td>
 
                         <td className="py-4 px-6 whitespace-nowrap font-bold text-brand-brown">
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2 flex-wrap">
                             <User className="w-4 h-4 text-brand-sage" />
                             <span>{r.name}</span>
+                            {r.client_type && (
+                              <span className={cn(
+                                "px-2 py-0.5 rounded-full text-[10px] font-bold border shadow-2xs",
+                                r.client_type === '아동'
+                                  ? "bg-amber-100 text-amber-900 border-amber-300"
+                                  : r.client_type === '청소년'
+                                    ? "bg-indigo-100 text-indigo-900 border-indigo-300"
+                                    : "bg-emerald-100 text-emerald-950 border-emerald-300"
+                              )}>
+                                {r.client_type === '아동' && '🧸 '}
+                                {r.client_type === '청소년' && '🎒 '}
+                                {r.client_type === '성인' && '☕ '}
+                                {r.client_type}
+                              </span>
+                            )}
                           </div>
+                          {r.symptoms && (
+                            <div className="text-[11px] text-brand-brown/65 font-normal mt-0.5 max-w-[200px] truncate" title={r.symptoms}>
+                              고민: {r.symptoms}
+                            </div>
+                          )}
                         </td>
 
                         <td className="py-4 px-6 whitespace-nowrap text-brand-brown/90">

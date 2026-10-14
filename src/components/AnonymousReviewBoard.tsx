@@ -6,13 +6,13 @@ import {
   ShieldCheck, 
   Sparkles, 
   Search, 
-  Filter, 
   LayoutGrid, 
   List, 
   Quote, 
   ChevronRight, 
+  ChevronDown, 
+  ArrowUpDown, 
   Calendar, 
-  Tag, 
   MessageSquareHeart, 
   X, 
   Plus, 
@@ -22,8 +22,7 @@ import {
   User, 
   Check, 
   Award, 
-  HelpCircle,
-  RotateCcw
+  HelpCircle
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { Testimonial } from '../types';
@@ -39,21 +38,8 @@ interface AnonymousReviewBoardProps {
   initialSearchTerm?: string;
 }
 
-type SortOption = 'likes' | 'latest' | 'rating';
+type SortOption = 'latest' | 'likes' | 'rating';
 type ViewMode = 'cards' | 'table';
-
-// Symptom and experience preset keywords for quick 1-click filtering
-export const PRESET_SEARCH_KEYWORDS = [
-  { label: '🔥 직장인 번아웃', query: '번아웃' },
-  { label: '😰 발표불안 · 공황', query: '불안' },
-  { label: '🧸 아동 놀이 · 분리불안', query: '분리불안' },
-  { label: '💔 부부 갈등 · 대화단절', query: '부부' },
-  { label: '🌱 자존감 · 완벽주의', query: '자존감' },
-  { label: '🌙 불면 · 수면장애', query: '수면' },
-  { label: '🌧️ 우울 · 무기력', query: '우울' },
-  { label: '🏫 등교거부 · 학업스트레스', query: '학업' },
-  { label: '⚡ 충동조절 · 떼쓰기', query: '충동' },
-];
 
 // Keyword Highlighter Helper
 function highlightMatch(text: string | undefined | null, query: string) {
@@ -88,15 +74,6 @@ function highlightMatch(text: string | undefined | null, query: string) {
   }
 }
 
-const CATEGORIES = [
-  { id: 'all', label: '전체 후기' },
-  { id: 'child', label: '아동 심리 · 놀이/발달' },
-  { id: 'youth', label: '청소년 · 학업/사춘기' },
-  { id: 'adult', label: '성인 심리 · 번아웃' },
-  { id: 'couple', label: '부부 갈등 · 가족' },
-  { id: 'anxiety', label: '불안 · 공황 · 우울' },
-];
-
 const CATEGORY_COLORS: Record<string, { bg: string; text: string; border: string }> = {
   child: { bg: 'bg-indigo-50', text: 'text-indigo-800', border: 'border-indigo-200' },
   youth: { bg: 'bg-sky-50', text: 'text-sky-800', border: 'border-sky-200' },
@@ -116,12 +93,11 @@ export default function AnonymousReviewBoard({
   const [reviews, setReviews] = useState<Testimonial[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Filters & Controls
-  const [activeCategory, setActiveCategory] = useState<string>(initialCategory);
-  const [searchTerm, setSearchTerm] = useState<string>(initialSearchTerm);
-  const [searchInputVal, setSearchInputVal] = useState<string>(initialSearchTerm);
-  const [selectedTag, setSelectedTag] = useState<string | null>(null);
-  const [sortBy, setSortBy] = useState<SortOption>('likes');
+  // Filters & Controls (Keyword Search Only)
+  const defaultSearch = initialSearchTerm || (initialCategory && initialCategory !== 'all' ? initialCategory : '');
+  const [searchTerm, setSearchTerm] = useState<string>(defaultSearch);
+  const [searchInputVal, setSearchInputVal] = useState<string>(defaultSearch);
+  const [sortBy, setSortBy] = useState<SortOption>('latest');
   const [viewMode, setViewMode] = useState<ViewMode>('cards');
   const [visibleCount, setVisibleCount] = useState<number>(6);
 
@@ -210,19 +186,9 @@ export default function AnonymousReviewBoard({
     await testimonialService.likeReview(reviewId);
   };
 
-  // Filter and Sort Logic
+  // Filter and Sort Logic (Keyword Search Only)
   const filteredAndSortedReviews = useMemo(() => {
     let result = reviews.filter(r => r.status === 'approved' || !r.status);
-
-    // Category Filter
-    if (activeCategory !== 'all') {
-      result = result.filter(r => r.category === activeCategory);
-    }
-
-    // Tag Filter
-    if (selectedTag) {
-      result = result.filter(r => r.tags && r.tags.includes(selectedTag));
-    }
 
     // Search Filter with Multi-token Support (상담 경험, 증상, 제목, 본문, 태그 등 종합 검색)
     if (searchTerm.trim()) {
@@ -260,36 +226,31 @@ export default function AnonymousReviewBoard({
       if (a.isBest && !b.isBest) return -1;
       if (!a.isBest && b.isBest) return 1;
 
-      if (sortBy === 'likes') {
+      if (sortBy === 'latest') {
+        const dateA = a.created_at || a.date || '';
+        const dateB = b.created_at || b.date || '';
+        return dateB.localeCompare(dateA);
+      } else if (sortBy === 'likes') {
         const countA = a.recommendCount || 0;
         const countB = b.recommendCount || 0;
-        return countB - countA;
-      } else if (sortBy === 'latest') {
+        if (countB !== countA) {
+          return countB - countA;
+        }
         const dateA = a.created_at || a.date || '';
         const dateB = b.created_at || b.date || '';
         return dateB.localeCompare(dateA);
       } else if (sortBy === 'rating') {
-        return (b.rating || 5) - (a.rating || 5);
+        const ratingDiff = (b.rating || 5) - (a.rating || 5);
+        if (ratingDiff !== 0) return ratingDiff;
+        const countA = a.recommendCount || 0;
+        const countB = b.recommendCount || 0;
+        return countB - countA;
       }
       return 0;
     });
 
     return result;
-  }, [reviews, activeCategory, selectedTag, searchTerm, sortBy]);
-
-  // Tag list for quick exploration
-  const popularTags = useMemo(() => {
-    const map = new Map<string, number>();
-    reviews.forEach(r => {
-      if (r.tags && Array.isArray(r.tags)) {
-        r.tags.forEach(t => map.set(t, (map.get(t) || 0) + 1));
-      }
-    });
-    return Array.from(map.entries())
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 8)
-      .map(entry => entry[0]);
-  }, [reviews]);
+  }, [reviews, searchTerm, sortBy]);
 
   const displayedReviews = filteredAndSortedReviews.slice(0, visibleCount);
 
@@ -377,7 +338,7 @@ export default function AnonymousReviewBoard({
                 <span>키워드로 상담 경험 및 증상 검색</span>
               </label>
               <span className="text-[11px] text-brand-brown/60">
-                고민 증상(불안, 번아웃 등), 상담 경험(놀이치료, 자존감 등), 프로그램 통합 검색
+                고민 증상, 상담 경험, 프로그램 통합 검색
               </span>
             </div>
 
@@ -393,7 +354,7 @@ export default function AnonymousReviewBoard({
                 <input
                   id="review-search-input"
                   type="text"
-                  placeholder="고민 증상이나 상담 경험을 입력해보세요 (예: 번아웃, 발표불안, 불면, 아동 놀이치료, 부부갈등, 자존감)"
+                  placeholder="고민 증상이나 상담 경험을 입력해보세요"
                   value={searchInputVal}
                   onChange={(e) => {
                     const val = e.target.value;
@@ -428,106 +389,52 @@ export default function AnonymousReviewBoard({
                 <span>검색</span>
               </button>
             </form>
-
-            {/* Quick Preset Keywords (1-Click Symptom & Experience Filters) */}
-            <div className="flex flex-wrap items-center gap-1.5 pt-1 text-xs">
-              <span className="text-[11px] font-bold text-brand-brown/60 shrink-0 mr-1 flex items-center gap-1">
-                <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-                <span>자주 찾는 증상 &amp; 경험:</span>
-              </span>
-              {PRESET_SEARCH_KEYWORDS.map((item) => {
-                const isSelected = searchTerm === item.query || searchInputVal === item.query;
-                return (
-                  <button
-                    key={item.query}
-                    type="button"
-                    onClick={() => {
-                      if (isSelected) {
-                        setSearchInputVal('');
-                        setSearchTerm('');
-                      } else {
-                        setSearchInputVal(item.query);
-                        setSearchTerm(item.query);
-                        setVisibleCount(6);
-                      }
-                    }}
-                    className={cn(
-                      "px-2.5 py-1 rounded-xl text-[11px] font-semibold transition-all cursor-pointer flex items-center gap-1",
-                      isSelected
-                        ? "bg-brand-sage text-white font-bold shadow-2xs ring-2 ring-brand-sage/30"
-                        : "bg-brand-beige/35 hover:bg-brand-beige text-brand-brown/75 border border-brand-green/20"
-                    )}
-                  >
-                    <span>{item.label}</span>
-                    {isSelected && <X className="w-3 h-3 ml-0.5" />}
-                  </button>
-                );
-              })}
-            </div>
           </div>
 
-          {/* Middle Row: Category Tabs + Sort Dropdown & View Mode */}
-          <div className="pt-4 border-t border-brand-green/15 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-            
-            {/* Category Filter Pills */}
-            <div className="flex items-center gap-2 overflow-x-auto pb-1 lg:pb-0 scrollbar-none">
-              {CATEGORIES.map(cat => {
-                const isActive = activeCategory === cat.id;
-                const count = cat.id === 'all' 
-                  ? reviews.length 
-                  : reviews.filter(r => r.category === cat.id).length;
-
-                return (
+          {/* Controls: Result Count & Sort/View Mode */}
+          <div className="pt-3 border-t border-brand-green/15 flex flex-wrap items-center justify-between gap-3">
+            <div className="text-xs text-brand-brown/70 font-medium flex items-center gap-2">
+              <span>총 </span>
+              <strong className="text-brand-sage font-bold font-mono text-sm">{filteredAndSortedReviews.length}</strong>
+              <span>개의 상담 후기</span>
+              {searchTerm.trim() && (
+                <div className="inline-flex items-center gap-1.5 ml-1">
+                  <span className="text-xs text-amber-900 bg-amber-100 font-bold px-2.5 py-0.5 rounded-lg border border-amber-300">
+                    "{searchTerm}" 검색 결과
+                  </span>
                   <button
-                    key={cat.id}
                     type="button"
                     onClick={() => {
-                      setActiveCategory(cat.id);
+                      setSearchInputVal('');
+                      setSearchTerm('');
                       setVisibleCount(6);
                     }}
-                    className={cn(
-                      "px-3.5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 cursor-pointer",
-                      isActive
-                        ? "bg-brand-brown text-white shadow-xs"
-                        : "bg-brand-beige/30 hover:bg-brand-beige/60 text-brand-brown/80 border border-brand-green/20"
-                    )}
+                    className="text-[11px] text-brand-brown/60 hover:text-rose-600 underline cursor-pointer"
                   >
-                    <span>{cat.label}</span>
-                    <span className={cn(
-                      "text-[10px] px-1.5 py-0.2 rounded-full",
-                      isActive ? "bg-white/20 text-white" : "bg-brand-brown/10 text-brand-brown/60"
-                    )}>
-                      {count}
-                    </span>
+                    검색 초기화
                   </button>
-                );
-              })}
+                </div>
+              )}
             </div>
 
-            {/* Right Controls: Sort & View Mode */}
-            <div className="flex items-center justify-between lg:justify-end gap-3 shrink-0">
-              <div className="flex items-center gap-1 bg-brand-beige/25 p-1 rounded-xl border border-brand-green/20 text-xs">
-                {(['likes', 'latest', 'rating'] as SortOption[]).map(sort => {
-                  const labels: Record<SortOption, string> = {
-                    likes: '공감순',
-                    latest: '최신순',
-                    rating: '평점순'
-                  };
-                  const isSelected = sortBy === sort;
-                  return (
-                    <button
-                      key={sort}
-                      type="button"
-                      onClick={() => setSortBy(sort)}
-                      className={cn(
-                        "px-2.5 py-1 rounded-lg font-bold transition-all cursor-pointer text-[11px]",
-                        isSelected ? "bg-white text-brand-brown shadow-2xs font-extrabold" : "text-brand-brown/60 hover:text-brand-brown"
-                      )}
-                    >
-                      {labels[sort]}
-                    </button>
-                  );
-                })}
+            {/* Right Controls: Sort Dropdown & View Mode */}
+            <div className="flex items-center gap-2.5 shrink-0">
+              {/* Sort Dropdown Menu */}
+              <div className="relative inline-flex items-center">
+                <label htmlFor="review-sort-dropdown" className="sr-only">상담 후기 정렬 기준</label>
+                <ArrowUpDown className="w-3.5 h-3.5 text-brand-sage absolute left-3 pointer-events-none" />
+                <select
+                  id="review-sort-dropdown"
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value as SortOption)}
+                  className="appearance-none bg-white text-brand-brown font-bold text-xs pl-8.5 pr-8 py-2 rounded-xl border border-brand-green/30 shadow-2xs hover:border-brand-sage focus:outline-none focus:ring-2 focus:ring-brand-sage/25 cursor-pointer transition-all"
+                  aria-label="상담 후기 정렬 기준"
+                >
+                  <option value="latest">최신순</option>
+                  <option value="likes">인기순(추천수)</option>
+                  <option value="rating">평점순</option>
+                </select>
+                <ChevronDown className="w-3.5 h-3.5 text-brand-brown/50 absolute right-2.5 pointer-events-none" />
               </div>
 
               <div className="flex items-center bg-brand-beige/25 p-1 rounded-xl border border-brand-green/20 text-xs">
@@ -556,119 +463,6 @@ export default function AnonymousReviewBoard({
               </div>
             </div>
           </div>
-
-          {/* Bottom Row: Popular Tags & Tag Filters */}
-          <div className="pt-3 border-t border-brand-green/15 flex flex-wrap items-center justify-between gap-3 text-xs">
-            <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 scrollbar-none">
-              <span className="text-[11px] font-semibold text-brand-brown/50 shrink-0 flex items-center gap-1">
-                <Tag className="w-3 h-3" />
-                추천 태그:
-              </span>
-              {popularTags.map(tag => {
-                const isTagActive = selectedTag === tag;
-                return (
-                  <button
-                    key={tag}
-                    type="button"
-                    onClick={() => {
-                      setSelectedTag(isTagActive ? null : tag);
-                      setVisibleCount(6);
-                    }}
-                    className={cn(
-                      "px-2.5 py-1 rounded-lg text-[11px] font-medium transition-all shrink-0 cursor-pointer",
-                      isTagActive
-                        ? "bg-brand-sage text-white font-bold shadow-2xs"
-                        : "bg-brand-beige/25 text-brand-brown/70 hover:bg-brand-beige/50 border border-brand-green/20"
-                    )}
-                  >
-                    {tag}
-                  </button>
-                );
-              })}
-              {selectedTag && (
-                <button
-                  type="button"
-                  onClick={() => setSelectedTag(null)}
-                  className="text-[11px] text-rose-600 hover:underline px-1.5 py-0.5 shrink-0 font-medium cursor-pointer"
-                >
-                  태그 초기화 ✕
-                </button>
-              )}
-            </div>
-          </div>
-
-          {/* Active Filter & Match Summary Bar */}
-          {(searchTerm.trim() || selectedTag || activeCategory !== 'all') && (
-            <div className="pt-3 border-t border-brand-green/15 flex flex-wrap items-center justify-between gap-3 bg-brand-sage/5 p-3 rounded-2xl border border-brand-sage/20 text-xs">
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="font-bold text-brand-brown flex items-center gap-1.5">
-                  <Filter className="w-3.5 h-3.5 text-brand-sage" />
-                  <span>적용된 필터:</span>
-                </span>
-                
-                {searchTerm.trim() && (
-                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg bg-amber-100 text-amber-900 font-bold text-xs border border-amber-300">
-                    <span>키워드: "{searchTerm}"</span>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setSearchInputVal('');
-                        setSearchTerm('');
-                      }}
-                      className="hover:text-amber-700 cursor-pointer ml-0.5"
-                    >
-                      <X className="w-3 h-3" />
-                    </button>
-                  </span>
-                )}
-
-                {activeCategory !== 'all' && (
-                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg bg-brand-beige text-brand-brown font-semibold text-xs border border-brand-green/30">
-                    <span>분야: {CATEGORIES.find(c => c.id === activeCategory)?.label}</span>
-                    <button
-                      type="button"
-                      onClick={() => setActiveCategory('all')}
-                      className="hover:text-brand-sage cursor-pointer ml-0.5"
-                    >
-                      <X className="w-3 h-3" />
-                    </button>
-                  </span>
-                )}
-
-                {selectedTag && (
-                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg bg-brand-green/30 text-brand-brown font-semibold text-xs border border-brand-green/40">
-                    <span>태그: {selectedTag}</span>
-                    <button
-                      type="button"
-                      onClick={() => setSelectedTag(null)}
-                      className="hover:text-brand-sage cursor-pointer ml-0.5"
-                    >
-                      <X className="w-3 h-3" />
-                    </button>
-                  </span>
-                )}
-              </div>
-
-              <div className="flex items-center gap-3">
-                <span className="text-xs text-brand-brown/70 font-medium">
-                  일치하는 후기 <strong className="text-brand-sage font-bold">{filteredAndSortedReviews.length}</strong>건
-                </span>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSearchInputVal('');
-                    setSearchTerm('');
-                    setActiveCategory('all');
-                    setSelectedTag(null);
-                  }}
-                  className="text-xs text-rose-600 hover:text-rose-700 font-bold hover:underline cursor-pointer flex items-center gap-1"
-                >
-                  <RotateCcw className="w-3 h-3" />
-                  <span>필터 전체 초기화</span>
-                </button>
-              </div>
-            </div>
-          )}
         </div>
 
         {/* Reviews Content Area */}
@@ -682,36 +476,11 @@ export default function AnonymousReviewBoard({
           <div className="bg-white rounded-3xl p-10 sm:p-14 text-center border border-brand-green/20 shadow-xs max-w-xl mx-auto my-6">
             <Quote className="w-10 h-10 text-brand-brown/25 mx-auto mb-3" />
             <h3 className="text-lg font-serif font-bold text-brand-brown mb-1.5">
-              {searchTerm.trim() ? `"${searchTerm}"에 일치하는 상담 후기를 찾지 못했습니다` : '조건에 일치하는 후기를 찾지 못했습니다'}
+              {searchTerm.trim() ? `"${searchTerm}"에 일치하는 상담 후기를 찾지 못했습니다` : '등록된 후기를 찾지 못했습니다'}
             </h3>
             <p className="text-xs sm:text-sm text-brand-brown/65 mb-6 leading-relaxed max-w-md mx-auto">
-              입력하신 키워드(증상이나 상담 경험)의 철자를 확인하시거나, 아래의 자주 찾는 추천 키워드를 클릭해보세요.
+              입력하신 검색어의 철자를 확인하시거나, 다른 키워드로 다시 검색해 보세요.
             </p>
-
-            {/* Recommended Keywords to try */}
-            <div className="mb-6 p-4 rounded-2xl bg-brand-beige/25 border border-brand-green/15 text-left">
-              <span className="text-[11px] font-bold text-brand-brown/70 block mb-2">
-                💡 추천 검색 키워드 바로가기:
-              </span>
-              <div className="flex flex-wrap gap-1.5">
-                {['번아웃', '불안', '자존감', '부부', '놀이치료', '수면', '우울'].map(kw => (
-                  <button
-                    key={kw}
-                    type="button"
-                    onClick={() => {
-                      setSearchInputVal(kw);
-                      setSearchTerm(kw);
-                      setActiveCategory('all');
-                      setSelectedTag(null);
-                      setVisibleCount(6);
-                    }}
-                    className="px-2.5 py-1 rounded-lg bg-white border border-brand-green/30 text-brand-brown/80 text-xs font-semibold hover:border-brand-sage hover:text-brand-sage cursor-pointer transition-colors"
-                  >
-                    #{kw}
-                  </button>
-                ))}
-              </div>
-            </div>
 
             <div className="flex justify-center gap-2.5">
               <button
@@ -719,12 +488,11 @@ export default function AnonymousReviewBoard({
                 onClick={() => {
                   setSearchInputVal('');
                   setSearchTerm('');
-                  setActiveCategory('all');
-                  setSelectedTag(null);
+                  setVisibleCount(6);
                 }}
                 className="px-4 py-2.5 rounded-xl bg-brand-beige/40 text-brand-brown text-xs font-bold hover:bg-brand-beige/70 border border-brand-green/25 cursor-pointer transition-colors"
               >
-                검색 및 필터 초기화
+                검색 초기화
               </button>
               <button
                 type="button"
@@ -866,11 +634,14 @@ export default function AnonymousReviewBoard({
                             type="button"
                             onClick={(e) => {
                               e.stopPropagation();
-                              setSelectedTag(tag);
+                              setSearchInputVal(tag);
+                              setSearchTerm(tag);
+                              setVisibleCount(6);
                             }}
                             className="px-2 py-0.5 rounded-md bg-white border border-brand-green/20 text-brand-brown/70 hover:text-brand-sage hover:border-brand-sage text-[10px] transition-colors cursor-pointer"
+                            title={`"${tag}" 키워드 검색`}
                           >
-                            {tag}
+                            #{tag}
                           </button>
                         ))}
                       </div>

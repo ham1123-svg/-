@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { 
   CheckCircle2, X, MessageSquareText, Calendar, Clock, Phone, MapPin, 
   Copy, Check, PhoneCall, CalendarPlus, ChevronDown, ChevronUp, Sparkles,
-  ShieldCheck, Share2, Info
+  ShieldCheck, Share2, Info, User
 } from 'lucide-react';
 import { Program, NotificationResult } from '../types';
 
@@ -17,6 +17,7 @@ interface ReservationConfirmModalProps {
     preferred_date: string;
     preferred_time: string;
     program_id: string;
+    counselor?: string;
   };
   program?: Program;
   notificationResult?: NotificationResult | null;
@@ -270,6 +271,18 @@ export default function ReservationConfirmModal({
                       {formattedDateTime}
                     </span>
                   </div>
+
+                  {reservationData.counselor && (
+                    <div className="flex justify-between items-center text-xs">
+                      <span className="text-brand-brown/60 flex items-center gap-1.5">
+                        <User className="w-3.5 h-3.5 text-brand-sage" />
+                        희망 상담사
+                      </span>
+                      <span className="font-semibold text-brand-brown text-right">
+                        {reservationData.counselor}
+                      </span>
+                    </div>
+                  )}
 
                   <div className="flex justify-between items-center text-xs">
                     <span className="text-brand-brown/60 flex items-center gap-1.5">

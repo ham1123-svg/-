@@ -431,10 +431,25 @@ export default function ReservationStatus() {
                             : "border-brand-green/30"
                       )}
                     >
-                      {/* Top Bar: Status Badge + Date Created */}
+                      {/* Top Bar: Status Badge + Target Client Badge + Date Created */}
                       <div className="flex flex-wrap items-center justify-between gap-2 pb-4 mb-4 border-b border-brand-green/20">
-                        <div className="flex items-center gap-2.5">
+                        <div className="flex items-center gap-2.5 flex-wrap">
                           {getStatusBadge(res.status)}
+                          {res.client_type && (
+                            <span className={cn(
+                              "px-2.5 py-0.5 rounded-full text-xs font-bold border flex items-center gap-1 shadow-2xs",
+                              res.client_type === '아동'
+                                ? "bg-amber-100 text-amber-900 border-amber-300"
+                                : res.client_type === '청소년'
+                                  ? "bg-indigo-100 text-indigo-900 border-indigo-300"
+                                  : "bg-emerald-100 text-emerald-950 border-emerald-300"
+                            )}>
+                              {res.client_type === '아동' && '🧸 '}
+                              {res.client_type === '청소년' && '🎒 '}
+                              {res.client_type === '성인' && '☕ '}
+                              <span>{res.client_type} 상담</span>
+                            </span>
+                          )}
                           <span className="text-xs font-mono text-brand-brown/50">
                             예약번호 #{res.id}
                           </span>
@@ -448,7 +463,7 @@ export default function ReservationStatus() {
                       </div>
 
                       {/* Content Grid */}
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                         <div>
                           <span className="text-xs font-bold text-brand-brown/60 block mb-1">
                             신청 프로그램
@@ -476,6 +491,30 @@ export default function ReservationStatus() {
                           </div>
                         </div>
                       </div>
+
+                      {/* Pre-survey Symptoms & Notes */}
+                      {(res.symptoms || res.notes) && (
+                        <div className="mb-4 p-3.5 rounded-2xl bg-brand-beige/25 border border-brand-green/20 text-xs space-y-2">
+                          {res.symptoms && (
+                            <div>
+                              <span className="font-bold text-brand-brown/70 block mb-1">사전 설문 호소 증상:</span>
+                              <div className="flex flex-wrap gap-1">
+                                {res.symptoms.split(',').map((sym, sIdx) => (
+                                  <span key={sIdx} className="px-2 py-0.5 rounded-md bg-white border border-brand-green/25 text-[11px] text-brand-brown font-medium">
+                                    {sym.trim()}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                          {res.notes && (
+                            <div className="pt-1 border-t border-brand-green/15 text-brand-brown/80 text-[11px]">
+                              <span className="font-bold text-brand-sage">사전 전달 메모: </span>
+                              <span>{res.notes}</span>
+                            </div>
+                          )}
+                        </div>
+                      )}
 
                       {/* Status Guidance Notice Box */}
                       {isConfirmed && (
