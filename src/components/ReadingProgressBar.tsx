@@ -50,10 +50,16 @@ export default function ReadingProgressBar() {
       Math.max(0, (scrollTop / totalDocScrollLength) * 100)
     );
 
-    setReadingProgress(currentProgress);
+    // Only update progress when significant difference to prevent 60fps React re-renders on mobile
+    setReadingProgress(prev => {
+      if (Math.abs(prev - currentProgress) < 0.4 && currentProgress !== 100 && currentProgress !== 0) {
+        return prev;
+      }
+      return currentProgress;
+    });
 
     // Indicator for active scrolling
-    setIsScrolling(true);
+    setIsScrolling(prev => (prev ? prev : true));
     if (scrollTimeoutRef.current) {
       window.clearTimeout(scrollTimeoutRef.current);
     }
@@ -101,6 +107,10 @@ export default function ReadingProgressBar() {
   return (
     <div
       className="fixed top-16 left-0 right-0 z-40 pointer-events-none transition-opacity duration-300"
+      style={{
+        transform: 'translate3d(0, 0, 0)',
+        WebkitTransform: 'translate3d(0, 0, 0)',
+      }}
       aria-hidden="true"
     >
       {/* Background Track */}
@@ -111,7 +121,7 @@ export default function ReadingProgressBar() {
         aria-valuemin={0}
         aria-valuemax={100}
         className={cn(
-          "w-full h-[3.5px] bg-brand-green/20 backdrop-blur-xs relative overflow-hidden",
+          "w-full h-[3.5px] bg-brand-green/30 relative overflow-hidden",
           isHighContrast && "h-[4.5px] bg-black/40 border-b border-black/80"
         )}
       >

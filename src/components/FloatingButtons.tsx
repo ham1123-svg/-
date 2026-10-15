@@ -11,12 +11,15 @@ export default function FloatingButtons() {
   const [isQuickModalOpen, setIsQuickModalOpen] = useState(false);
 
   useEffect(() => {
+    let ticking = false;
     const handleScroll = () => {
-      // Show button when scrolled down more than 250px
-      if (window.scrollY > 250) {
-        setShowTop(true);
-      } else {
-        setShowTop(false);
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          const isScrolledPast = window.scrollY > 250;
+          setShowTop(prev => (prev !== isScrolledPast ? isScrolledPast : prev));
+          ticking = false;
+        });
+        ticking = true;
       }
     };
 
@@ -36,7 +39,12 @@ export default function FloatingButtons() {
   return (
     <>
       <div 
-        className="fixed bottom-[calc(1.5rem+env(safe-area-inset-bottom,0px))] right-[calc(1.5rem+env(safe-area-inset-right,0px))] z-40 flex flex-col items-end gap-2.5"
+        className="fixed bottom-[calc(1.5rem+env(safe-area-inset-bottom,0px))] right-[calc(1.5rem+env(safe-area-inset-right,0px))] z-40 flex flex-col items-end gap-2.5 pointer-events-none"
+        style={{
+          transform: 'translate3d(0, 0, 0)',
+          WebkitTransform: 'translate3d(0, 0, 0)',
+          willChange: 'transform',
+        }}
         role="region"
         aria-label="빠른 실행 및 플로팅 상담 메뉴"
       >
@@ -52,10 +60,10 @@ export default function FloatingButtons() {
               whileTap={{ scale: 0.92 }}
               transition={{ duration: 0.2 }}
               className={cn(
-                "flex flex-col items-center justify-center w-12 h-12 rounded-full shadow-lg transition-all group cursor-pointer backdrop-blur-xs",
+                "pointer-events-auto flex flex-col items-center justify-center w-12 h-12 rounded-full shadow-lg transition-all group cursor-pointer",
                 isHighContrast
                   ? "bg-black text-white border-2 border-white"
-                  : "bg-white/95 hover:bg-white text-brand-brown border border-brand-green/30 hover:border-brand-sage"
+                  : "bg-white hover:bg-white text-brand-brown border border-brand-green/30 hover:border-brand-sage"
               )}
               aria-label="페이지 최상단으로 바로 가기"
               title="최상단(TOP)으로 바로 가기"
@@ -75,7 +83,7 @@ export default function FloatingButtons() {
           whileHover={{ scale: 1.05, y: -2 }}
           whileTap={{ scale: 0.95 }}
           className={cn(
-            "relative flex items-center gap-2 px-4 py-3 rounded-full shadow-xl font-bold text-sm cursor-pointer transition-all border",
+            "pointer-events-auto relative flex items-center gap-2 px-4 py-3 rounded-full shadow-xl font-bold text-sm cursor-pointer transition-all border",
             isHighContrast
               ? "bg-amber-400 text-black border-amber-500 font-extrabold"
               : "bg-brand-sage hover:bg-brand-sage/95 text-white border-white/30 hover:shadow-brand-sage/30 hover:shadow-2xl"
@@ -103,7 +111,7 @@ export default function FloatingButtons() {
           rel="noopener noreferrer"
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
-          className="flex items-center gap-2 bg-[#FEE500] text-[#3C1E1E] px-4 py-3 rounded-full shadow-lg font-bold text-sm cursor-pointer border border-[#eed700]"
+          className="pointer-events-auto flex items-center gap-2 bg-[#FEE500] text-[#3C1E1E] px-4 py-3 rounded-full shadow-lg font-bold text-sm cursor-pointer border border-[#eed700]"
           aria-label="카카오톡 1:1 상담 문의"
           title="카카오톡 1:1 상담 문의"
         >
@@ -118,7 +126,7 @@ export default function FloatingButtons() {
           rel="noopener noreferrer"
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
-          className="flex items-center gap-2 bg-[#03C75A] text-white px-4 py-3 rounded-full shadow-lg font-bold text-sm cursor-pointer border border-emerald-600"
+          className="pointer-events-auto flex items-center gap-2 bg-[#03C75A] text-white px-4 py-3 rounded-full shadow-lg font-bold text-sm cursor-pointer border border-emerald-600"
           aria-label="네이버 실시간 예약하기"
           title="네이버 실시간 예약하기"
         >

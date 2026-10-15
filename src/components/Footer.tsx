@@ -17,7 +17,7 @@ export default function Footer() {
   };
 
   return (
-    <footer className="bg-brand-brown text-brand-beige py-16">
+    <footer className="bg-brand-brown text-brand-beige pt-16 pb-16 pb-[calc(4rem+env(safe-area-inset-bottom,0px))] relative z-10">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-10 lg:gap-14">
           {/* Brand Info */}

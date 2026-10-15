@@ -48,6 +48,7 @@ export default function CounselingCenterMap({
   const { isHighContrast } = useHighContrast();
   const [activeView, setActiveView] = useState<MapProviderType>(initialProvider);
   const [copied, setCopied] = useState(false);
+  const [isMapInteractive, setIsMapInteractive] = useState(false);
   const mapContainerRef = useRef<HTMLDivElement>(null);
 
   const address = "울산광역시 울주군 삼남읍 도호1길 23 상가 408호";
@@ -90,6 +91,7 @@ export default function CounselingCenterMap({
 
   const handleSelectProvider = (provider: MapProviderType) => {
     setActiveView(provider);
+    setIsMapInteractive(false);
     if (mapContainerRef.current) {
       mapContainerRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
@@ -276,10 +278,25 @@ export default function CounselingCenterMap({
               <iframe
                 title="행복바람 심리상담연구소 네이버 지도 연동 위치"
                 src="https://maps.google.com/maps?q=울산광역시%20울주군%20삼남읍%20도호1길%2023&t=&z=16&ie=UTF8&iwloc=&output=embed"
-                className="w-full h-full border-0 filter contrast-[1.03]"
+                className={cn("w-full h-full border-0 filter contrast-[1.03]", !isMapInteractive && "pointer-events-none md:pointer-events-auto")}
                 loading="lazy"
                 aria-hidden="false"
               />
+
+              {/* Mobile Touch Interception Shield to prevent scroll jitter */}
+              {!isMapInteractive && (
+                <button
+                  type="button"
+                  onClick={() => setIsMapInteractive(true)}
+                  className="md:hidden absolute inset-0 z-15 flex items-center justify-center bg-black/5 hover:bg-black/10 transition-colors cursor-pointer"
+                  aria-label="지도 터치하여 조작 활성화"
+                >
+                  <span className="px-3.5 py-1.5 rounded-full bg-white/95 text-brand-brown text-xs font-bold shadow-md border border-emerald-300 flex items-center gap-1.5">
+                    <Navigation className="w-3.5 h-3.5 text-[#03C75A]" />
+                    <span>터치하여 지도 이동/확대</span>
+                  </span>
+                </button>
+              )}
 
               {/* Naver Map Branded Header Bar Overlay */}
               <div className="absolute top-3 left-3 right-3 sm:right-auto z-10 flex items-center gap-2 bg-white/95 backdrop-blur-md p-2.5 px-3.5 rounded-2xl shadow-lg border border-emerald-300">
@@ -351,10 +368,25 @@ export default function CounselingCenterMap({
               <iframe
                 title="행복바람 심리상담연구소 카카오지도 연동 위치"
                 src="https://maps.google.com/maps?q=울산광역시%20울주군%20삼남읍%20도호1길%2023&t=&z=16&ie=UTF8&iwloc=&output=embed"
-                className="w-full h-full border-0 filter contrast-[1.03]"
+                className={cn("w-full h-full border-0 filter contrast-[1.03]", !isMapInteractive && "pointer-events-none md:pointer-events-auto")}
                 loading="lazy"
                 aria-hidden="false"
               />
+
+              {/* Mobile Touch Interception Shield to prevent scroll jitter */}
+              {!isMapInteractive && (
+                <button
+                  type="button"
+                  onClick={() => setIsMapInteractive(true)}
+                  className="md:hidden absolute inset-0 z-15 flex items-center justify-center bg-black/5 hover:bg-black/10 transition-colors cursor-pointer"
+                  aria-label="지도 터치하여 조작 활성화"
+                >
+                  <span className="px-3.5 py-1.5 rounded-full bg-white/95 text-brand-brown text-xs font-bold shadow-md border border-amber-300 flex items-center gap-1.5">
+                    <Navigation className="w-3.5 h-3.5 text-amber-700" />
+                    <span>터치하여 지도 이동/확대</span>
+                  </span>
+                </button>
+              )}
 
               {/* Kakao Map Branded Header Bar Overlay */}
               <div className="absolute top-3 left-3 right-3 sm:right-auto z-10 flex items-center gap-2 bg-white/95 backdrop-blur-md p-2.5 px-3.5 rounded-2xl shadow-lg border border-amber-300">
@@ -425,10 +457,25 @@ export default function CounselingCenterMap({
               <iframe
                 title="행복바람 심리상담연구소 Google 지도 위치"
                 src="https://maps.google.com/maps?q=울산광역시%20울주군%20삼남읍%20도호1길%2023&t=&z=16&ie=UTF8&iwloc=&output=embed"
-                className="w-full h-full border-0 filter contrast-[1.02]"
+                className={cn("w-full h-full border-0 filter contrast-[1.02]", !isMapInteractive && "pointer-events-none md:pointer-events-auto")}
                 loading="lazy"
                 aria-hidden="false"
               />
+
+              {/* Mobile Touch Interception Shield to prevent scroll jitter */}
+              {!isMapInteractive && (
+                <button
+                  type="button"
+                  onClick={() => setIsMapInteractive(true)}
+                  className="md:hidden absolute inset-0 z-15 flex items-center justify-center bg-black/5 hover:bg-black/10 transition-colors cursor-pointer"
+                  aria-label="지도 터치하여 조작 활성화"
+                >
+                  <span className="px-3.5 py-1.5 rounded-full bg-white/95 text-brand-brown text-xs font-bold shadow-md border border-blue-300 flex items-center gap-1.5">
+                    <Navigation className="w-3.5 h-3.5 text-blue-600" />
+                    <span>터치하여 지도 이동/확대</span>
+                  </span>
+                </button>
+              )}
 
               {/* Google Maps Floating Card on top-left */}
               <div className="absolute top-3 left-3 z-10 flex items-center gap-2 bg-white/95 backdrop-blur-md p-2.5 px-3.5 rounded-2xl shadow-lg border border-blue-200 text-xs">

@@ -56,6 +56,7 @@ export default function Reservation() {
   const [existingReservations, setExistingReservations] = useState<ReservationType[]>([]);
   const [formError, setFormError] = useState<string>('');
   const [copiedAddress, setCopiedAddress] = useState(false);
+  const [isMapInteractive, setIsMapInteractive] = useState(false);
   const [recentReservation, setRecentReservation] = useState<{
     id: number;
     name: string;
@@ -1131,7 +1132,7 @@ export default function Reservation() {
             <motion.div 
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="bg-white rounded-3xl overflow-hidden shadow-xl border border-brand-green/10 h-[400px]"
+              className="bg-white rounded-3xl overflow-hidden shadow-xl border border-brand-green/10 h-[400px] relative"
             >
               {/* Google Maps Iframe */}
               <iframe 
@@ -1142,7 +1143,23 @@ export default function Reservation() {
                 allowFullScreen 
                 loading="lazy" 
                 referrerPolicy="no-referrer-when-downgrade"
+                className={cn("w-full h-full", !isMapInteractive && "pointer-events-none md:pointer-events-auto")}
               ></iframe>
+
+              {/* Mobile Touch Interception Shield to prevent scroll jitter */}
+              {!isMapInteractive && (
+                <button
+                  type="button"
+                  onClick={() => setIsMapInteractive(true)}
+                  className="md:hidden absolute inset-0 z-15 flex items-center justify-center bg-black/5 hover:bg-black/10 transition-colors cursor-pointer"
+                  aria-label="지도 터치하여 조작 활성화"
+                >
+                  <span className="px-3.5 py-1.5 rounded-full bg-white/95 text-brand-brown text-xs font-bold shadow-md border border-brand-green/30 flex items-center gap-1.5">
+                    <MapPin className="w-3.5 h-3.5 text-brand-sage" />
+                    <span>터치하여 지도 조작하기</span>
+                  </span>
+                </button>
+              )}
             </motion.div>
 
             <motion.div 

@@ -65,7 +65,7 @@ export default function App() {
       <Router>
         <KeyboardShortcutsProvider>
           <ScrollToTopOnNavigate />
-          <div className="flex flex-col min-h-screen">
+          <div className="flex flex-col min-h-screen min-h-[100dvh] w-full overflow-x-hidden">
             {/* Skip Navigation for Keyboard & Screen Reader Accessibility (KWCAG 2.2 / WCAG 2.4.1) */}
             <a
               href="#main-content"
