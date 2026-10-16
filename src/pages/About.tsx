@@ -110,8 +110,8 @@ export default function About() {
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Hero Section */}
-      <section className="relative py-32 bg-brand-green/10 overflow-hidden">
+      {/* Hero & Vision Section (인사말 및 비전) */}
+      <section id="vision" className="relative py-28 sm:py-32 bg-brand-green/10 overflow-hidden scroll-mt-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
@@ -119,14 +119,26 @@ export default function About() {
             className="text-center max-w-3xl mx-auto"
           >
             <Wind className="w-12 h-12 text-brand-sage mx-auto mb-6" />
+            <span className="text-xs font-bold tracking-widest text-brand-sage uppercase px-3.5 py-1.5 bg-brand-sage/10 rounded-full inline-block mb-3.5">
+              Greeting &amp; Vision · 소장 인사말 및 설립 비전
+            </span>
             <h1 className="text-4xl md:text-5xl font-serif font-bold text-brand-brown mb-6">
               마음의 평온을 찾는 <br />
               <span className="text-brand-sage">행복바람 심리상담연구소</span>
             </h1>
-            <p className="text-lg text-brand-brown/70 font-serif leading-relaxed">
+            <p className="text-lg text-brand-brown/70 font-serif leading-relaxed mb-6">
               우리는 누구나 삶의 무게에 지칠 때가 있습니다. <br />
               행복바람은 당신의 이야기에 귀 기울이며, 다시 일어설 수 있는 행복의 바람을 함께 만들어갑니다.
             </p>
+            <div className="p-4 sm:p-5 rounded-2xl bg-white/70 border border-brand-green/30 text-xs sm:text-sm text-brand-brown/85 font-serif leading-relaxed max-w-2xl mx-auto text-left shadow-2xs">
+              <strong className="text-brand-sage font-bold block mb-1">소장 인사말</strong>
+              "30,000시간 이상의 임상 현장에서 내담자분들을 만나며 확인한 진실은, 
+              아무리 깊은 상처와 혼란 속에서도 스스로 회복할 수 있는 힘이 우리 내면에 이미 존재한다는 것입니다. 
+              비밀이 철저히 지켜지는 안전한 쉼터에서, 온전한 나 자신을 되찾는 여정에 든든한 동반자가 되어 드리겠습니다."
+              <span className="block text-right text-xs font-bold text-brand-brown/60 mt-2">
+                — 교육학 박사 박미경 소장 배상
+              </span>
+            </div>
           </motion.div>
         </div>
         
@@ -135,8 +147,8 @@ export default function About() {
         <div className="absolute bottom-0 right-0 w-96 h-96 bg-brand-green/10 rounded-full translate-x-1/3 translate-y-1/3 blur-3xl"></div>
       </section>
 
-      {/* Interior Photos Section */}
-      <section className="py-24 bg-brand-beige/30">
+      {/* Interior Photos Section (내부 공간 안내) */}
+      <section id="facilities" className="py-24 bg-brand-beige/30 scroll-mt-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <span className="text-xs font-bold tracking-widest text-brand-sage uppercase px-3.5 py-1.5 bg-brand-sage/10 rounded-full inline-block mb-3">
@@ -362,8 +374,8 @@ export default function About() {
         </div>
       </section>
 
-      {/* Counseling Center Location & Directions Map */}
-      <section className="py-16 sm:py-20 bg-brand-beige/30 border-t border-brand-green/20">
+      {/* Counseling Center Location & Directions Map (오시는 길) */}
+      <section id="location" className="py-16 sm:py-20 bg-brand-beige/30 border-t border-brand-green/20 scroll-mt-20">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
           <CounselingCenterMap 
             title="상담소 위치 &amp; 오시는 길"

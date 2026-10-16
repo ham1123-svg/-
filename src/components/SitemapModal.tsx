@@ -117,24 +117,25 @@ export default function SitemapModal({ isOpen, onClose }: SitemapModalProps) {
 
           {/* Scrollable Content */}
           <div className="p-5 sm:p-6 overflow-y-auto space-y-6 text-brand-brown">
-            {/* Structured Sitemap Grid */}
+            {/* Structured 2-Depth Sitemap Grid (5 Main Categories) */}
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-              {/* Category 1: 소개 & 상담진 */}
+              
+              {/* 1. 연구소 소개 */}
               <div className="bg-brand-beige/25 rounded-2xl p-4 border border-brand-green/25 hover:border-brand-sage/50 transition-colors">
                 <div className="flex items-center gap-2 mb-3 pb-2 border-b border-brand-green/20">
                   <div className="w-7 h-7 rounded-lg bg-brand-sage/20 text-brand-sage flex items-center justify-center">
                     <Heart className="w-4 h-4" />
                   </div>
-                  <h4 className="font-bold text-sm text-brand-brown">소개 & 전문진</h4>
+                  <h4 className="font-bold text-sm text-brand-brown">1. 연구소 소개</h4>
                 </div>
-                <ul className="space-y-2 text-xs">
+                <ul className="space-y-1.5 text-xs">
                   <li>
                     <button
                       type="button"
-                      onClick={() => handleNavigate('/about')}
-                      className="w-full text-left py-1 px-2 rounded-lg hover:bg-brand-green/20 text-brand-brown/85 font-medium flex items-center justify-between group cursor-pointer"
+                      onClick={() => handleNavigate('/about#vision')}
+                      className="w-full text-left py-1.5 px-2 rounded-lg hover:bg-brand-green/20 text-brand-brown/85 font-medium flex items-center justify-between group cursor-pointer"
                     >
-                      <span>연구소 소개 & 비전</span>
+                      <span>인사말 및 비전</span>
                       <ChevronRight className="w-3.5 h-3.5 text-brand-brown/40 group-hover:text-brand-sage group-hover:translate-x-0.5 transition-all" />
                     </button>
                   </li>
@@ -142,123 +143,175 @@ export default function SitemapModal({ isOpen, onClose }: SitemapModalProps) {
                     <button
                       type="button"
                       onClick={() => handleNavigate('/counselors')}
-                      className="w-full text-left py-1 px-2 rounded-lg hover:bg-brand-green/20 text-brand-brown/85 font-medium flex items-center justify-between group cursor-pointer"
+                      className="w-full text-left py-1.5 px-2 rounded-lg hover:bg-brand-green/20 text-brand-brown/85 font-medium flex items-center justify-between group cursor-pointer"
                     >
-                      <span>상담 소장 프로필 (Executive Profile)</span>
+                      <span>전문가 소개</span>
                       <ChevronRight className="w-3.5 h-3.5 text-brand-brown/40 group-hover:text-brand-sage group-hover:translate-x-0.5 transition-all" />
                     </button>
                   </li>
                   <li>
                     <button
                       type="button"
-                      onClick={() => handleNavigate('/about')}
-                      className="w-full text-left py-1 px-2 rounded-lg hover:bg-brand-green/20 text-brand-brown/85 font-medium flex items-center justify-between group cursor-pointer"
+                      onClick={() => handleNavigate('/about#facilities')}
+                      className="w-full text-left py-1.5 px-2 rounded-lg hover:bg-brand-green/20 text-brand-brown/85 font-medium flex items-center justify-between group cursor-pointer"
                     >
-                      <span>시설 및 공간 둘러보기</span>
+                      <span>내부 공간 안내</span>
+                      <ChevronRight className="w-3.5 h-3.5 text-brand-brown/40 group-hover:text-brand-sage group-hover:translate-x-0.5 transition-all" />
+                    </button>
+                  </li>
+                  <li>
+                    <button
+                      type="button"
+                      onClick={() => handleNavigate('/about#location')}
+                      className="w-full text-left py-1.5 px-2 rounded-lg hover:bg-brand-green/20 text-brand-brown/85 font-medium flex items-center justify-between group cursor-pointer"
+                    >
+                      <span>오시는 길 (지도 &amp; 주차)</span>
                       <ChevronRight className="w-3.5 h-3.5 text-brand-brown/40 group-hover:text-brand-sage group-hover:translate-x-0.5 transition-all" />
                     </button>
                   </li>
                 </ul>
               </div>
 
-              {/* Category 2: 상담 프로그램 */}
+              {/* 2. 심리상담 */}
               <div className="bg-brand-beige/25 rounded-2xl p-4 border border-brand-green/25 hover:border-brand-sage/50 transition-colors">
                 <div className="flex items-center gap-2 mb-3 pb-2 border-b border-brand-green/20">
                   <div className="w-7 h-7 rounded-lg bg-emerald-100 text-emerald-800 flex items-center justify-center">
                     <Sparkles className="w-4 h-4" />
                   </div>
-                  <h4 className="font-bold text-sm text-brand-brown">상담 프로그램</h4>
+                  <h4 className="font-bold text-sm text-brand-brown">2. 심리상담</h4>
                 </div>
-                <ul className="space-y-2 text-xs">
+                <ul className="space-y-1.5 text-xs">
                   <li>
                     <button
                       type="button"
-                      onClick={() => handleNavigate('/programs')}
-                      className="w-full text-left py-1 px-2 rounded-lg hover:bg-brand-green/20 text-brand-brown/85 font-medium flex items-center justify-between group cursor-pointer"
+                      onClick={() => handleNavigate('/programs?category=개인상담#adult')}
+                      className="w-full text-left py-1.5 px-2 rounded-lg hover:bg-brand-green/20 text-brand-brown/85 font-medium flex items-center justify-between group cursor-pointer"
                     >
-                      <span>성인 및 청소년 개인상담</span>
+                      <span>개인상담 (성인)</span>
                       <ChevronRight className="w-3.5 h-3.5 text-brand-brown/40 group-hover:text-brand-sage group-hover:translate-x-0.5 transition-all" />
                     </button>
                   </li>
                   <li>
                     <button
                       type="button"
-                      onClick={() => handleNavigate('/programs')}
-                      className="w-full text-left py-1 px-2 rounded-lg hover:bg-brand-green/20 text-brand-brown/85 font-medium flex items-center justify-between group cursor-pointer"
+                      onClick={() => handleNavigate('/programs?category=개인상담#youth')}
+                      className="w-full text-left py-1.5 px-2 rounded-lg hover:bg-brand-green/20 text-brand-brown/85 font-medium flex items-center justify-between group cursor-pointer"
                     >
-                      <span>부부 및 가족관계 상담</span>
+                      <span>청소년·아동상담</span>
                       <ChevronRight className="w-3.5 h-3.5 text-brand-brown/40 group-hover:text-brand-sage group-hover:translate-x-0.5 transition-all" />
                     </button>
                   </li>
                   <li>
                     <button
                       type="button"
-                      onClick={() => handleNavigate('/programs')}
-                      className="w-full text-left py-1 px-2 rounded-lg hover:bg-brand-green/20 text-brand-brown/85 font-medium flex items-center justify-between group cursor-pointer"
+                      onClick={() => handleNavigate('/programs?category=부부상담#family')}
+                      className="w-full text-left py-1.5 px-2 rounded-lg hover:bg-brand-green/20 text-brand-brown/85 font-medium flex items-center justify-between group cursor-pointer"
                     >
-                      <span>종합 심리검사 (정서·성격)</span>
+                      <span>부부·가족상담</span>
                       <ChevronRight className="w-3.5 h-3.5 text-brand-brown/40 group-hover:text-brand-sage group-hover:translate-x-0.5 transition-all" />
                     </button>
                   </li>
                   <li>
                     <button
                       type="button"
-                      onClick={() => handleNavigate('/eap')}
-                      className="w-full text-left py-1 px-2 rounded-lg hover:bg-brand-green/20 text-brand-brown/85 font-medium flex items-center justify-between group cursor-pointer"
+                      onClick={() => handleNavigate('/programs?category=집단/교육#group')}
+                      className="w-full text-left py-1.5 px-2 rounded-lg hover:bg-brand-green/20 text-brand-brown/85 font-medium flex items-center justify-between group cursor-pointer"
                     >
-                      <span className="text-brand-sage font-semibold">기관 및 기업상담 (EAP) 제휴</span>
+                      <span>집단상담 (힐링 워크숍)</span>
                       <ChevronRight className="w-3.5 h-3.5 text-brand-brown/40 group-hover:text-brand-sage group-hover:translate-x-0.5 transition-all" />
                     </button>
                   </li>
                 </ul>
               </div>
 
-              {/* Category 3: 자가진단 & 상담안내 */}
+              {/* 3. 심리평가/검사 */}
               <div className="bg-brand-beige/25 rounded-2xl p-4 border border-brand-green/25 hover:border-brand-sage/50 transition-colors">
                 <div className="flex items-center gap-2 mb-3 pb-2 border-b border-brand-green/20">
-                  <div className="w-7 h-7 rounded-lg bg-amber-100 text-amber-800 flex items-center justify-center">
-                    <Activity className="w-4 h-4" />
+                  <div className="w-7 h-7 rounded-lg bg-blue-100 text-blue-800 flex items-center justify-center">
+                    <BookOpen className="w-4 h-4" />
                   </div>
-                  <h4 className="font-bold text-sm text-brand-brown">자가진단 & 안내</h4>
+                  <h4 className="font-bold text-sm text-brand-brown">3. 심리평가/검사</h4>
                 </div>
-                <ul className="space-y-2 text-xs">
+                <ul className="space-y-1.5 text-xs">
                   <li>
                     <button
                       type="button"
-                      onClick={() => handleNavigate('/self-diagnosis')}
-                      className="w-full text-left py-1 px-2 rounded-lg hover:bg-brand-green/20 text-brand-brown/85 font-medium flex items-center justify-between group cursor-pointer"
+                      onClick={() => handleNavigate('/assessment#full-battery')}
+                      className="w-full text-left py-1.5 px-2 rounded-lg hover:bg-brand-green/20 text-brand-brown/85 font-medium flex items-center justify-between group cursor-pointer"
                     >
-                      <span>마음 자가진단 (우울·불안)</span>
+                      <span>종합심리평가 (풀배터리)</span>
                       <ChevronRight className="w-3.5 h-3.5 text-brand-brown/40 group-hover:text-brand-sage group-hover:translate-x-0.5 transition-all" />
                     </button>
                   </li>
                   <li>
                     <button
                       type="button"
-                      onClick={() => handleNavigate('/mood-tracker')}
-                      className="w-full text-left py-1 px-2 rounded-lg hover:bg-brand-green/20 text-brand-brown/85 font-medium flex items-center justify-between group cursor-pointer"
+                      onClick={() => handleNavigate('/assessment#personality')}
+                      className="w-full text-left py-1.5 px-2 rounded-lg hover:bg-brand-green/20 text-brand-brown/85 font-medium flex items-center justify-between group cursor-pointer"
                     >
-                      <span className="text-brand-sage font-semibold">데일리 무드 트래커 (감정 추이 분석)</span>
+                      <span>성격 및 기질 검사 (TCI·MBTI)</span>
                       <ChevronRight className="w-3.5 h-3.5 text-brand-brown/40 group-hover:text-brand-sage group-hover:translate-x-0.5 transition-all" />
                     </button>
                   </li>
                   <li>
                     <button
                       type="button"
-                      onClick={() => handleNavigate('/guide#process')}
-                      className="w-full text-left py-1 px-2 rounded-lg hover:bg-brand-green/20 text-brand-brown/85 font-medium flex items-center justify-between group cursor-pointer"
+                      onClick={() => handleNavigate('/assessment#stress')}
+                      className="w-full text-left py-1.5 px-2 rounded-lg hover:bg-brand-green/20 text-brand-brown/85 font-medium flex items-center justify-between group cursor-pointer"
                     >
-                      <span>상담 절차 및 진행 방법</span>
+                      <span>정서 및 스트레스 평가</span>
                       <ChevronRight className="w-3.5 h-3.5 text-brand-brown/40 group-hover:text-brand-sage group-hover:translate-x-0.5 transition-all" />
                     </button>
                   </li>
+                  <li>
+                    <button
+                      type="button"
+                      onClick={() => handleNavigate('/assessment#process')}
+                      className="w-full text-left py-1.5 px-2 rounded-lg hover:bg-brand-green/20 text-brand-brown/85 font-medium flex items-center justify-between group cursor-pointer"
+                    >
+                      <span>검사 진행 절차 (4단계)</span>
+                      <ChevronRight className="w-3.5 h-3.5 text-brand-brown/40 group-hover:text-brand-sage group-hover:translate-x-0.5 transition-all" />
+                    </button>
+                  </li>
+                </ul>
+              </div>
+
+              {/* 4. 상담 예약/안내 */}
+              <div className="bg-brand-beige/25 rounded-2xl p-4 border border-brand-green/25 hover:border-brand-sage/50 transition-colors">
+                <div className="flex items-center gap-2 mb-3 pb-2 border-b border-brand-green/20">
+                  <div className="w-7 h-7 rounded-lg bg-teal-100 text-teal-800 flex items-center justify-center">
+                    <Calendar className="w-4 h-4" />
+                  </div>
+                  <h4 className="font-bold text-sm text-brand-brown">4. 상담 예약/안내</h4>
+                </div>
+                <ul className="space-y-1.5 text-xs">
                   <li>
                     <button
                       type="button"
                       onClick={() => handleNavigate('/guide#pricing')}
-                      className="w-full text-left py-1 px-2 rounded-lg hover:bg-brand-green/20 text-brand-brown/85 font-medium flex items-center justify-between group cursor-pointer"
+                      className="w-full text-left py-1.5 px-2 rounded-lg hover:bg-brand-green/20 text-brand-brown/85 font-medium flex items-center justify-between group cursor-pointer"
                     >
-                      <span>비용 안내 및 환불 규정</span>
+                      <span>상담 절차 및 비용 안내</span>
+                      <ChevronRight className="w-3.5 h-3.5 text-brand-brown/40 group-hover:text-brand-sage group-hover:translate-x-0.5 transition-all" />
+                    </button>
+                  </li>
+                  <li>
+                    <button
+                      type="button"
+                      onClick={() => handleNavigate('/reservation')}
+                      className="w-full text-left py-1.5 px-2 rounded-lg hover:bg-brand-green/20 text-brand-brown/85 font-medium flex items-center justify-between group cursor-pointer font-bold text-brand-sage"
+                    >
+                      <span>실시간 예약 신청 (폼 작성)</span>
+                      <ChevronRight className="w-3.5 h-3.5 text-brand-sage group-hover:translate-x-0.5 transition-all" />
+                    </button>
+                  </li>
+                  <li>
+                    <button
+                      type="button"
+                      onClick={() => handleNavigate('/confidentiality')}
+                      className="w-full text-left py-1.5 px-2 rounded-lg hover:bg-brand-green/20 text-brand-brown/85 font-medium flex items-center justify-between group cursor-pointer"
+                    >
+                      <span>비밀보장 원칙 (윤리규정)</span>
                       <ChevronRight className="w-3.5 h-3.5 text-brand-brown/40 group-hover:text-brand-sage group-hover:translate-x-0.5 transition-all" />
                     </button>
                   </li>
@@ -266,7 +319,7 @@ export default function SitemapModal({ isOpen, onClose }: SitemapModalProps) {
                     <button
                       type="button"
                       onClick={() => handleNavigate('/guide#faq')}
-                      className="w-full text-left py-1 px-2 rounded-lg hover:bg-brand-green/20 text-brand-brown/85 font-medium flex items-center justify-between group cursor-pointer"
+                      className="w-full text-left py-1.5 px-2 rounded-lg hover:bg-brand-green/20 text-brand-brown/85 font-medium flex items-center justify-between group cursor-pointer"
                     >
                       <span>자주 묻는 질문 (FAQ)</span>
                       <ChevronRight className="w-3.5 h-3.5 text-brand-brown/40 group-hover:text-brand-sage group-hover:translate-x-0.5 transition-all" />
@@ -275,74 +328,22 @@ export default function SitemapModal({ isOpen, onClose }: SitemapModalProps) {
                 </ul>
               </div>
 
-              {/* Category 4: 예약 및 오시는 길 */}
+              {/* 5. 커뮤니티 */}
               <div className="bg-brand-beige/25 rounded-2xl p-4 border border-brand-green/25 hover:border-brand-sage/50 transition-colors">
                 <div className="flex items-center gap-2 mb-3 pb-2 border-b border-brand-green/20">
-                  <div className="w-7 h-7 rounded-lg bg-teal-100 text-teal-800 flex items-center justify-center">
-                    <Calendar className="w-4 h-4" />
-                  </div>
-                  <h4 className="font-bold text-sm text-brand-brown">예약 및 오시는 길</h4>
-                </div>
-                <ul className="space-y-2 text-xs">
-                  <li>
-                    <button
-                      type="button"
-                      onClick={() => handleNavigate('/reservation')}
-                      className="w-full text-left py-1 px-2 rounded-lg hover:bg-brand-green/20 text-brand-brown/85 font-medium flex items-center justify-between group cursor-pointer"
-                    >
-                      <span>실시간 온라인 상담 예약</span>
-                      <ChevronRight className="w-3.5 h-3.5 text-brand-brown/40 group-hover:text-brand-sage group-hover:translate-x-0.5 transition-all" />
-                    </button>
-                  </li>
-                  <li>
-                    <button
-                      type="button"
-                      onClick={() => handleNavigate('/reservation/status')}
-                      className="w-full text-left py-1 px-2 rounded-lg hover:bg-brand-green/20 text-brand-brown/85 font-medium flex items-center justify-between group cursor-pointer"
-                    >
-                      <span className="font-bold text-brand-sage">예약 상태 조회 (휴대폰 번호)</span>
-                      <ChevronRight className="w-3.5 h-3.5 text-brand-brown/40 group-hover:text-brand-sage group-hover:translate-x-0.5 transition-all" />
-                    </button>
-                  </li>
-                  <li>
-                    <button
-                      type="button"
-                      onClick={() => handleNavigate('/reservation')}
-                      className="w-full text-left py-1 px-2 rounded-lg hover:bg-brand-green/20 text-brand-brown/85 font-medium flex items-center justify-between group cursor-pointer"
-                    >
-                      <span>상담소 위치 & 지도</span>
-                      <ChevronRight className="w-3.5 h-3.5 text-brand-brown/40 group-hover:text-brand-sage group-hover:translate-x-0.5 transition-all" />
-                    </button>
-                  </li>
-                  <li>
-                    <button
-                      type="button"
-                      onClick={() => handleNavigate('/reservation')}
-                      className="w-full text-left py-1 px-2 rounded-lg hover:bg-brand-green/20 text-brand-brown/85 font-medium flex items-center justify-between group cursor-pointer"
-                    >
-                      <span>대중교통 및 주차 안내</span>
-                      <ChevronRight className="w-3.5 h-3.5 text-brand-brown/40 group-hover:text-brand-sage group-hover:translate-x-0.5 transition-all" />
-                    </button>
-                  </li>
-                </ul>
-              </div>
-
-              {/* Category 5: 커뮤니티 (3대 메뉴) */}
-              <div className="bg-brand-beige/25 rounded-2xl p-4 border border-brand-green/25 hover:border-brand-sage/50 transition-colors">
-                <div className="flex items-center gap-2 mb-3 pb-2 border-b border-brand-green/20">
-                  <div className="w-7 h-7 rounded-lg bg-blue-100 text-blue-800 flex items-center justify-center">
+                  <div className="w-7 h-7 rounded-lg bg-amber-100 text-amber-800 flex items-center justify-center">
                     <MessageSquare className="w-4 h-4" />
                   </div>
-                  <h4 className="font-bold text-sm text-brand-brown">커뮤니티</h4>
+                  <h4 className="font-bold text-sm text-brand-brown">5. 커뮤니티</h4>
                 </div>
-                <ul className="space-y-2 text-xs">
+                <ul className="space-y-1.5 text-xs">
                   <li>
                     <button
                       type="button"
-                      onClick={() => handleNavigate('/community?tab=faq')}
-                      className="w-full text-left py-1 px-2 rounded-lg hover:bg-brand-green/20 text-brand-brown/85 font-medium flex items-center justify-between group cursor-pointer"
+                      onClick={() => handleNavigate('/community?tab=notice')}
+                      className="w-full text-left py-1.5 px-2 rounded-lg hover:bg-brand-green/20 text-brand-brown/85 font-medium flex items-center justify-between group cursor-pointer"
                     >
-                      <span>1. 자주하는 질문 (FAQ & 문의)</span>
+                      <span>공지사항 (운영·특강 안내)</span>
                       <ChevronRight className="w-3.5 h-3.5 text-brand-brown/40 group-hover:text-brand-sage group-hover:translate-x-0.5 transition-all" />
                     </button>
                   </li>
@@ -350,9 +351,9 @@ export default function SitemapModal({ isOpen, onClose }: SitemapModalProps) {
                     <button
                       type="button"
                       onClick={() => handleNavigate('/community?tab=column')}
-                      className="w-full text-left py-1 px-2 rounded-lg hover:bg-brand-green/20 text-brand-brown/85 font-medium flex items-center justify-between group cursor-pointer"
+                      className="w-full text-left py-1.5 px-2 rounded-lg hover:bg-brand-green/20 text-brand-brown/85 font-medium flex items-center justify-between group cursor-pointer"
                     >
-                      <span>2. 전문가 심리 칼럼</span>
+                      <span>마음 칼럼 (전문가 기고)</span>
                       <ChevronRight className="w-3.5 h-3.5 text-brand-brown/40 group-hover:text-brand-sage group-hover:translate-x-0.5 transition-all" />
                     </button>
                   </li>
@@ -360,13 +361,67 @@ export default function SitemapModal({ isOpen, onClose }: SitemapModalProps) {
                     <button
                       type="button"
                       onClick={() => handleNavigate('/community?tab=review')}
-                      className="w-full text-left py-1 px-2 rounded-lg hover:bg-brand-green/20 text-brand-brown/85 font-medium flex items-center justify-between group cursor-pointer"
+                      className="w-full text-left py-1.5 px-2 rounded-lg hover:bg-brand-green/20 text-brand-brown/85 font-medium flex items-center justify-between group cursor-pointer"
                     >
-                      <span>3. 내담자 상담 후기</span>
+                      <span>상담 후기 (내담자 이야기)</span>
                       <ChevronRight className="w-3.5 h-3.5 text-brand-brown/40 group-hover:text-brand-sage group-hover:translate-x-0.5 transition-all" />
                     </button>
                   </li>
+                  <li>
+                    <button
+                      type="button"
+                      onClick={() => handleNavigate('/reservation/status')}
+                      className="w-full text-left py-1.5 px-2 rounded-lg hover:bg-brand-green/20 text-brand-brown/85 font-medium flex items-center justify-between group cursor-pointer text-brand-sage font-bold"
+                    >
+                      <span>예약 진행 상태 조회</span>
+                      <ChevronRight className="w-3.5 h-3.5 text-brand-sage group-hover:translate-x-0.5 transition-all" />
+                    </button>
+                  </li>
                 </ul>
+              </div>
+
+              {/* Additional: 디지털 웰니스 도구 & EAP */}
+              <div className="bg-brand-sage/10 rounded-2xl p-4 border border-brand-sage/30 flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center gap-2 mb-3 pb-2 border-b border-brand-sage/20">
+                    <div className="w-7 h-7 rounded-lg bg-brand-sage text-white flex items-center justify-center">
+                      <Activity className="w-4 h-4" />
+                    </div>
+                    <h4 className="font-bold text-sm text-brand-brown">디지털 마음도구</h4>
+                  </div>
+                  <ul className="space-y-1.5 text-xs">
+                    <li>
+                      <button
+                        type="button"
+                        onClick={() => handleNavigate('/self-diagnosis')}
+                        className="w-full text-left py-1.5 px-2 rounded-lg hover:bg-brand-sage/15 text-brand-brown/90 font-medium flex items-center justify-between group cursor-pointer"
+                      >
+                        <span>3분 마음 자가진단</span>
+                        <ChevronRight className="w-3.5 h-3.5 text-brand-sage" />
+                      </button>
+                    </li>
+                    <li>
+                      <button
+                        type="button"
+                        onClick={() => handleNavigate('/mood-tracker')}
+                        className="w-full text-left py-1.5 px-2 rounded-lg hover:bg-brand-sage/15 text-brand-brown/90 font-medium flex items-center justify-between group cursor-pointer"
+                      >
+                        <span>데일리 무드 트래커</span>
+                        <ChevronRight className="w-3.5 h-3.5 text-brand-sage" />
+                      </button>
+                    </li>
+                    <li>
+                      <button
+                        type="button"
+                        onClick={() => handleNavigate('/eap')}
+                        className="w-full text-left py-1.5 px-2 rounded-lg hover:bg-brand-sage/15 text-brand-brown/90 font-medium flex items-center justify-between group cursor-pointer"
+                      >
+                        <span>기업·기관 EAP 상담 제휴</span>
+                        <ChevronRight className="w-3.5 h-3.5 text-brand-sage" />
+                      </button>
+                    </li>
+                  </ul>
+                </div>
               </div>
 
               {/* Category 6: 규정 및 약관 */}

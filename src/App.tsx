@@ -35,6 +35,7 @@ import Privacy from './pages/Privacy';
 import Terms from './pages/Terms';
 import Admin from './pages/Admin';
 import CorporateEAP from './pages/CorporateEAP';
+import Assessment from './pages/Assessment';
 
 // Route change scroll helper
 function ScrollToTopOnNavigate() {
@@ -83,6 +84,8 @@ export default function App() {
                   <Route path="/about" element={<About />} />
                   <Route path="/counselors" element={<Counselors />} />
                   <Route path="/programs" element={<Programs />} />
+                  <Route path="/assessment" element={<Assessment />} />
+                  <Route path="/psychological-assessment" element={<Assessment />} />
                   <Route path="/guide" element={<Guide />} />
                   <Route path="/self-diagnosis" element={<SelfDiagnosisPage />} />
                   <Route path="/mood-tracker" element={<MoodTrackerPage />} />

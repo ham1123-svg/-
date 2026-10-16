@@ -97,7 +97,7 @@ export default function Guide() {
                 }`}
               >
                 <ClipboardCheck className="w-4 h-4" />
-                <span>4단계 인포그래픽 (예약 ➔ 초기상담 ➔ 진행 ➔ 종결)</span>
+                <span>5단계 인터랙티브 플로우 차트 (Application ➔ Initial Interview ➔ Testing ➔ Counseling ➔ Follow-up)</span>
               </button>
               <button
                 type="button"

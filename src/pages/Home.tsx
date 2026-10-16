@@ -301,7 +301,7 @@ export default function Home() {
       {/* Virtual Office Tour: High-Quality Interior Carousel for Client Comfort */}
       <VirtualOfficeTour />
 
-      {/* Counseling Process Infographic: Step-by-Step Visual Journey (예약 -> 초기상담 -> 진행 -> 종결) */}
+      {/* Counseling Process: 5-Step Interactive Visual Flow Chart (Application -> Initial Interview -> Testing -> Counseling -> Follow-up) */}
       <CounselingProcessInfographic />
 
       {/* Counseling Insights (Expert Clinical Column & Blog Posts) */}

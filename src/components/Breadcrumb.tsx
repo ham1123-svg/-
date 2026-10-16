@@ -11,13 +11,15 @@ export interface BreadcrumbItem {
 }
 
 const ROUTE_DEFINITIONS: Record<string, { name: string; englishName: string }> = {
-  '/about': { name: '상담소 소개', englishName: 'About' },
-  '/counselors': { name: '상담사 소개', englishName: 'Counselors' },
-  '/programs': { name: '프로그램', englishName: 'Programs' },
+  '/about': { name: '연구소 소개', englishName: 'About' },
+  '/counselors': { name: '전문가 소개', englishName: 'Counselors' },
+  '/programs': { name: '심리상담', englishName: 'Counseling' },
+  '/assessment': { name: '심리평가/검사', englishName: 'Assessment' },
+  '/psychological-assessment': { name: '심리평가/검사', englishName: 'Assessment' },
   '/self-diagnosis': { name: '자가진단', englishName: 'Self Diagnosis' },
-  '/guide': { name: '상담 안내', englishName: 'Guide' },
+  '/guide': { name: '상담 예약/안내', englishName: 'Guide' },
   '/community': { name: '커뮤니티', englishName: 'Community' },
-  '/reservation': { name: '예약/오시는 길', englishName: 'Reservation' },
+  '/reservation': { name: '실시간 예약 신청', englishName: 'Reservation' },
   '/confidentiality': { name: '비밀보장 원칙', englishName: 'Confidentiality' },
   '/privacy': { name: '개인정보처리방침', englishName: 'Privacy Policy' },
   '/terms': { name: '이용약관', englishName: 'Terms' },

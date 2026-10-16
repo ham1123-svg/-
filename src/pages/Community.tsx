@@ -279,12 +279,12 @@ export default function Community() {
   const [selectedWordCloudKeyword, setSelectedWordCloudKeyword] = useState<string>('');
   const currentTab: CommunityTab = rawTab === 'qna'
     ? 'faq'
-    : rawTab && ['faq', 'column', 'review', 'all', 'notice'].includes(rawTab as CommunityTab)
+    : rawTab && ['notice', 'column', 'review', 'faq', 'all'].includes(rawTab as CommunityTab)
     ? (rawTab as CommunityTab)
-    : (initialSearchTerm ? 'review' : 'faq');
+    : (initialSearchTerm ? 'review' : 'notice');
 
   const setTab = (tab: CommunityTab) => {
-    setSearchParams(tab === 'faq' ? {} : { tab });
+    setSearchParams(tab === 'notice' ? {} : { tab });
   };
 
   // State for Column
@@ -862,7 +862,7 @@ export default function Community() {
             <div className="flex items-center gap-2">
               <button
                 type="button"
-                onClick={() => setTab(currentTab === 'all' ? 'faq' : 'all')}
+                onClick={() => setTab(currentTab === 'all' ? 'notice' : 'all')}
                 className={cn(
                   "px-3 py-1.5 rounded-xl text-xs font-bold transition-all border flex items-center gap-1.5 cursor-pointer",
                   currentTab === 'all'
@@ -871,21 +871,21 @@ export default function Community() {
                 )}
               >
                 <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-                <span>{currentTab === 'all' ? '개별 메뉴 창 보기' : '3개 메뉴 한눈에 전체보기'}</span>
+                <span>{currentTab === 'all' ? '개별 메뉴 창 보기' : '3대 메뉴 한눈에 전체보기'}</span>
               </button>
             </div>
           </div>
 
           {/* 3-Window Grid Arrangement */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-            {/* 메뉴 창 1: 자주하는 질문 */}
+            {/* 메뉴 창 1: 공지사항 */}
             <motion.div
               whileHover={{ y: -3 }}
               whileTap={{ scale: 0.99 }}
-              onClick={() => setTab('faq')}
+              onClick={() => setTab('notice')}
               className={cn(
                 "p-6 rounded-3xl text-left transition-all relative overflow-hidden border cursor-pointer flex flex-col justify-between group",
-                currentTab === 'faq'
+                currentTab === 'notice'
                   ? "bg-white border-brand-sage shadow-md ring-2 ring-brand-sage/40"
                   : "bg-white/85 border-brand-green/25 hover:border-brand-sage/60 hover:bg-white shadow-2xs"
               )}
@@ -896,42 +896,42 @@ export default function Community() {
                 <div className="flex items-center justify-between mb-4">
                   <div className={cn(
                     "w-12 h-12 rounded-2xl flex items-center justify-center transition-colors shadow-2xs",
-                    currentTab === 'faq'
+                    currentTab === 'notice'
                       ? "bg-brand-sage text-white"
                       : "bg-brand-sage/15 text-brand-sage group-hover:bg-brand-sage group-hover:text-white"
                   )}>
-                    <HelpCircle className="w-6 h-6" />
+                    <Bell className="w-6 h-6" />
                   </div>
                   <span className={cn(
                     "text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider",
-                    currentTab === 'faq' ? "bg-brand-sage text-white" : "bg-brand-beige text-brand-brown/70"
+                    currentTab === 'notice' ? "bg-brand-sage text-white" : "bg-brand-beige text-brand-brown/70"
                   )}>
                     MENU 01
                   </span>
                 </div>
 
                 <div className="flex items-center gap-1.5 mb-1 text-xs font-semibold text-brand-sage">
-                  <span>FAQ &amp; 1:1 비밀상담</span>
+                  <span>운영일정 · 특강소식 · 휴진안내</span>
                 </div>
                 <h3 className="text-xl font-bold font-serif text-brand-brown mb-2 flex items-center justify-between">
-                  <span>자주하는 질문</span>
+                  <span>공지사항</span>
                   <ChevronRight className={cn(
                     "w-5 h-5 transition-transform",
-                    currentTab === 'faq' ? "text-brand-sage translate-x-1" : "text-brand-brown/30 group-hover:translate-x-1"
+                    currentTab === 'notice' ? "text-brand-sage translate-x-1" : "text-brand-brown/30 group-hover:translate-x-1"
                   )} />
                 </h3>
-                <p className="text-xs text-brand-brown/70 leading-relaxed">
-                  상담 비용, 진행 절차, 100% 비밀보장 원칙부터 사전 질문 및 1:1 비밀 문의까지 신속하게 해결해 드립니다.
+                <p className="text-xs text-brand-brown/70 leading-relaxed font-serif">
+                  연구소 운영 시간, 야간/주말 특별 상담 일정, 박미경 소장 특강 및 힐링 워크숍 모집, 정기 휴진 일정을 투명하게 공지합니다.
                 </p>
               </div>
 
               <div className="mt-5 pt-3.5 border-t border-brand-green/15 flex items-center justify-between text-xs">
-                <span className="text-[11px] text-brand-brown/50 font-medium">8대 핵심 FAQ · 비공개 문의</span>
+                <span className="text-[11px] text-brand-brown/50 font-medium">최신 공지 및 운영 일정</span>
                 <span className={cn(
                   "font-bold flex items-center gap-1 text-xs",
-                  currentTab === 'faq' ? "text-brand-sage" : "text-brand-brown/60 group-hover:text-brand-sage"
+                  currentTab === 'notice' ? "text-brand-sage" : "text-brand-brown/60 group-hover:text-brand-sage"
                 )}>
-                  {currentTab === 'faq' ? '● 현재 열람 중' : '질문 보러가기 →'}
+                  {currentTab === 'notice' ? '● 현재 열람 중' : '공지사항 보러가기 →'}
                 </span>
               </div>
             </motion.div>
@@ -969,17 +969,17 @@ export default function Community() {
                 </div>
 
                 <div className="flex items-center gap-1.5 mb-1 text-xs font-semibold text-brand-sage">
-                  <span>박미경 소장의 마음 처방전</span>
+                  <span>소장 및 상담진 심리학 칼럼</span>
                 </div>
                 <h3 className="text-xl font-bold font-serif text-brand-brown mb-2 flex items-center justify-between">
-                  <span>전문가 심리 칼럼</span>
+                  <span>마음 칼럼</span>
                   <ChevronRight className={cn(
                     "w-5 h-5 transition-transform",
                     currentTab === 'column' ? "text-brand-sage translate-x-1" : "text-brand-brown/30 group-hover:translate-x-1"
                   )} />
                 </h3>
-                <p className="text-xs text-brand-brown/70 leading-relaxed">
-                  ADHD 감별 기준, 직장인 번아웃 극복 3단계, 부부 비폭력 대화법 등 교육학 박사 박미경 소장의 전문 심리 칼럼입니다.
+                <p className="text-xs text-brand-brown/70 leading-relaxed font-serif">
+                  소장 인사말과 연구진의 전문 심리학 칼럼, 마음 건강 관리법 및 임상 경험 기반 솔루션을 제공합니다.
                 </p>
               </div>
 
@@ -1027,17 +1027,17 @@ export default function Community() {
                 </div>
 
                 <div className="flex items-center gap-1.5 mb-1 text-xs font-semibold text-rose-600">
-                  <span>100% 익명 생생 회복 수기</span>
+                  <span>내담자 익명 후기 &amp; 변화 스토리</span>
                 </div>
                 <h3 className="text-xl font-bold font-serif text-brand-brown mb-2 flex items-center justify-between">
-                  <span>내담자 상담 후기</span>
+                  <span>상담 후기</span>
                   <ChevronRight className={cn(
                     "w-5 h-5 transition-transform",
                     currentTab === 'review' ? "text-rose-500 translate-x-1" : "text-brand-brown/30 group-hover:translate-x-1"
                   )} />
                 </h3>
-                <p className="text-xs text-brand-brown/70 leading-relaxed">
-                  마음의 고통을 딛고 회복과 주도권을 되찾은 실제 내담자분들의 진솔한 상담 후기와 박미경 소장의 임상 코멘트입니다.
+                <p className="text-xs text-brand-brown/70 leading-relaxed font-serif">
+                  마음의 고통을 딛고 회복과 주도권을 되찾은 실제 내담자분들의 진솔한 상담 후기와 변화 스토리 (비식별화 조치 철저 준수).
                 </p>
               </div>
 
@@ -1058,30 +1058,209 @@ export default function Community() {
             <div className="flex items-center gap-2">
               <span className="font-semibold text-brand-brown">선택된 영역:</span>
               <span className="font-bold text-brand-sage">
-                {currentTab === 'faq' && '1. 자주하는 질문 (FAQ & 1:1 비밀문의)'}
-                {currentTab === 'column' && '2. 전문가 심리 칼럼'}
-                {currentTab === 'review' && '3. 내담자 상담 후기'}
-                {currentTab === 'all' && '전체 3개 메뉴 연속 보기'}
-                {currentTab === 'notice' && '연구소 공지사항 & 소식'}
+                {currentTab === 'notice' && '1. 공지사항 (운영 일정 · 특강/세미나 일정 · 휴진 안내)'}
+                {currentTab === 'column' && '2. 마음 칼럼 (소장 및 상담진 심리학 칼럼)'}
+                {currentTab === 'review' && '3. 상담 후기 (내담자 익명 후기 및 변화 스토리)'}
+                {currentTab === 'faq' && '자주하는 질문 (FAQ & 1:1 비밀상담)'}
+                {currentTab === 'all' && '전체 3대 메뉴 연속 보기'}
               </span>
             </div>
-            {currentTab !== 'faq' && currentTab !== 'all' && (
-              <button
-                type="button"
-                onClick={() => setTab('faq')}
-                className="text-brand-sage hover:underline font-bold text-xs flex items-center gap-1 cursor-pointer"
+            <div className="flex items-center gap-3">
+              {currentTab !== 'faq' && (
+                <button
+                  type="button"
+                  onClick={() => setTab('faq')}
+                  className="text-brand-brown/65 hover:text-brand-sage font-semibold text-xs flex items-center gap-1 cursor-pointer"
+                >
+                  <HelpCircle className="w-3.5 h-3.5" />
+                  <span>자주하는 질문(FAQ) 보기</span>
+                </button>
+              )}
+              <Link
+                to="/guide#faq"
+                className="text-brand-sage hover:underline font-bold text-xs flex items-center gap-1"
               >
-                <span>자주하는 질문으로 이동</span>
-                <ChevronRight className="w-3.5 h-3.5" />
-              </button>
-            )}
+                <span>상담 안내 FAQ 바로가기 &rarr;</span>
+              </Link>
+            </div>
           </div>
         </div>
 
         {/* ========================================================================= */}
-        {/* REARRANGED ORDER 1: 자주하는 질문 (FAQ & 1:1 비밀상담 문의) */}
+        {/* MENU 01: 공지사항 (운영 일정 · 특강/세미나 · 휴진 안내) */}
         {/* ========================================================================= */}
-        {(currentTab === 'all' || currentTab === 'faq') && (
+        {(currentTab === 'all' || currentTab === 'notice') && (
+          <section className="mb-20">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 pb-3 border-b border-brand-green/20">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 bg-brand-sage/15 rounded-2xl text-brand-sage">
+                  <Bell className="w-5 h-5" />
+                </div>
+                <div>
+                  <h2 className="text-xl sm:text-2xl font-serif font-bold text-brand-brown flex items-center gap-2">
+                    <span>연구소 공지사항</span>
+                    <span className="text-xs px-2.5 py-0.5 rounded-full bg-brand-sage/15 text-brand-sage font-sans font-bold">
+                      Notice &amp; Schedule
+                    </span>
+                  </h2>
+                  <p className="text-xs sm:text-sm text-brand-brown/65">
+                    행복바람의 운영 일정, 특강 및 세미나 일정, 휴진 안내 등 최신 소식을 전합니다.
+                  </p>
+                </div>
+              </div>
+
+              {/* Action Buttons: Admin Controls */}
+              <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto">
+                {isAdmin ? (
+                  <>
+                    <span className="px-2.5 py-1 bg-amber-50 text-amber-900 border border-amber-300 rounded-full text-xs font-bold flex items-center gap-1 shadow-2xs">
+                      <ShieldCheck className="w-3.5 h-3.5 text-amber-600" />
+                      <span>관리자 모드</span>
+                    </span>
+                    <button
+                      type="button"
+                      onClick={handleOpenCreateNotice}
+                      className="px-3.5 py-2 bg-brand-sage hover:bg-brand-sage/90 text-white text-xs font-bold rounded-xl shadow-xs flex items-center gap-1.5 transition-all cursor-pointer"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>공지 글쓰기</span>
+                    </button>
+                    <Link
+                      to="/admin"
+                      className="px-3 py-2 bg-white border border-brand-green/30 hover:border-brand-sage text-brand-brown text-xs font-semibold rounded-xl transition-all"
+                    >
+                      관리자 대시보드
+                    </Link>
+                  </>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setShowAdminLoginModal(true)}
+                    className="px-3 py-1.5 text-xs text-brand-brown/60 hover:text-brand-sage flex items-center gap-1.5 rounded-xl hover:bg-brand-beige/40 transition-colors border border-dashed border-brand-green/30 cursor-pointer"
+                  >
+                    <Lock className="w-3.5 h-3.5 text-brand-brown/40" />
+                    <span>관리자 글쓰기</span>
+                  </button>
+                )}
+
+                {currentTab === 'all' && (
+                  <button
+                    type="button"
+                    onClick={() => setTab('notice')}
+                    className="text-xs font-bold text-brand-sage hover:underline flex items-center gap-1 self-start sm:self-auto cursor-pointer"
+                  >
+                    <span>공지 전용 화면</span>
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {noticesLoading ? (
+              <div className="py-12 text-center text-brand-brown/60">
+                <RefreshCw className="w-6 h-6 animate-spin mx-auto mb-2 text-brand-sage" />
+                <p className="text-xs">공지사항을 불러오는 중입니다...</p>
+              </div>
+            ) : (
+              <div className="grid md:grid-cols-2 gap-4">
+                {notices.map((item) => (
+                  <motion.div
+                    key={item.id}
+                    whileHover={{ y: -2 }}
+                    onClick={() => handleOpenNotice(item)}
+                    className="p-5 rounded-2xl bg-white border border-brand-green/20 hover:border-brand-sage/40 hover:shadow-sm transition-all cursor-pointer flex flex-col justify-between group relative"
+                  >
+                    {/* Admin Action Toolbar on card */}
+                    {isAdmin && (
+                      <div 
+                        onClick={(e) => e.stopPropagation()} 
+                        className="flex items-center justify-between pb-2 mb-2.5 border-b border-brand-green/10 text-xs"
+                      >
+                        <button
+                          type="button"
+                          onClick={(e) => handleTogglePinNotice(item, e)}
+                          className={cn(
+                            "px-2 py-0.5 rounded text-[11px] font-semibold flex items-center gap-1 transition-all cursor-pointer",
+                            item.is_pinned === 1 ? "bg-rose-100 text-rose-700" : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200"
+                          )}
+                          title="상단 고정 토글"
+                        >
+                          <Pin className={cn("w-3 h-3", item.is_pinned === 1 && "fill-current")} />
+                          <span>{item.is_pinned === 1 ? '고정해제' : '상단고정'}</span>
+                        </button>
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            type="button"
+                            onClick={(e) => handleOpenEditNotice(item, e)}
+                            className="px-2 py-0.5 rounded bg-brand-sage/10 text-brand-sage hover:bg-brand-sage hover:text-white transition-all text-[11px] font-bold flex items-center gap-1 cursor-pointer"
+                          >
+                            <Edit3 className="w-3 h-3" />
+                            <span>수정</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(e) => handleDeleteNotice(item, e)}
+                            className="px-2 py-0.5 rounded bg-rose-50 text-rose-600 hover:bg-rose-600 hover:text-white transition-all text-[11px] font-bold flex items-center gap-1 cursor-pointer"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                            <span>삭제</span>
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    <div>
+                      <div className="flex items-center justify-between gap-2 mb-2">
+                        <div className="flex items-center gap-2">
+                          {item.is_pinned === 1 && (
+                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-200">
+                              중요 공지
+                            </span>
+                          )}
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-brand-sage/10 text-brand-sage">
+                            {item.category}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2 text-[11px] text-brand-brown/50">
+                          <span className="flex items-center gap-1">
+                            <Calendar className="w-3 h-3" />
+                            {item.created_at ? item.created_at.substring(0, 10) : ''}
+                          </span>
+                          <span>•</span>
+                          <span className="flex items-center gap-1">
+                            <Eye className="w-3 h-3" />
+                            {item.views}
+                          </span>
+                        </div>
+                      </div>
+
+                      <h3 className="font-bold text-base text-brand-brown group-hover:text-brand-sage transition-colors line-clamp-2 mb-2">
+                        {item.title}
+                      </h3>
+
+                      <p className="text-xs text-brand-brown/70 line-clamp-2 leading-relaxed font-serif">
+                        {item.content}
+                      </p>
+                    </div>
+
+                    <div className="pt-3 mt-3 border-t border-brand-green/10 flex items-center justify-between text-xs text-brand-brown/60">
+                      <span>{item.author}</span>
+                      <span className="font-bold text-brand-sage group-hover:translate-x-1 transition-transform flex items-center gap-0.5">
+                        상세보기
+                        <ChevronRight className="w-3.5 h-3.5" />
+                      </span>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            )}
+          </section>
+        )}
+
+        {/* ========================================================================= */}
+        {/* OPTIONAL VIEW: 자주하는 질문 (FAQ & 1:1 비밀상담 문의) */}
+        {/* ========================================================================= */}
+        {currentTab === 'faq' && (
           <section className="mb-20">
             {/* 1-A. 자주 묻는 질문 (FAQ) Header */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 pb-3 border-b border-brand-green/20">
@@ -1102,20 +1281,18 @@ export default function Community() {
                 </div>
               </div>
 
-              {currentTab === 'all' && (
-                <button
-                  type="button"
-                  onClick={() => setTab('faq')}
-                  className="text-xs font-bold text-brand-sage hover:underline flex items-center gap-1 self-start sm:self-auto cursor-pointer"
+              <div className="flex items-center gap-2">
+                <Link
+                  to="/guide#faq"
+                  className="px-3 py-2 bg-brand-sage/10 text-brand-sage hover:bg-brand-sage hover:text-white rounded-xl text-xs font-bold transition-all flex items-center gap-1"
                 >
-                  <span>FAQ &amp; 문의 전용 화면</span>
-                  <ChevronRight className="w-4 h-4" />
-                </button>
-              )}
+                  <span>예약/안내 FAQ 페이지 &rarr;</span>
+                </Link>
+              </div>
             </div>
 
             <div className="bg-white rounded-3xl p-6 sm:p-10 border border-brand-green/20 shadow-xs mb-10">
-              <FAQ showHeader={false} limit={currentTab === 'all' ? 6 : undefined} />
+              <FAQ showHeader={false} />
             </div>
 
             {/* 1-B. 1:1 비밀상담 문의 (Private Q&A Board) */}
@@ -1183,7 +1360,7 @@ export default function Community() {
                   </div>
                 ) : (
                   <div className="divide-y divide-brand-green/10">
-                    {(currentTab === 'all' ? qnaList.slice(0, 5) : qnaList).map((item) => (
+                    {qnaList.map((item) => (
                       <div
                         key={item.id}
                         onClick={() => {
@@ -1372,174 +1549,7 @@ export default function Community() {
           </div>
         )}
 
-        {/* ========================================================================= */}
-        {/* OPTIONAL/ADMIN VIEW: 연구소 공지 & 소식 (Notice & News) */}
-        {/* ========================================================================= */}
-        {currentTab === 'notice' && (
-          <section className="mb-20">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 pb-3 border-b border-brand-green/20">
-              <div className="flex items-center gap-3">
-                <div className="p-2.5 bg-brand-sage/15 rounded-2xl text-brand-sage">
-                  <Bell className="w-5 h-5" />
-                </div>
-                <div>
-                  <h2 className="text-xl sm:text-2xl font-serif font-bold text-brand-brown flex items-center gap-2">
-                    <span>연구소 공지 &amp; 소식</span>
-                    <span className="text-xs px-2.5 py-0.5 rounded-full bg-brand-sage/15 text-brand-sage font-sans font-bold">
-                      Notice &amp; News
-                    </span>
-                  </h2>
-                  <p className="text-xs sm:text-sm text-brand-brown/65">
-                    행복바람의 운영 일정, 힐링 워크숍 모집 공고 및 박미경 소장 특강 소식을 전합니다.
-                  </p>
-                </div>
-              </div>
 
-              {/* Action Buttons: Admin Controls & Return */}
-              <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto">
-                {isAdmin ? (
-                  <>
-                    <span className="px-2.5 py-1 bg-amber-50 text-amber-900 border border-amber-300 rounded-full text-xs font-bold flex items-center gap-1 shadow-2xs">
-                      <ShieldCheck className="w-3.5 h-3.5 text-amber-600" />
-                      <span>관리자 모드</span>
-                    </span>
-                    <button
-                      type="button"
-                      onClick={handleOpenCreateNotice}
-                      className="px-3.5 py-2 bg-brand-sage hover:bg-brand-sage/90 text-white text-xs font-bold rounded-xl shadow-xs flex items-center gap-1.5 transition-all cursor-pointer"
-                    >
-                      <Plus className="w-3.5 h-3.5" />
-                      <span>공지 글쓰기</span>
-                    </button>
-                    <Link
-                      to="/admin"
-                      className="px-3 py-2 bg-white border border-brand-green/30 hover:border-brand-sage text-brand-brown text-xs font-semibold rounded-xl transition-all"
-                    >
-                      관리자 대시보드
-                    </Link>
-                  </>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => setShowAdminLoginModal(true)}
-                    className="px-3 py-1.5 text-xs text-brand-brown/60 hover:text-brand-sage flex items-center gap-1.5 rounded-xl hover:bg-brand-beige/40 transition-colors border border-dashed border-brand-green/30 cursor-pointer"
-                  >
-                    <Lock className="w-3.5 h-3.5 text-brand-brown/40" />
-                    <span>관리자 글쓰기</span>
-                  </button>
-                )}
-
-                <button
-                  type="button"
-                  onClick={() => setTab('faq')}
-                  className="px-3 py-2 bg-brand-beige/50 hover:bg-brand-beige text-brand-brown text-xs font-bold rounded-xl transition-all flex items-center gap-1 cursor-pointer"
-                >
-                  <span>3대 메뉴로 돌아가기</span>
-                  <ChevronRight className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            </div>
-
-            {noticesLoading ? (
-              <div className="py-12 text-center text-brand-brown/60">
-                <RefreshCw className="w-6 h-6 animate-spin mx-auto mb-2 text-brand-sage" />
-                <p className="text-xs">공지사항을 불러오는 중입니다...</p>
-              </div>
-            ) : (
-              <div className="grid md:grid-cols-2 gap-4">
-                {notices.map((item) => (
-                  <motion.div
-                    key={item.id}
-                    whileHover={{ y: -2 }}
-                    onClick={() => handleOpenNotice(item)}
-                    className="p-5 rounded-2xl bg-white border border-brand-green/20 hover:border-brand-sage/40 hover:shadow-sm transition-all cursor-pointer flex flex-col justify-between group relative"
-                  >
-                    {/* Admin Action Toolbar on card */}
-                    {isAdmin && (
-                      <div 
-                        onClick={(e) => e.stopPropagation()} 
-                        className="flex items-center justify-between pb-2 mb-2.5 border-b border-brand-green/10 text-xs"
-                      >
-                        <button
-                          type="button"
-                          onClick={(e) => handleTogglePinNotice(item, e)}
-                          className={cn(
-                            "px-2 py-0.5 rounded text-[11px] font-semibold flex items-center gap-1 transition-all cursor-pointer",
-                            item.is_pinned === 1 ? "bg-rose-100 text-rose-700" : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200"
-                          )}
-                          title="상단 고정 토글"
-                        >
-                          <Pin className={cn("w-3 h-3", item.is_pinned === 1 && "fill-current")} />
-                          <span>{item.is_pinned === 1 ? '고정해제' : '상단고정'}</span>
-                        </button>
-                        <div className="flex items-center gap-1.5">
-                          <button
-                            type="button"
-                            onClick={(e) => handleOpenEditNotice(item, e)}
-                            className="px-2 py-0.5 rounded bg-brand-sage/10 text-brand-sage hover:bg-brand-sage hover:text-white transition-all text-[11px] font-bold flex items-center gap-1 cursor-pointer"
-                          >
-                            <Edit3 className="w-3 h-3" />
-                            <span>수정</span>
-                          </button>
-                          <button
-                            type="button"
-                            onClick={(e) => handleDeleteNotice(item, e)}
-                            className="px-2 py-0.5 rounded bg-rose-50 text-rose-600 hover:bg-rose-600 hover:text-white transition-all text-[11px] font-bold flex items-center gap-1 cursor-pointer"
-                          >
-                            <Trash2 className="w-3 h-3" />
-                            <span>삭제</span>
-                          </button>
-                        </div>
-                      </div>
-                    )}
-
-                    <div>
-                      <div className="flex items-center justify-between gap-2 mb-2">
-                        <div className="flex items-center gap-2">
-                          {item.is_pinned === 1 && (
-                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-200">
-                              중요 공지
-                            </span>
-                          )}
-                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-brand-sage/10 text-brand-sage">
-                            {item.category}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2 text-[11px] text-brand-brown/50">
-                          <span className="flex items-center gap-1">
-                            <Calendar className="w-3 h-3" />
-                            {item.created_at ? item.created_at.substring(0, 10) : ''}
-                          </span>
-                          <span>•</span>
-                          <span className="flex items-center gap-1">
-                            <Eye className="w-3 h-3" />
-                            {item.views}
-                          </span>
-                        </div>
-                      </div>
-
-                      <h3 className="font-bold text-base text-brand-brown group-hover:text-brand-sage transition-colors line-clamp-2 mb-2">
-                        {item.title}
-                      </h3>
-
-                      <p className="text-xs text-brand-brown/70 line-clamp-2 leading-relaxed">
-                        {item.content}
-                      </p>
-                    </div>
-
-                    <div className="pt-3 mt-3 border-t border-brand-green/10 flex items-center justify-between text-xs text-brand-brown/60">
-                      <span>{item.author}</span>
-                      <span className="font-bold text-brand-sage group-hover:translate-x-1 transition-transform flex items-center gap-0.5">
-                        상세보기
-                        <ChevronRight className="w-3.5 h-3.5" />
-                      </span>
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-            )}
-          </section>
-        )}
 
         {/* ========================================================================= */}
         {/* Bottom CTA Banner */}

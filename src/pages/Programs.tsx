@@ -197,14 +197,23 @@ export default function Programs() {
       });
   }, []);
 
-  // Sync activeCategory with URL parameter changes
+  // Sync activeCategory with URL parameter or hash changes
   useEffect(() => {
+    const hash = window.location.hash.replace('#', '');
     if (categoryFromUrl) {
       setActiveCategory(categoryFromUrl);
+    } else if (hash === 'adult' || hash === 'youth') {
+      setActiveCategory('개인상담');
+    } else if (hash === 'family') {
+      setActiveCategory('부부상담');
+    } else if (hash === 'group') {
+      setActiveCategory('집단/교육');
+    } else if (hash === 'assessment') {
+      setActiveCategory('심리검사');
     } else {
       setActiveCategory('all');
     }
-  }, [categoryFromUrl]);
+  }, [categoryFromUrl, location.hash]);
 
   // Sync selectedProgram with URL parameter on load or URL change
   useEffect(() => {
