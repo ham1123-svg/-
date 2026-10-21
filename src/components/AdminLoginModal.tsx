@@ -106,8 +106,12 @@ export default function AdminLoginModal({ isOpen, onClose, onSuccess }: AdminLog
 
             {/* Header */}
             <div className="text-center mb-6">
-              <div className="w-14 h-14 bg-brand-green/30 text-brand-sage rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-inner">
-                <ShieldCheck className="w-7 h-7" />
+              <div className="w-16 h-16 bg-transparent flex items-center justify-center mx-auto mb-3">
+                <img 
+                  src="/assets/aistudio/______-____a6aaa0a5.png" 
+                  alt="행복바람 심리상담연구소 공식 로고 심볼" 
+                  className="w-full h-full object-contain"
+                />
               </div>
               <h3 className="text-xl font-serif font-bold text-brand-brown">
                 운영자 관리 모드 인증

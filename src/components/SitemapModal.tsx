@@ -92,8 +92,12 @@ export default function SitemapModal({ isOpen, onClose }: SitemapModalProps) {
           {/* Header */}
           <div className="px-6 py-5 bg-gradient-to-r from-brand-beige via-white to-brand-beige/50 border-b border-brand-green/20 flex items-center justify-between shrink-0">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-brand-sage text-white flex items-center justify-center shadow-md">
-                <Plus className="w-5 h-5" />
+              <div className="w-9 h-9 bg-transparent flex items-center justify-center shrink-0">
+                <img 
+                  src="/assets/aistudio/______-____a6aaa0a5.png" 
+                  alt="행복바람 로고 심볼" 
+                  className="w-full h-full object-contain"
+                />
               </div>
               <button
                 type="button"

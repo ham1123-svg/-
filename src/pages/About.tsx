@@ -139,6 +139,76 @@ export default function About() {
                 — 교육학 박사 박미경 소장 배상
               </span>
             </div>
+
+            {/* Official Brand Identity (CI) Showcase Card */}
+            <div className="mt-10 p-6 sm:p-8 bg-white/95 rounded-3xl border border-brand-green/30 shadow-lg text-left max-w-3xl mx-auto">
+              <div className="flex items-center justify-between mb-5 pb-4 border-b border-brand-green/20">
+                <div>
+                  <span className="text-[11px] font-bold text-brand-sage uppercase tracking-wider bg-brand-sage/10 px-2.5 py-0.5 rounded-full inline-block mb-1">
+                    Brand Identity &amp; Philosophy
+                  </span>
+                  <h3 className="text-xl font-serif font-bold text-brand-brown">
+                    행복바람 심리상담연구소 공식 CI (로고 &amp; 심볼)
+                  </h3>
+                </div>
+                <div className="hidden sm:flex items-center gap-2 text-xs text-brand-brown/60">
+                  <span className="w-2.5 h-2.5 rounded-full bg-[#1e8270] inline-block" />
+                  <span>세이지 틸</span>
+                  <span className="w-2.5 h-2.5 rounded-full bg-[#523d35] inline-block" />
+                  <span>어스 브라운</span>
+                </div>
+              </div>
+
+              {/* Two Column Grid: Official Symbol & Signature Full Logo */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
+                {/* 1. Official Symbol Card */}
+                <div className="bg-brand-beige/50 rounded-2xl p-4 border border-brand-green/30 flex flex-col items-center text-center">
+                  <div className="w-28 h-28 sm:w-32 sm:h-32 bg-transparent flex items-center justify-center mb-3">
+                    <img 
+                      src="/assets/aistudio/______-____a6aaa0a5.png" 
+                      alt="행복바람 심리상담연구소 공식 로고 심볼 마크" 
+                      className="w-full h-full object-contain"
+                    />
+                  </div>
+                  <span className="text-xs font-bold text-brand-brown font-serif mb-1">
+                    공식 심볼 마크 (Symbol Mark)
+                  </span>
+                  <p className="text-[11px] text-brand-brown/70 leading-relaxed font-serif">
+                    세잎클로버의 '일상의 행복'과 마음을 품는 사람 실루엣 음각
+                  </p>
+                </div>
+
+                {/* 2. Signature Full Logo Card */}
+                <div className="bg-brand-beige/50 rounded-2xl p-4 border border-brand-green/30 flex flex-col items-center text-center">
+                  <div className="w-full h-28 sm:h-32 bg-transparent flex items-center justify-center mb-3">
+                    <img 
+                      src="/assets/aistudio/Gemini_Generated_Image_4slbta4slbta4slb_13d59397.png" 
+                      alt="행복바람 심리상담연구소 공식 시그니처 로고" 
+                      className="w-full h-full object-contain mix-blend-multiply"
+                    />
+                  </div>
+                  <span className="text-xs font-bold text-brand-brown font-serif mb-1">
+                    시그니처 풀 로고 (Signature Logo)
+                  </span>
+                  <p className="text-[11px] text-brand-brown/70 leading-relaxed font-serif">
+                    심볼과 국·영문 연구소 워드마크의 정통 결합 규격
+                  </p>
+                </div>
+              </div>
+
+              {/* Symbol Philosophy Text */}
+              <div className="bg-white p-4 rounded-2xl border border-brand-green/20 text-xs sm:text-sm text-brand-brown/80 leading-relaxed font-serif space-y-1.5">
+                <p>
+                  • <strong>세잎클로버 형상:</strong> 지나치기 쉬운 일상 속 소중한 '행복'을 상징합니다.
+                </p>
+                <p>
+                  • <strong>중심 사람 형상 음각:</strong> 상처를 치유하고 온전한 평온을 되찾는 내담자 본연의 존엄성을 나타냅니다.
+                </p>
+                <p>
+                  • <strong>부드러운 유선형 줄기:</strong> 지친 마음을 어루만져 주는 따뜻하고 포근한 '행복의 바람'을 표현합니다.
+                </p>
+              </div>
+            </div>
           </motion.div>
         </div>
         

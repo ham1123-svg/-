@@ -32,13 +32,25 @@ export default function Footer() {
                   }
                   window.dispatchEvent(new CustomEvent('reset-home-view'));
                 }}
-                className="inline-block py-1 transition-transform duration-200 hover:scale-[1.01] cursor-pointer"
+                className="inline-flex items-center gap-3 py-1 transition-transform duration-200 hover:scale-[1.01] cursor-pointer"
                 aria-label="행복바람 심리상담연구소 초기 메인 화면으로 이동"
                 title="행복바람심리상담연구소 초기 메인 화면으로 이동"
               >
-                <span className="text-xl sm:text-2xl font-serif font-bold text-brand-beige tracking-tight">
-                  행복바람<span className="text-brand-sage">심리상담연구소</span>
-                </span>
+                <div className="h-11 w-11 bg-transparent shrink-0 flex items-center justify-center">
+                  <img 
+                    src="/assets/aistudio/______-____a6aaa0a5.png" 
+                    alt="행복바람 심리상담연구소 공식 로고 심볼" 
+                    className="w-full h-full object-contain"
+                  />
+                </div>
+                <div className="flex flex-col text-left">
+                  <span className="text-xl sm:text-2xl font-serif font-bold text-brand-beige tracking-tight leading-tight">
+                    행복바람<span className="text-brand-sage">심리상담연구소</span>
+                  </span>
+                  <span className="text-[10px] text-brand-beige/60 tracking-wider font-sans uppercase">
+                    Happiness Wind Counseling Center
+                  </span>
+                </div>
               </Link>
             </div>
             <p className="text-brand-beige/65 text-xs sm:text-sm leading-relaxed mb-6">

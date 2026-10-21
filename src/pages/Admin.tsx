@@ -607,8 +607,12 @@ export default function Admin() {
           className="max-w-md w-full bg-white rounded-3xl p-8 shadow-xl border border-brand-green/20"
         >
           <div className="text-center mb-8">
-            <div className="w-16 h-16 bg-brand-green/30 text-brand-sage rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <ShieldCheck className="w-8 h-8" />
+            <div className="w-16 h-16 bg-transparent flex items-center justify-center mx-auto mb-4">
+              <img 
+                src="/assets/aistudio/______-____a6aaa0a5.png" 
+                alt="행복바람 공식 로고 심볼" 
+                className="w-full h-full object-contain"
+              />
             </div>
             <h1 className="text-2xl font-serif font-bold text-brand-brown mb-2">운영자 관리 모드</h1>
             <p className="text-sm text-brand-brown/60">
@@ -685,17 +689,25 @@ export default function Admin() {
       <div className="max-w-7xl mx-auto">
         {/* Top Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between pb-6 mb-6 border-b border-brand-green/20 gap-4">
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-              <span className="px-2.5 py-0.5 bg-brand-sage/15 text-brand-sage font-semibold text-xs rounded-full">
-                운영자 모드
-              </span>
-              <span className="text-xs text-brand-brown/50">행복바람심리상담연구소</span>
+          <div className="flex items-center gap-3.5">
+            <div className="w-10 h-10 bg-transparent flex items-center justify-center shrink-0">
+              <img 
+                src="/assets/aistudio/______-____a6aaa0a5.png" 
+                alt="행복바람 공식 로고 심볼" 
+                className="w-full h-full object-contain"
+              />
             </div>
-            <h1 className="text-3xl font-serif font-bold text-brand-brown flex items-center gap-3">
-              <ShieldCheck className="w-8 h-8 text-brand-sage" />
-              예약 접수 대시보드
-            </h1>
+            <div>
+              <div className="flex items-center gap-2 mb-0.5">
+                <span className="px-2.5 py-0.5 bg-brand-sage/15 text-brand-sage font-semibold text-xs rounded-full">
+                  운영자 모드
+                </span>
+                <span className="text-xs text-brand-brown/50">행복바람심리상담연구소</span>
+              </div>
+              <h1 className="text-2xl sm:text-3xl font-serif font-bold text-brand-brown">
+                예약 접수 대시보드
+              </h1>
+            </div>
           </div>
 
           <div className="flex flex-wrap items-center gap-2 sm:gap-3">

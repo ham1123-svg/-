@@ -76,17 +76,29 @@ export default function Navbar() {
       <nav className="fixed top-0 left-0 right-0 z-40 bg-brand-beige/85 backdrop-blur-md border-b border-brand-green/30">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16 items-center gap-2">
-            {/* Brand Logo */}
+            {/* Brand Logo with Official CI Emblem */}
             <Link 
               to="/" 
               onClick={handleLogoClick}
-              className="flex items-center gap-2 shrink-0 group py-1 transition-transform duration-200 hover:scale-[1.01] cursor-pointer"
+              className="flex items-center gap-2.5 shrink-0 group py-1 transition-transform duration-200 hover:scale-[1.01] cursor-pointer"
               aria-label="행복바람 심리상담연구소 초기 메인 화면으로 이동"
               title="행복바람심리상담연구소 초기 메인 화면으로 이동"
             >
-              <span className="text-xl sm:text-2xl font-serif font-bold text-brand-brown tracking-tight">
-                행복바람<span className="text-brand-sage">심리상담연구소</span>
-              </span>
+              <div className="h-10 w-10 sm:h-11 sm:w-11 bg-transparent flex items-center justify-center shrink-0">
+                <img 
+                  src="/assets/aistudio/______-____a6aaa0a5.png" 
+                  alt="행복바람 심리상담연구소 공식 로고 심볼" 
+                  className="w-full h-full object-contain"
+                />
+              </div>
+              <div className="flex flex-col text-left">
+                <span className="text-base sm:text-lg lg:text-xl font-serif font-bold text-brand-brown tracking-tight leading-tight">
+                  행복바람<span className="text-brand-sage">심리상담연구소</span>
+                </span>
+                <span className="text-[8px] sm:text-[9.5px] text-brand-brown/60 tracking-wider font-sans uppercase">
+                  Happiness Wind Counseling Center
+                </span>
+              </div>
             </Link>
 
             {/* Desktop Navigation (소개 -> 상담사 -> 프로그램 -> 자가진단 -> 커뮤니티 -> 예약 / 오시는 길) */}
@@ -277,8 +289,14 @@ export default function Navbar() {
                   : "text-brand-brown hover:bg-brand-green/30"
               )}
             >
-              <div className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-emerald-500" />
+              <div className="flex items-center gap-2.5">
+                <div className="w-6 h-6 bg-transparent flex items-center justify-center shrink-0">
+                  <img 
+                    src="/assets/aistudio/______-____a6aaa0a5.png" 
+                    alt="행복바람 로고 심볼" 
+                    className="w-full h-full object-contain"
+                  />
+                </div>
                 <span>행복바람심리상담연구소 (홈)</span>
               </div>
               <ChevronRight className="w-4 h-4 text-brand-brown/40" />

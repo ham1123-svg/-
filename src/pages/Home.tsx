@@ -105,10 +105,17 @@ export default function Home() {
               transition={{ duration: 0.8 }}
               className="lg:col-span-7"
             >
-              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-brand-sage/10 text-brand-sage text-xs font-semibold mb-6 tracking-wide">
-                <span>🍃 Mind Rest Area</span>
+              <div className="inline-flex items-center gap-2.5 px-3.5 py-1.5 rounded-full bg-white/90 border border-brand-green/30 text-brand-brown text-xs font-semibold mb-6 tracking-wide shadow-2xs backdrop-blur-xs">
+                <div className="w-5 h-5 flex items-center justify-center shrink-0">
+                  <img 
+                    src="/assets/aistudio/______-____a6aaa0a5.png" 
+                    alt="행복바람 심리상담연구소 공식 로고 심볼" 
+                    className="w-full h-full object-contain"
+                  />
+                </div>
+                <span className="font-bold text-brand-brown">행복바람 심리상담연구소</span>
                 <span className="w-1 h-1 rounded-full bg-brand-sage"></span>
-                <span>마음의 평온을 찾는 쉼터</span>
+                <span className="text-brand-sage font-medium">마음의 평온을 찾는 안식처</span>
               </div>
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-serif font-bold text-brand-brown leading-tight mb-6">
                 지친 마음에 <br />

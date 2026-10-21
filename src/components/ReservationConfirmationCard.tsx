@@ -227,8 +227,12 @@ export default function ReservationConfirmationCard({
       <div className="bg-gradient-to-r from-brand-beige/40 via-white to-brand-green/20 rounded-3xl p-6 sm:p-7 border border-brand-green/30 shadow-sm relative overflow-hidden">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-brand-green/20">
           <div className="flex items-center gap-3.5">
-            <div className="w-12 h-12 rounded-2xl bg-brand-sage text-white flex items-center justify-center shrink-0 shadow-sm">
-              <CheckCircle className="w-6 h-6" />
+            <div className="w-11 h-11 bg-transparent flex items-center justify-center shrink-0">
+              <img 
+                src="/assets/aistudio/______-____a6aaa0a5.png" 
+                alt="행복바람 공식 로고 심볼" 
+                className="w-full h-full object-contain"
+              />
             </div>
             <div>
               <div className="flex items-center gap-2 mb-1">
