@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { 
   CalendarCheck, 
   MessageSquareHeart, 
@@ -24,11 +24,155 @@ import {
   Compass,
   Star,
   Lock,
-  RotateCcw
+  RotateCcw,
+  Zap,
+  Info,
+  CheckCircle
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 
-export type ConcernType = 'INDIVIDUAL' | 'COUPLE' | 'BURNOUT' | 'YOUTH';
+export type ConcernType = 'INDIVIDUAL' | 'COUPLE' | 'BURNOUT' | 'YOUTH' | 'ASSESSMENT' | 'CORPORATE_EAP';
+
+export type CounselingServiceKey = 
+  | 'ALL'             // 전체 기본 로드맵
+  | 'INDIVIDUAL'      // 개인 심리상담 (청소년 & 성인 1:1)
+  | 'COUPLES'         // 부부 및 가족상담
+  | 'ASSESSMENT'      // 종합심리검사 (Full Battery)
+  | 'YOUTH'           // 청소년 및 아동상담
+  | 'CORPORATE_EAP';  // 기업 및 기관 EAP 상담
+
+export interface CounselingServiceInfo {
+  key: CounselingServiceKey;
+  label: string;
+  shortLabel: string;
+  badge: string;
+  icon: React.ComponentType<{ className?: string }>;
+  primaryStep: number;
+  coreSteps: number[];
+  targetAudience: string;
+  highlightReason: string;
+  recommendedDuration: string;
+}
+
+export const COUNSELING_SERVICES: CounselingServiceInfo[] = [
+  {
+    key: 'ALL',
+    label: '전체 기본 절차',
+    shortLabel: '전체 플로우',
+    badge: '표준 5단계 치유 로드맵',
+    icon: Compass,
+    primaryStep: 1,
+    coreSteps: [1, 2, 3, 4, 5],
+    targetAudience: '상담 전체 이용 과정과 표준 흐름을 확인하고 싶으신 분',
+    highlightReason: '접수부터 초기면담, 검사, 심층치료, 사후관리까지의 5단계 표준 치유 로드맵입니다.',
+    recommendedDuration: '개인 50분 / 부부 80분'
+  },
+  {
+    key: 'INDIVIDUAL',
+    label: '개인 심리상담',
+    shortLabel: '개인상담',
+    badge: '1:1 심층 정서 치유 & 자아 회복',
+    icon: User,
+    primaryStep: 2,
+    coreSteps: [2, 4],
+    targetAudience: '우울, 불안, 만성 스트레스, 자존감 저하, 대인관계 상처 치유',
+    highlightReason: '개인 심리상담은 안전한 라포를 형성하는 [STEP 02: 1:1 초기면담]과 내면 근육을 강화하는 [STEP 04: 심층 치료]가 핵심 단계입니다.',
+    recommendedDuration: '1회 50분 (주 1회 정기 세션)'
+  },
+  {
+    key: 'COUPLES',
+    label: '부부 및 가족상담',
+    shortLabel: '부부·가족',
+    badge: '부부 갈등 중재 & 건강한 애착 소통',
+    icon: Users,
+    primaryStep: 2,
+    coreSteps: [2, 4],
+    targetAudience: '반복되는 부부 싸움, 소통 단절, 성격 차이, 외도 상처, 가족 갈등',
+    highlightReason: '부부상담은 중립적 공간에서 두 사람의 상호작용 역동을 파악하는 [STEP 02: 부부 초기면담(80분)]과 [STEP 04: 비폭력 대화 실습]이 중심입니다.',
+    recommendedDuration: '1회 80분 심층 세션'
+  },
+  {
+    key: 'ASSESSMENT',
+    label: '종합심리검사',
+    shortLabel: '심리검사',
+    badge: '지능·정서·기질 과학적 정밀 진단',
+    icon: FileText,
+    primaryStep: 3,
+    coreSteps: [3],
+    targetAudience: '나의 타고난 기질과 성격, 인지 기능 및 정서 상태를 객관적으로 파악하고 싶은 분',
+    highlightReason: '종합심리검사 서비스는 표준화 검사(MMPI-2, TCI 등) 및 교육학 박사의 1:1 정밀 해석 상담이 이루어지는 [STEP 03: 심리검사]가 핵심 단계입니다.',
+    recommendedDuration: '검사 40~60분 + 전문 해석 상담 50분'
+  },
+  {
+    key: 'YOUTH',
+    label: '청소년 및 아동상담',
+    shortLabel: '청소년·아동',
+    badge: '학업·교우 스트레스 & 부모 코칭',
+    icon: GraduationCap,
+    primaryStep: 2,
+    coreSteps: [2, 3],
+    targetAudience: '학업 스트레스, 등교 거부, 또래 갈등, 사춘기 반항, 정서 불안 청소년 및 학부모',
+    highlightReason: '청소년 상담은 자녀의 속마음을 듣는 [STEP 02: 자녀 면담(40분)+부모 피드백(10분)]과 객관적 발달을 짚는 [STEP 03: 기질/학습검사]가 연계됩니다.',
+    recommendedDuration: '1회 50분 (자녀 40분 + 양육자 10분)'
+  },
+  {
+    key: 'CORPORATE_EAP',
+    label: '기업 및 기관 EAP',
+    shortLabel: '기업 EAP',
+    badge: '100% 비공개 직무 소진 & 번아웃 케어',
+    icon: Briefcase,
+    primaryStep: 4,
+    coreSteps: [1, 4],
+    targetAudience: '직무 스트레스, 번아웃(탈진), 직장 내 대인관계 갈등, 임직원 심리적 소진',
+    highlightReason: '기업 EAP 상담은 회사에 절대 통보되지 않는 [STEP 01: 100% 비공개 접수]와 빠른 직무 복귀를 돕는 [STEP 04: 단기 솔루션 심층치료]가 핵심입니다.',
+    recommendedDuration: '1회 50분 (단기 4~8회기 집중 솔루션)'
+  }
+];
+
+export const SERVICE_STEP_TAGS: Record<CounselingServiceKey, Record<number, { tag: string; isCore: boolean; customSubtitle: string }>> = {
+  ALL: {
+    1: { tag: '01단계: 접수 & 예약', isCore: false, customSubtitle: '접수 및 일정 확정' },
+    2: { tag: '02단계: 초기 면담', isCore: false, customSubtitle: '1:1 심층 면담 & 목표 수립' },
+    3: { tag: '03단계: 심리 검사', isCore: false, customSubtitle: '객관적 심리평가 & 과학적 진단' },
+    4: { tag: '04단계: 심층 상담', isCore: false, customSubtitle: '정기 심층 치료 & 회복 체화' },
+    5: { tag: '05단계: 사후 관리', isCore: false, customSubtitle: '목표 달성 종결 & 부스터 케어' },
+  },
+  INDIVIDUAL: {
+    1: { tag: '독립 세션 예약', isCore: false, customSubtitle: '1인 독립 세션 확보 (F코드 무등록)' },
+    2: { tag: '★ 핵심: 1:1 라포 형성', isCore: true, customSubtitle: '박사 소장 1:1 심층 경청 & 치유 목표' },
+    3: { tag: '선택형 정서 검사', isCore: false, customSubtitle: '기질(TCI) 및 정서 상태 진단' },
+    4: { tag: '★ 핵심: 내면 근육 강화', isCore: true, customSubtitle: '인지왜곡 교정 & 자아 존중감 회복' },
+    5: { tag: '자가 심리 핸드북', isCore: false, customSubtitle: '평생 소장 자가 심리 관리 가이드' },
+  },
+  COUPLES: {
+    1: { tag: '부부 동반 일정 조율', isCore: false, customSubtitle: '토요일/야간 부부 동반 슬롯 확보' },
+    2: { tag: '★ 핵심: 부부 갈등 역동 (80분)', isCore: true, customSubtitle: '중립적 환경에서 부부 상호작용 심층 평가' },
+    3: { tag: '부부 기질 상호 비교', isCore: false, customSubtitle: '두 사람의 TCI 기질 프로파일 대조' },
+    4: { tag: '★ 핵심: 비폭력 대화 훈련', isCore: true, customSubtitle: '안전한 정서 중심 부부 애착 대화 실습' },
+    5: { tag: '가정 소통 규칙 확립', isCore: false, customSubtitle: '갈등 재발 방지 부부 협력 매뉴얼' },
+  },
+  ASSESSMENT: {
+    1: { tag: '사전 질문지 수령', isCore: false, customSubtitle: '온라인 사전 검사 및 평가 일정 확보' },
+    2: { tag: '호소 문제 정밀 파악', isCore: false, customSubtitle: '임상적 증상에 맞춘 검사군 선별' },
+    3: { tag: '★ 핵심: 종합심리평가 & 1:1 해석', isCore: true, customSubtitle: 'MMPI-2, TCI 등 풀배터리 객관적 진단' },
+    4: { tag: '검사 기반 타깃 치료', isCore: false, customSubtitle: '기질적 취약점 보완 집중 심층 세션' },
+    5: { tag: '정밀 결과지 영구 소장', isCore: false, customSubtitle: '종합 결과 프로파일 리포트 제공' },
+  },
+  YOUTH: {
+    1: { tag: '자녀 거부감 완화 접수', isCore: false, customSubtitle: '방과후/주말 청소년 안심 일정 예약' },
+    2: { tag: '★ 핵심: 자녀 면담+부모 피드백', isCore: true, customSubtitle: '자녀 1:1(40분) + 양육자 피드백(10분)' },
+    3: { tag: '★ 핵심: 기질 & 학습 평가', isCore: true, customSubtitle: '청소년 인성(MMPI-A) & 학습 기질 진단' },
+    4: { tag: '자존감 & 또래 적응', isCore: false, customSubtitle: '부정 감정 해소 및 학교 생활 코칭' },
+    5: { tag: '가정 내 소통 문화 정착', isCore: false, customSubtitle: '부모-자녀 지지형 환경 점검' },
+  },
+  CORPORATE_EAP: {
+    1: { tag: '★ 핵심: 100% 사내 비공개 접수', isCore: true, customSubtitle: '회사에 일절 통보 없는 익명 비밀 보장' },
+    2: { tag: '직무 스트레스 긴급 진단', isCore: false, customSubtitle: '업무 소진 및 조직 갈등 요인 탐색' },
+    3: { tag: '번아웃 척도 객관 평가', isCore: false, customSubtitle: '심리적 방전 상태 및 스트레스 척도 측정' },
+    4: { tag: '★ 핵심: 단기 솔루션 코칭', isCore: true, customSubtitle: '업무 경계선 구축 & 회복탄력성 강화' },
+    5: { tag: '지속 가능한 워라밸 유지', isCore: false, customSubtitle: '직무 복귀 적응도 및 비상 핫라인 지원' },
+  },
+};
 
 export interface InfographicStep {
   id: string;
@@ -120,6 +264,16 @@ export const COUNSELING_INFOGRAPHIC_STEPS: InfographicStep[] = [
         focus: '청소년 및 학부모 동반 일정 접수',
         action: '방과 후 또는 주말 시간대 지정 및 자녀의 심리적 저항감을 낮추는 사전 안내',
         outcome: '자녀가 심리적 거부감 없이 방문할 수 있도록 친절한 사전 접수 완료'
+      },
+      ASSESSMENT: {
+        focus: '종합심리검사 희망일 및 사전 작성 질문지 수령',
+        action: '지능·정서·기질 통합 검사를 위한 일정 예약 및 사전 온라인 설문 확인',
+        outcome: '검사 진행에 필요한 정숙한 독립 평가실 및 사전 질문지 세트 확보'
+      },
+      CORPORATE_EAP: {
+        focus: '사내 EAP 협약 기반 100% 비공개 단독 접수',
+        action: '회사 인사팀이나 동료에게 노출되지 않는 프라이빗 슬롯 예약',
+        outcome: '익명성이 철저히 보장되는 1:1 독립 심층 상담 시간 확보'
       }
     }
   },
@@ -183,6 +337,16 @@ export const COUNSELING_INFOGRAPHIC_STEPS: InfographicStep[] = [
         focus: '자녀의 학업 스트레스 및 부모와의 소통 단절 원인 파악',
         action: '청소년 1:1 비밀보장 면담(40분) + 부모 양육 태도 전문 피드백(10분)',
         outcome: '자녀의 속마음 이해 및 가정 내 대화 분위기 전환의 첫 단추 마련'
+      },
+      ASSESSMENT: {
+        focus: '호소 문제와 심리적 고통에 부합하는 맞춤형 검사 패키지 구성',
+        action: '현재 겪는 어려움의 성격에 맞춰 불필요한 비용 없이 꼭 필요한 검사군 선별',
+        outcome: '나에게 꼭 맞는 과학적 검사 포트폴리오 확정 및 검사 가이드 수령'
+      },
+      CORPORATE_EAP: {
+        focus: '직무 스트레스, 조직 내 관계 갈등 및 번아웃 긴급 진단',
+        action: '업무상 심리적 탈진과 심신 소진 상태를 안전하게 털어놓고 경청받기',
+        outcome: '긴급 정서 안정화 및 직무 복귀를 위한 맞춤형 단기 목표 수립'
       }
     }
   },
@@ -246,6 +410,16 @@ export const COUNSELING_INFOGRAPHIC_STEPS: InfographicStep[] = [
         focus: '학업 스트레스 저항도, 정서적 불안 및 자아존중감 측정',
         action: '청소년 인성검사(MMPI-A)와 학습 기질 검사로 자녀의 학습 피로 원인 파악',
         outcome: '부모가 몰랐던 자녀의 마음속 고통과 학습 압박감의 객관적 파악'
+      },
+      ASSESSMENT: {
+        focus: '지능, 성격, 정서, 투사검사를 아우르는 Full Battery 정밀 평가',
+        action: '전문 평가 환경에서 MMPI-2, TCI, K-WAIS, SCT, HTP 등 표준화 검사 수행',
+        outcome: '교육학 박사의 다각도 임상 분석이 담긴 종합 심리평가 리포트 및 1:1 심층 해석 세션'
+      },
+      CORPORATE_EAP: {
+        focus: '직무 소진(MBI) 및 스트레스 대처 양식 정밀 측정',
+        action: '객관적 척도로 측정된 업무 피로도 및 기질적 취약 요인 확인',
+        outcome: '단순 개인의 나약함이 아닌 직무 환경과 기질의 상호작용 객관화'
       }
     }
   },
@@ -309,6 +483,16 @@ export const COUNSELING_INFOGRAPHIC_STEPS: InfographicStep[] = [
         focus: '감정 표현력 신장, 자존감 회복, 또래 관계 기술 훈련',
         action: '부정적 감정을 건강하게 배출하는 법과 자신만의 강점 찾기 프로젝트 진행',
         outcome: '스스로에 대한 긍정적 자아상 확립 및 등교 거부·무기력 해소'
+      },
+      ASSESSMENT: {
+        focus: '심리검사 결과에서 도출된 핵심 취약 영역 집중 케어',
+        action: '기질적 특성에 기반한 인지행동 치료 및 자가 감정 조절 훈련',
+        outcome: '검사 데이터 기반의 정밀하고 빠른 심리적 회복과 내면 힘 체화'
+      },
+      CORPORATE_EAP: {
+        focus: '건강한 업무 경계선 설정 및 회복탄력성 강화 솔루션',
+        action: '직장 내 갈등 소통 기술 및 직무 스트레스 해소 실천 과제 훈련',
+        outcome: '번아웃 극복 및 직무 만족도, 일상 활력의 건강한 회복'
       }
     }
   },
@@ -372,46 +556,101 @@ export const COUNSELING_INFOGRAPHIC_STEPS: InfographicStep[] = [
         focus: '자율적인 성장 동기 확립 및 부모-자녀 간 신뢰 회복',
         action: '자녀의 학업 스트레스 대처력 확인 및 부모의 지속적인 지지형 양육 환경 점검',
         outcome: '자신감을 되찾은 자녀와 가정이 서로를 신뢰하며 미래로 나아가는 도약'
+      },
+      ASSESSMENT: {
+        focus: '종합 평가 리포트 영구 소장 및 주기적 추적 상담',
+        action: '평생 참고할 수 있는 나의 기질 프로파일 핸드북 제공 및 3개월 후 점검',
+        outcome: '자기 이해에 기반한 지속 가능한 심리적 자기결정권 확립'
+      },
+      CORPORATE_EAP: {
+        focus: '직무 복귀 후 안정적 적응도 및 스트레스 재발 방지',
+        action: '조직 생활 중 재발 위기 시 즉각 대처할 수 있는 비상 핫라인 안내',
+        outcome: '지속 가능한 직무 몰입과 건강한 워라밸 자생력 확립'
       }
     }
   }
 ];
 
-const CONCERN_TABS: { type: ConcernType; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
-  { type: 'INDIVIDUAL', label: '개인 심리 (우울·불안)', icon: User },
-  { type: 'COUPLE', label: '부부·가족 갈등', icon: Users },
-  { type: 'BURNOUT', label: '직장인 번아웃', icon: Briefcase },
-  { type: 'YOUTH', label: '청소년·학업', icon: GraduationCap },
-];
-
 const SITUATION_PRESETS = [
-  { stepNumber: 1, label: '처음 상담을 고민 중이거나 예약을 희망해요', desc: '1단계: 신청 및 예약' },
-  { stepNumber: 2, label: '예약 완료 후 첫 1:1 면담을 앞두고 있어요', desc: '2단계: 초기 면담' },
-  { stepNumber: 3, label: '나를 과학적으로 파악할 심리검사 단계예요', desc: '3단계: 심리검사' },
-  { stepNumber: 4, label: '정기적인 심층 상담 세션을 진행 중이에요', desc: '4단계: 심층 상담' },
-  { stepNumber: 5, label: '상담 종결 및 일상 복귀, 사후관리가 필요해요', desc: '5단계: 사후관리' },
+  { stepNumber: 1, label: '상담을 고민 중이거나 예약 일정을 잡고 싶어요', desc: '1단계: 신청 및 예약' },
+  { stepNumber: 2, label: '예약 완료 후 첫 1:1 심층 면담을 앞두고 있어요', desc: '2단계: 초기 면담' },
+  { stepNumber: 3, label: '나를 과학적으로 파악할 심리검사를 진행/해석 중이에요', desc: '3단계: 심리검사' },
+  { stepNumber: 4, label: '정기적인 심층 상담 세션으로 마음 근육을 키우고 있어요', desc: '4단계: 심층 상담' },
+  { stepNumber: 5, label: '상담 목표를 달성하고 종결 및 사후관리를 점검해요', desc: '5단계: 사후관리' },
 ];
 
-const STORAGE_KEY = 'happywind_counseling_current_step';
+const STEP_STORAGE_KEY = 'happywind_counseling_current_step';
+const SERVICE_STORAGE_KEY = 'happywind_counseling_selected_service';
+
+export interface CounselingProcessInfographicProps {
+  className?: string;
+  defaultStep?: number;
+  initialService?: CounselingServiceKey;
+  showTitle?: boolean;
+}
 
 export default function CounselingProcessInfographic({
   className = '',
   defaultStep = 1,
+  initialService = 'ALL',
   showTitle = true
-}: {
-  className?: string;
-  defaultStep?: number;
-  showTitle?: boolean;
-}) {
-  // Current viewing step (which step's details are open)
-  const [activeStepNumber, setActiveStepNumber] = useState<number>(defaultStep);
-  // User's self-reported current step position in their counseling journey
+}: CounselingProcessInfographicProps) {
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Selected Counseling Service
+  const [selectedService, setSelectedService] = useState<CounselingServiceKey>(() => {
+    // 1. Check URL param first
+    const paramService = searchParams.get('service') || searchParams.get('program');
+    if (paramService) {
+      const lower = paramService.toLowerCase();
+      if (lower.includes('assess') || lower.includes('test') || lower.includes('검사')) return 'ASSESSMENT';
+      if (lower.includes('couple') || lower.includes('부부') || lower.includes('가족')) return 'COUPLES';
+      if (lower.includes('youth') || lower.includes('청소년') || lower.includes('아동')) return 'YOUTH';
+      if (lower.includes('eap') || lower.includes('corp') || lower.includes('기업')) return 'CORPORATE_EAP';
+      if (lower.includes('indiv') || lower.includes('개인') || lower.includes('성인')) return 'INDIVIDUAL';
+    }
+    // 2. Initial service prop
+    if (initialService && initialService !== 'ALL') return initialService;
+    // 3. LocalStorage
+    try {
+      const saved = localStorage.getItem(SERVICE_STORAGE_KEY) as CounselingServiceKey;
+      if (saved && COUNSELING_SERVICES.some(s => s.key === saved)) {
+        return saved;
+      }
+    } catch {
+      // ignore
+    }
+    return 'ALL';
+  });
+
+  // Current viewing step (Active State highlight in flowchart & deep-dive panel)
+  const [activeStepNumber, setActiveStepNumber] = useState<number>(() => {
+    // If URL step is provided
+    const paramStep = searchParams.get('step') || searchParams.get('currentStep');
+    if (paramStep) {
+      const parsed = parseInt(paramStep, 10);
+      if (parsed >= 1 && parsed <= 5) return parsed;
+    }
+    // If service has primary step
+    const s = COUNSELING_SERVICES.find(srv => srv.key === selectedService);
+    if (s && s.key !== 'ALL') {
+      return s.primaryStep;
+    }
+    return defaultStep;
+  });
+
+  // User's self-reported current position in their counseling journey
   const [userCurrentStep, setUserCurrentStep] = useState<number>(() => {
     try {
-      const saved = localStorage.getItem(STORAGE_KEY);
+      const saved = localStorage.getItem(STEP_STORAGE_KEY);
       if (saved) {
         const parsed = parseInt(saved, 10);
         if (parsed >= 1 && parsed <= 5) return parsed;
+      }
+      // Check if user has a recent reservation stored
+      const hasRecentRes = localStorage.getItem('hbbr_last_reservation');
+      if (hasRecentRes) {
+        return 2; // Auto-advance to Step 2: Initial Interview
       }
     } catch {
       // ignore
@@ -419,27 +658,94 @@ export default function CounselingProcessInfographic({
     return defaultStep;
   });
 
-  const [selectedConcern, setSelectedConcern] = useState<ConcernType>('INDIVIDUAL');
+  const [hasRecentReservation, setHasRecentReservation] = useState<boolean>(false);
   const [checkedItems, setCheckedItems] = useState<Record<string, boolean>>({});
   const [showSituationFinder, setShowSituationFinder] = useState(false);
+  const [lastAutoTriggerReason, setLastAutoTriggerReason] = useState<string | null>(null);
 
-  // Sync with localStorage
+  // Sync state with URL params & localStorage
   useEffect(() => {
     try {
-      localStorage.setItem(STORAGE_KEY, userCurrentStep.toString());
+      const lastRes = localStorage.getItem('hbbr_last_reservation');
+      if (lastRes) {
+        setHasRecentReservation(true);
+      }
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  // Listen to external triggers (e.g. from Programs, Reservation, or Navbar)
+  useEffect(() => {
+    const handleServiceSelectEvent = (e: Event) => {
+      const customEvent = e as CustomEvent<{ service?: CounselingServiceKey; step?: number }>;
+      if (customEvent.detail?.service) {
+        handleServiceSelect(customEvent.detail.service);
+      }
+      if (customEvent.detail?.step) {
+        handleSetUserStep(customEvent.detail.step);
+      }
+    };
+
+    window.addEventListener('counseling-service-selected', handleServiceSelectEvent);
+    return () => window.removeEventListener('counseling-service-selected', handleServiceSelectEvent);
+  }, []);
+
+  // Persist userCurrentStep
+  useEffect(() => {
+    try {
+      localStorage.setItem(STEP_STORAGE_KEY, userCurrentStep.toString());
     } catch {
       // ignore
     }
   }, [userCurrentStep]);
 
+  // Persist selectedService
+  useEffect(() => {
+    try {
+      localStorage.setItem(SERVICE_STORAGE_KEY, selectedService);
+    } catch {
+      // ignore
+    }
+  }, [selectedService]);
+
+  const currentServiceInfo = COUNSELING_SERVICES.find(s => s.key === selectedService) || COUNSELING_SERVICES[0];
   const activeStep = COUNSELING_INFOGRAPHIC_STEPS.find(s => s.stepNumber === activeStepNumber) || COUNSELING_INFOGRAPHIC_STEPS[0];
   const userStepData = COUNSELING_INFOGRAPHIC_STEPS.find(s => s.stepNumber === userCurrentStep) || COUNSELING_INFOGRAPHIC_STEPS[0];
-  const activeScenario = activeStep.scenarioExamples[selectedConcern];
+  
+  // Scenario matching
+  const scenarioKey: ConcernType = 
+    selectedService === 'INDIVIDUAL' ? 'INDIVIDUAL' :
+    selectedService === 'COUPLES' ? 'COUPLE' :
+    selectedService === 'YOUTH' ? 'YOUTH' :
+    selectedService === 'ASSESSMENT' ? 'ASSESSMENT' :
+    selectedService === 'CORPORATE_EAP' ? 'CORPORATE_EAP' : 'INDIVIDUAL';
+
+  const activeScenario = activeStep.scenarioExamples[scenarioKey] || activeStep.scenarioExamples.INDIVIDUAL;
+
+  // Handle service change: Automatically activates the primary step for this service!
+  const handleServiceSelect = (serviceKey: CounselingServiceKey) => {
+    setSelectedService(serviceKey);
+    const serviceInfo = COUNSELING_SERVICES.find(s => s.key === serviceKey);
+    if (serviceInfo) {
+      if (serviceKey === 'ALL') {
+        setActiveStepNumber(userCurrentStep || 1);
+        setLastAutoTriggerReason(`전체 5단계 표준 치유 로드맵으로 복귀했습니다.`);
+      } else {
+        // Automatically highlight corresponding process step (Active State)
+        setActiveStepNumber(serviceInfo.primaryStep);
+        setLastAutoTriggerReason(
+          `선택하신 [${serviceInfo.label}] 서비스에 맞춰 STEP 0${serviceInfo.primaryStep} (${serviceInfo.badge}) 단계가 자동으로 강조 표시(Active)되었습니다.`
+        );
+      }
+    }
+  };
 
   const handleSetUserStep = (stepNum: number) => {
     setUserCurrentStep(stepNum);
     setActiveStepNumber(stepNum);
     setShowSituationFinder(false);
+    setLastAutoTriggerReason(`사용자 현재 진행 단계가 [STEP 0${stepNum}]로 설정되어 자동으로 활성화되었습니다.`);
   };
 
   const handleToggleChecklist = (itemKey: string) => {
@@ -467,7 +773,7 @@ export default function CounselingProcessInfographic({
               <Compass className="w-4 h-4 text-brand-sage animate-spin-slow" />
               <span>Interactive Counseling Flowchart</span>
               <span aria-hidden="true" className="text-brand-brown/30">·</span>
-              <span>체계적인 5단계 치유 로드맵</span>
+              <span>스마트 단계 자동 감지 &amp; 맞춤 로드맵</span>
             </div>
 
             <h2 className="text-2xl sm:text-3xl md:text-4xl font-serif font-bold text-brand-brown mb-4 leading-snug">
@@ -476,7 +782,7 @@ export default function CounselingProcessInfographic({
 
             <p className="text-xs sm:text-sm md:text-base text-brand-brown/75 font-serif leading-relaxed">
               <strong>신청(Application) ➔ 초기면담(Initial Interview) ➔ 심리검사(Testing) ➔ 심층상담(Counseling) ➔ 사후관리(Follow-up)</strong><br className="hidden sm:inline" />
-              나의 현재 단계를 클릭하여 하이라이트하고, 각 단계별 준비 사항과 치유 과정을 확인해보세요.
+              상담 서비스 또는 나의 현재 단계를 선택하면 해당 프로세스가 <strong>자동으로 강조 표시(Active State)</strong>됩니다.
             </p>
 
             {/* Quick Metrics */}
@@ -493,13 +799,118 @@ export default function CounselingProcessInfographic({
               <span aria-hidden="true" className="text-brand-brown/30">·</span>
               <span className="flex items-center gap-1.5">
                 <Award className="w-4 h-4 text-amber-600" />
-                <span>교육학 박사 직접 상담</span>
+                <span>교육학 박사 1:1 책임 전담</span>
               </span>
             </div>
           </div>
         )}
 
-        {/* User's Current Step Tracker Strip */}
+        {/* 1. COUNSELING SERVICE SELECTOR BAR (자동 활성화 트리거) */}
+        <div className="mb-8 bg-white p-5 sm:p-6 rounded-3xl border border-brand-green/35 shadow-sm">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-4 pb-3 border-b border-brand-green/20">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-xl bg-brand-sage/15 text-brand-sage flex items-center justify-center shrink-0">
+                <Zap className="w-4 h-4" />
+              </div>
+              <div>
+                <span className="text-xs font-bold font-serif text-brand-sage tracking-wider uppercase block">
+                  서비스별 프로세스 자동 강조 (Service Active Selector)
+                </span>
+                <h3 className="text-sm sm:text-base font-bold font-serif text-brand-brown">
+                  원하시는 상담 서비스를 선택하세요 — 해당 단계가 자동으로 활성화됩니다:
+                </h3>
+              </div>
+            </div>
+
+            {selectedService !== 'ALL' && (
+              <button
+                type="button"
+                onClick={() => handleServiceSelect('ALL')}
+                className="self-start md:self-auto text-xs font-serif text-brand-brown/60 hover:text-brand-sage flex items-center gap-1 transition-colors cursor-pointer"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                <span>전체 기본 플로우로 복귀</span>
+              </button>
+            )}
+          </div>
+
+          {/* 6 Interactive Service Tabs */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
+            {COUNSELING_SERVICES.map((srv) => {
+              const IconComp = srv.icon;
+              const isSelected = selectedService === srv.key;
+              return (
+                <button
+                  key={srv.key}
+                  type="button"
+                  onClick={() => handleServiceSelect(srv.key)}
+                  aria-pressed={isSelected}
+                  className={cn(
+                    "p-3 rounded-2xl text-left border transition-all duration-200 cursor-pointer flex flex-col justify-between group relative overflow-hidden",
+                    isSelected
+                      ? "bg-brand-sage text-white border-brand-sage shadow-md ring-2 ring-brand-sage/30 scale-[1.02]"
+                      : "bg-brand-beige/20 hover:bg-brand-green/20 text-brand-brown border-brand-green/25 hover:border-brand-sage/40"
+                  )}
+                >
+                  <div>
+                    <div className="flex items-center justify-between gap-1 mb-2">
+                      <div className={cn(
+                        "w-7 h-7 rounded-lg flex items-center justify-center transition-colors",
+                        isSelected ? "bg-white/20 text-white" : "bg-white text-brand-sage shadow-2xs"
+                      )}>
+                        <IconComp className="w-3.5 h-3.5" />
+                      </div>
+                      {isSelected ? (
+                        <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-white/25 text-white font-bold animate-pulse">
+                          Active
+                        </span>
+                      ) : srv.key !== 'ALL' ? (
+                        <span className="text-[9px] px-1 py-0.2 rounded-md bg-brand-green/40 text-brand-brown/70 font-mono">
+                          STEP 0{srv.primaryStep}
+                        </span>
+                      ) : null}
+                    </div>
+                    <div className={cn(
+                      "font-serif font-bold text-xs sm:text-sm leading-snug",
+                      isSelected ? "text-white" : "text-brand-brown group-hover:text-brand-sage"
+                    )}>
+                      {srv.shortLabel}
+                    </div>
+                  </div>
+                  <div className={cn(
+                    "text-[10px] mt-1.5 truncate leading-tight",
+                    isSelected ? "text-white/80" : "text-brand-brown/55"
+                  )}>
+                    {srv.badge}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Dynamic Auto-Trigger Notice Banner */}
+          <AnimatePresence mode="wait">
+            {lastAutoTriggerReason && (
+              <motion.div
+                key={lastAutoTriggerReason}
+                initial={{ opacity: 0, y: -6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -6 }}
+                className="mt-4 p-3 rounded-xl bg-brand-sage/10 border border-brand-sage/25 text-xs font-serif text-brand-brown flex items-center gap-2.5"
+              >
+                <div className="w-5 h-5 rounded-full bg-brand-sage text-white flex items-center justify-center shrink-0">
+                  <Check className="w-3 h-3 stroke-[3]" />
+                </div>
+                <div className="flex-grow">
+                  <span className="font-bold text-brand-sage mr-1">[자동 강조 알림]</span>
+                  <span>{lastAutoTriggerReason}</span>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+
+        {/* 2. USER'S CURRENT STEP TRACKER STRIP */}
         <div className="mb-8 p-4 sm:p-5 rounded-2xl bg-white border border-brand-green/30 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-brand-sage text-white flex items-center justify-center shrink-0 shadow-2xs">
@@ -508,7 +919,7 @@ export default function CounselingProcessInfographic({
             <div>
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="text-xs font-bold text-brand-sage font-serif uppercase tracking-wider">
-                  나의 현재 상담 단계
+                  나의 현재 진행 단계 (Current Progress)
                 </span>
                 <span className="text-[11px] px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold font-mono">
                   STEP 0{userCurrentStep} ({userStepData.stageNameEn})
@@ -516,9 +927,14 @@ export default function CounselingProcessInfographic({
                 <span className="text-xs text-brand-brown/60 font-serif hidden sm:inline">
                   진행률 {userCurrentStep * 20}%
                 </span>
+                {hasRecentReservation && (
+                  <span className="text-[10px] px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 font-bold">
+                    ✓ 예약 접수 확인됨
+                  </span>
+                )}
               </div>
               <p className="text-xs sm:text-sm font-bold text-brand-brown font-serif mt-0.5">
-                현재 <span className="text-brand-sage underline underline-offset-4 font-extrabold">{userStepData.stageName} ({userStepData.title})</span> 단계입니다.
+                현재 내담자님의 위치는 <span className="text-brand-sage underline underline-offset-4 font-extrabold">{userStepData.stageName} ({userStepData.title})</span> 단계입니다.
               </p>
             </div>
           </div>
@@ -528,7 +944,7 @@ export default function CounselingProcessInfographic({
             <button
               type="button"
               onClick={() => setShowSituationFinder(prev => !prev)}
-              className="px-3.5 py-1.5 rounded-xl text-xs font-serif font-bold bg-brand-beige/50 hover:bg-brand-sage hover:text-white text-brand-brown border border-brand-green/30 transition-all flex items-center gap-1.5 cursor-pointer"
+              className="px-3.5 py-1.5 rounded-xl text-xs font-serif font-bold bg-brand-beige/50 hover:bg-brand-sage hover:text-white text-brand-brown border border-brand-green/30 transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
             >
               <Compass className="w-3.5 h-3.5" />
               <span>상황으로 내 단계 찾기</span>
@@ -561,7 +977,7 @@ export default function CounselingProcessInfographic({
                 <div className="flex items-center justify-between mb-3 pb-2 border-b border-brand-green/20">
                   <span className="text-xs font-serif font-bold text-brand-brown flex items-center gap-1.5">
                     <Compass className="w-4 h-4 text-brand-sage" />
-                    <span>현재 나의 상황에 가장 가까운 항목을 클릭하세요:</span>
+                    <span>현재 나의 상황에 가장 가까운 항목을 클릭하시면 해당 단계가 자동으로 활성화됩니다:</span>
                   </span>
                   <button
                     type="button"
@@ -594,24 +1010,24 @@ export default function CounselingProcessInfographic({
           )}
         </AnimatePresence>
 
-        {/* 5-STEP INTERACTIVE VISUAL FLOW CHART PIPELINE */}
+        {/* 3. 5-STEP INTERACTIVE VISUAL FLOW CHART PIPELINE */}
         <div className="mb-10 sm:mb-12">
           
           {/* Visual Progress Connector Pipeline Line (Desktop) */}
           <div className="relative mb-8 hidden lg:block px-8">
-            <div className="h-2 w-full bg-brand-green/20 rounded-full overflow-hidden relative">
+            <div className="h-2.5 w-full bg-brand-green/20 rounded-full overflow-hidden relative">
               <motion.div 
                 className="h-full bg-gradient-to-r from-emerald-500 via-blue-500 to-brand-sage transition-all duration-500 rounded-full"
-                style={{ width: `${(userCurrentStep / 5) * 100}%` }}
+                style={{ width: `${(activeStepNumber / 5) * 100}%` }}
               />
             </div>
             
-            {/* Pulsing indicator marker at current step percentage */}
+            {/* Pulsing indicator marker at active step percentage */}
             <div 
-              className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-5 h-5 rounded-full bg-white border-3 border-brand-sage shadow-md flex items-center justify-center transition-all duration-500"
-              style={{ left: `calc(${((userCurrentStep - 0.5) / 5) * 100}% + 2rem)` }}
+              className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-6 h-6 rounded-full bg-white border-4 border-brand-sage shadow-md flex items-center justify-center transition-all duration-500 z-10"
+              style={{ left: `calc(${((activeStepNumber - 0.5) / 5) * 100}% + 2rem)` }}
             >
-              <div className="w-2 h-2 rounded-full bg-brand-sage animate-ping" />
+              <div className="w-2.5 h-2.5 rounded-full bg-brand-sage animate-ping" />
             </div>
           </div>
 
@@ -622,7 +1038,12 @@ export default function CounselingProcessInfographic({
               const isViewing = activeStepNumber === step.stepNumber;
               const isUserCurrent = userCurrentStep === step.stepNumber;
               const isCompleted = userCurrentStep > step.stepNumber;
-              const isUpcoming = userCurrentStep < step.stepNumber;
+              const isServiceCore = currentServiceInfo.coreSteps.includes(step.stepNumber);
+              const isServicePrimary = currentServiceInfo.primaryStep === step.stepNumber && selectedService !== 'ALL';
+              
+              // Active State: step is either actively selected, user's current step, or primary for selected service
+              const isActivelyHighlighted = isViewing;
+              const stepTagInfo = SERVICE_STEP_TAGS[selectedService]?.[step.stepNumber] || SERVICE_STEP_TAGS.ALL[step.stepNumber];
 
               return (
                 <div
@@ -632,16 +1053,18 @@ export default function CounselingProcessInfographic({
                   <button
                     type="button"
                     onClick={() => setActiveStepNumber(step.stepNumber)}
-                    aria-pressed={isViewing}
+                    aria-pressed={isActivelyHighlighted}
                     className={cn(
-                      "text-left p-4 sm:p-5 rounded-2xl sm:rounded-3xl border transition-all duration-200 cursor-pointer relative group flex flex-col justify-between h-full w-full",
-                      isUserCurrent
-                        ? "bg-white border-brand-sage shadow-lg ring-2 ring-brand-sage/40 scale-[1.02] z-10"
-                        : isViewing
-                          ? "bg-white border-brand-brown/30 shadow-md ring-1 ring-brand-brown/20"
-                          : isCompleted
-                            ? "bg-emerald-50/40 hover:bg-white border-emerald-500/25 text-brand-brown/90"
-                            : "bg-white/80 hover:bg-brand-beige/20 border-brand-green/20 text-brand-brown/70 hover:border-brand-green/40"
+                      "text-left p-4 sm:p-5 rounded-2xl sm:rounded-3xl border transition-all duration-300 cursor-pointer relative group flex flex-col justify-between h-full w-full",
+                      isActivelyHighlighted
+                        ? "bg-white border-brand-sage shadow-xl ring-4 ring-brand-sage/30 scale-[1.03] z-20"
+                        : isUserCurrent
+                          ? "bg-white border-emerald-500/70 shadow-md ring-2 ring-emerald-500/30 scale-[1.01] z-10"
+                          : isServiceCore
+                            ? "bg-emerald-50/30 border-brand-sage/50 hover:bg-white shadow-xs"
+                            : isCompleted
+                              ? "bg-emerald-50/20 hover:bg-white border-emerald-500/25 text-brand-brown/85"
+                              : "bg-white/80 hover:bg-brand-beige/25 border-brand-green/20 text-brand-brown/70 hover:border-brand-green/40"
                     )}
                   >
                     {/* Top: Step Badge & Status */}
@@ -650,12 +1073,12 @@ export default function CounselingProcessInfographic({
                         <div className="flex items-center gap-1.5">
                           <span className={cn(
                             "w-6 h-6 rounded-lg font-mono text-xs font-bold flex items-center justify-center transition-colors",
-                            isUserCurrent
+                            isActivelyHighlighted
                               ? "bg-brand-sage text-white shadow-2xs font-extrabold"
-                              : isCompleted
+                              : isUserCurrent
                                 ? "bg-emerald-600 text-white"
-                                : isViewing
-                                  ? "bg-brand-brown text-white"
+                                : isCompleted
+                                  ? "bg-emerald-600/80 text-white"
                                   : "bg-brand-brown/10 text-brand-brown/70 group-hover:bg-brand-sage/10 group-hover:text-brand-sage"
                           )}>
                             {isCompleted ? <Check className="w-3.5 h-3.5 stroke-[3]" /> : `0${step.stepNumber}`}
@@ -666,10 +1089,18 @@ export default function CounselingProcessInfographic({
                         </div>
 
                         {/* Status Pills */}
-                        {isUserCurrent ? (
+                        {isActivelyHighlighted ? (
                           <span className="inline-flex items-center gap-1 text-[10px] text-brand-sage font-extrabold bg-brand-sage/15 px-2 py-0.5 rounded-full border border-brand-sage/30 animate-pulse">
                             <span className="w-1.5 h-1.5 rounded-full bg-brand-sage" />
-                            <span>나의 단계</span>
+                            <span>Active</span>
+                          </span>
+                        ) : isUserCurrent ? (
+                          <span className="inline-flex items-center gap-1 text-[10px] text-emerald-800 font-extrabold bg-emerald-100/80 px-2 py-0.5 rounded-full border border-emerald-400">
+                            <span>내 위치</span>
+                          </span>
+                        ) : isServicePrimary ? (
+                          <span className="inline-flex items-center gap-0.5 text-[10px] text-amber-700 font-bold bg-amber-100/70 px-1.5 py-0.5 rounded-md">
+                            <span>★ 핵심</span>
                           </span>
                         ) : isCompleted ? (
                           <span className="inline-flex items-center gap-0.5 text-[10px] text-emerald-700 font-bold bg-emerald-100/60 px-1.5 py-0.5 rounded-md">
@@ -696,19 +1127,28 @@ export default function CounselingProcessInfographic({
                         <div>
                           <h3 className={cn(
                             "text-xs sm:text-sm font-bold font-serif leading-snug line-clamp-1 transition-colors",
-                            isUserCurrent 
+                            isActivelyHighlighted 
                               ? "text-brand-sage font-extrabold" 
-                              : isViewing 
+                              : isUserCurrent 
                                 ? "text-brand-brown font-extrabold" 
                                 : "text-brand-brown group-hover:text-brand-sage"
                           )}>
                             {step.stageName}
                           </h3>
-                          <p className="text-[11px] text-brand-brown/65 font-serif line-clamp-2 mt-0.5 leading-tight">
-                            {step.flowTitle}
+                          <p className="text-[11px] text-brand-brown/70 font-serif line-clamp-2 mt-0.5 leading-tight">
+                            {stepTagInfo.customSubtitle || step.flowTitle}
                           </p>
                         </div>
                       </div>
+
+                      {/* Service Core Badge */}
+                      {isServiceCore && selectedService !== 'ALL' && (
+                        <div className="mt-1">
+                          <span className="inline-block text-[10px] font-bold text-emerald-800 bg-emerald-100/70 px-2 py-0.5 rounded-md border border-emerald-300">
+                            {stepTagInfo.tag}
+                          </span>
+                        </div>
+                      )}
                     </div>
 
                     {/* Bottom: Duration & Details Indicator */}
@@ -719,24 +1159,24 @@ export default function CounselingProcessInfographic({
                       </span>
                       <ChevronRight className={cn(
                         "w-3.5 h-3.5 transition-transform shrink-0",
-                        isViewing ? "text-brand-sage translate-x-1" : "text-brand-brown/30 group-hover:text-brand-sage group-hover:translate-x-0.5"
+                        isActivelyHighlighted ? "text-brand-sage translate-x-1" : "text-brand-brown/30 group-hover:text-brand-sage group-hover:translate-x-0.5"
                       )} />
                     </div>
                   </button>
 
                   {/* Flow connecting arrow on desktop */}
                   {step.stepNumber < 5 && (
-                    <div className="hidden lg:flex absolute -right-2.5 top-1/2 -translate-y-1/2 z-20 w-5 h-5 rounded-full bg-white border border-brand-green/30 items-center justify-center text-brand-sage shadow-2xs pointer-events-none">
+                    <div className="hidden lg:flex absolute -right-2.5 top-1/2 -translate-y-1/2 z-30 w-5 h-5 rounded-full bg-white border border-brand-green/30 items-center justify-center text-brand-sage shadow-2xs pointer-events-none">
                       <ArrowRight className="w-3 h-3" />
                     </div>
                   )}
 
-                  {/* Quick "Set as my current step" button below card */}
+                  {/* Quick "이 단계로 내 위치 지정" button below card */}
                   <div className="mt-1.5 text-center">
                     {isUserCurrent ? (
-                      <span className="text-[10px] font-bold text-brand-sage inline-flex items-center gap-1">
-                        <CheckCircle2 className="w-3 h-3" />
-                        <span>현재 내 위치</span>
+                      <span className="text-[10px] font-bold text-emerald-700 inline-flex items-center gap-1">
+                        <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                        <span>현재 내 진행 단계</span>
                       </span>
                     ) : (
                       <button
@@ -745,9 +1185,9 @@ export default function CounselingProcessInfographic({
                           e.stopPropagation();
                           handleSetUserStep(step.stepNumber);
                         }}
-                        className="text-[10px] font-serif text-brand-brown/50 hover:text-brand-sage hover:underline cursor-pointer transition-colors"
+                        className="text-[10px] font-serif text-brand-brown/60 hover:text-brand-sage hover:underline cursor-pointer transition-colors"
                       >
-                        이 단계로 지정
+                        이 단계로 내 위치 지정
                       </button>
                     )}
                   </div>
@@ -757,10 +1197,10 @@ export default function CounselingProcessInfographic({
           </div>
         </div>
 
-        {/* Selected Step Spotlight Deep-Dive Infographic Panel */}
+        {/* 4. SELECTED STEP SPOTLIGHT DEEP-DIVE INFOGRAPHIC PANEL */}
         <AnimatePresence mode="wait">
           <motion.div
-            key={activeStep.id}
+            key={`${activeStep.id}-${selectedService}`}
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -12 }}
@@ -780,14 +1220,21 @@ export default function CounselingProcessInfographic({
                 </div>
                 <div>
                   <div className="flex items-center gap-2 text-xs font-serif text-brand-sage font-bold tracking-wider mb-1 flex-wrap">
-                    <span>STEP 0{activeStep.stepNumber}</span>
+                    <span className="px-2 py-0.5 rounded-full bg-brand-sage/15 text-brand-sage">
+                      STEP 0{activeStep.stepNumber}
+                    </span>
                     <span aria-hidden="true" className="text-brand-brown/30">·</span>
                     <span className="text-brand-brown/80 font-mono uppercase">{activeStep.stageNameEn}</span>
                     <span aria-hidden="true" className="text-brand-brown/30">·</span>
                     <span className="text-brand-brown/80">{activeStep.stageName}</span>
                     {userCurrentStep === activeStep.stepNumber && (
                       <span className="bg-emerald-100 text-emerald-800 text-[10px] px-2 py-0.5 rounded-full font-bold">
-                        ★ 현재 나의 단계
+                        ★ 현재 나의 단계 (Active)
+                      </span>
+                    )}
+                    {selectedService !== 'ALL' && currentServiceInfo.coreSteps.includes(activeStep.stepNumber) && (
+                      <span className="bg-amber-100 text-amber-800 text-[10px] px-2 py-0.5 rounded-full font-bold">
+                        ★ {currentServiceInfo.shortLabel} 핵심 단계
                       </span>
                     )}
                   </div>
@@ -811,7 +1258,7 @@ export default function CounselingProcessInfographic({
                     className="px-3.5 py-2 rounded-xl text-xs font-serif font-bold bg-brand-sage hover:bg-brand-sage/90 text-white transition-all shadow-2xs flex items-center gap-1.5 cursor-pointer"
                   >
                     <Star className="w-3.5 h-3.5" />
-                    <span>내 현재 단계로 설정</span>
+                    <span>이 단계로 내 위치 지정</span>
                   </button>
                 ) : (
                   <div className="px-3 py-2 rounded-xl text-xs font-serif font-bold bg-emerald-50 text-emerald-800 border border-emerald-300 flex items-center gap-1.5">
@@ -821,6 +1268,21 @@ export default function CounselingProcessInfographic({
                 )}
               </div>
             </div>
+
+            {/* Service-Tailored Context Banner */}
+            {selectedService !== 'ALL' && (
+              <div className="mt-6 p-4 rounded-2xl bg-brand-sage/10 border border-brand-sage/25 flex items-start gap-3">
+                <Info className="w-5 h-5 text-brand-sage shrink-0 mt-0.5" />
+                <div className="text-xs sm:text-sm font-serif">
+                  <span className="font-bold text-brand-brown">
+                    [{currentServiceInfo.label}] 서비스 안내:
+                  </span>{' '}
+                  <span className="text-brand-brown/80">
+                    {currentServiceInfo.highlightReason} (권장 시간: {currentServiceInfo.recommendedDuration})
+                  </span>
+                </div>
+              </div>
+            )}
 
             {/* Core Objective Callout */}
             <div className="my-6 p-4 sm:p-5 rounded-2xl bg-brand-beige/25 border border-brand-green/20 flex items-start gap-3">
@@ -950,38 +1412,17 @@ export default function CounselingProcessInfographic({
 
             </div>
 
-            {/* Interactive Concern-Tailored Roadmap Preview */}
+            {/* Service-Specific Scenario Simulation Preview */}
             <div className="bg-gradient-to-r from-brand-beige/30 via-white to-brand-beige/30 rounded-2xl p-5 sm:p-6 border border-brand-green/25">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 pb-3 border-b border-brand-green/20">
                 <div className="flex items-center gap-2">
                   <RefreshCw className="w-4 h-4 text-brand-sage" />
                   <span className="text-xs sm:text-sm font-serif font-bold text-brand-brown">
-                    고민 유형별 5단계 진행 시뮬레이션
+                    선택 서비스에 맞춘 0{activeStep.stepNumber}단계 진행 시뮬레이션
                   </span>
                 </div>
-
-                {/* Scenario Tabs (Functional segmented buttons) */}
-                <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
-                  {CONCERN_TABS.map((tab) => {
-                    const TabIcon = tab.icon;
-                    const isSelected = selectedConcern === tab.type;
-                    return (
-                      <button
-                        key={tab.type}
-                        type="button"
-                        onClick={() => setSelectedConcern(tab.type)}
-                        className={cn(
-                          "px-3 py-1.5 rounded-xl text-xs font-serif font-medium transition-all flex items-center gap-1.5 shrink-0 cursor-pointer",
-                          isSelected
-                            ? "bg-brand-sage text-white shadow-2xs font-bold"
-                            : "bg-white text-brand-brown/70 hover:bg-brand-green/20 hover:text-brand-brown border border-brand-green/20"
-                        )}
-                      >
-                        <TabIcon className="w-3.5 h-3.5" />
-                        <span>{tab.label}</span>
-                      </button>
-                    );
-                  })}
+                <div className="text-xs font-serif text-brand-sage font-bold bg-white px-2.5 py-1 rounded-full border border-brand-green/30">
+                  적용 서비스: {currentServiceInfo.label}
                 </div>
               </div>
 

@@ -25,8 +25,16 @@ export default function Footer() {
             <div className="mb-4">
               <Link 
                 to="/" 
-                className="inline-block py-1 transition-transform duration-200 hover:scale-[1.01]"
-                aria-label="행복바람 심리상담연구소 홈으로 이동"
+                onClick={(e) => {
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                  if (window.location.hash) {
+                    window.history.pushState(null, '', '/');
+                  }
+                  window.dispatchEvent(new CustomEvent('reset-home-view'));
+                }}
+                className="inline-block py-1 transition-transform duration-200 hover:scale-[1.01] cursor-pointer"
+                aria-label="행복바람 심리상담연구소 초기 메인 화면으로 이동"
+                title="행복바람심리상담연구소 초기 메인 화면으로 이동"
               >
                 <span className="text-xl sm:text-2xl font-serif font-bold text-brand-beige tracking-tight">
                   행복바람<span className="text-brand-sage">심리상담연구소</span>
@@ -46,46 +54,50 @@ export default function Footer() {
             </div>
           </div>
           
-          {/* Quick Menu (5 Main IA Categories) */}
-          <div>
-            <h4 className="font-bold mb-5 text-brand-sage uppercase tracking-wider text-xs sm:text-sm">Navigation</h4>
-            <ul className="space-y-2.5 text-xs sm:text-sm text-brand-beige/70">
-              <li><Link to="/about" className="hover:text-brand-sage transition-colors">1. 연구소 소개 (인사말·전문가·공간·오시는길)</Link></li>
-              <li><Link to="/programs" className="hover:text-brand-sage transition-colors">2. 심리상담 (성인·청소년·부부·집단)</Link></li>
-              <li><Link to="/assessment" className="hover:text-brand-sage transition-colors text-emerald-300 font-medium">3. 심리평가/검사 (풀배터리·TCI·스트레스)</Link></li>
-              <li><Link to="/guide" className="hover:text-brand-sage transition-colors">4. 상담 예약/안내 (절차·비용·실시간예약·FAQ)</Link></li>
-              <li><Link to="/community" className="hover:text-brand-sage transition-colors">5. 커뮤니티 (공지사항·칼럼·상담후기)</Link></li>
-            </ul>
-          </div>
-
           {/* Contact Details (Contact Us) */}
           <div>
             <h4 className="font-bold mb-5 text-brand-sage uppercase tracking-wider text-xs sm:text-sm">Contact Us</h4>
-            <ul className="space-y-2.5 text-xs sm:text-sm text-brand-beige/70">
+            <ul className="space-y-3 text-xs sm:text-sm text-brand-beige/70">
               <li className="flex items-start gap-2">
-                <span className="w-14 shrink-0 font-bold text-brand-beige">주소:</span>
-                <span>울산 울주군 삼남읍 도호1길 23 상가 408호</span>
+                <span className="w-16 shrink-0 font-bold text-brand-beige">주소:</span>
+                <span>울산광역시 울주군 삼남읍 도호1길 23 상가 408호</span>
               </li>
               <li className="flex items-start gap-2">
-                <span className="w-14 shrink-0 font-bold text-brand-beige">전화:</span>
+                <span className="w-16 shrink-0 font-bold text-brand-beige">전화:</span>
                 <a href="tel:052-254-0230" className="hover:text-brand-sage transition-colors font-semibold text-brand-beige">
                   052-254-0230
                 </a>
               </li>
               <li className="flex items-start gap-2">
-                <span className="w-14 shrink-0 font-bold text-brand-beige">운영:</span>
-                <div>월~토 1일 5회 사전 예약제 (일·공휴일 휴무)</div>
+                <span className="w-16 shrink-0 font-bold text-brand-beige">이메일:</span>
+                <span>mikypa@naver.com</span>
               </li>
-              <li className="pt-2 border-t border-brand-beige/10 flex flex-wrap gap-x-3 gap-y-1 text-xs">
-                <Link to="/confidentiality" className="hover:text-brand-sage transition-colors">비밀보장원칙</Link>
-                <Link to="/privacy" className="hover:text-brand-sage transition-colors">개인정보처리방침</Link>
-                <Link to="/terms" className="hover:text-brand-sage transition-colors">이용약관</Link>
+              <li className="flex items-start gap-2">
+                <span className="w-16 shrink-0 font-bold text-brand-beige">운영시간:</span>
+                <div className="space-y-0.5">
+                  <div>월~토 1일 5회 사전 예약제</div>
+                  <div className="text-[11px] text-brand-beige/50">(09:00, 10:30, 14:00, 15:30, 19:00)</div>
+                  <div className="text-[11px] text-amber-300/70">일요일, 공휴일 휴무</div>
+                </div>
+              </li>
+            </ul>
+          </div>
+
+          {/* Customer & Legal */}
+          <div>
+            <h4 className="font-bold mb-5 text-brand-sage uppercase tracking-wider text-xs sm:text-sm">Customer &amp; Legal</h4>
+            <ul className="space-y-3 text-xs sm:text-sm text-brand-beige/65">
+              <li><Link to="/mood-tracker" className="hover:text-brand-sage transition-colors text-emerald-300 font-medium">데일리 무드 트래커 (감정 분석)</Link></li>
+              <li><Link to="/confidentiality" className="hover:text-brand-sage transition-colors">비밀보장원칙</Link></li>
+              <li><Link to="/privacy" className="hover:text-brand-sage transition-colors">개인정보처리방침</Link></li>
+              <li><Link to="/terms" className="hover:text-brand-sage transition-colors">이용약관</Link></li>
+              <li>
                 <button
                   type="button"
                   onClick={handleAdminClick}
-                  className="hover:text-brand-sage transition-colors cursor-pointer"
+                  className="hover:text-brand-sage transition-colors text-left cursor-pointer"
                 >
-                  운영자 모드
+                  운영자 관리 모드
                 </button>
               </li>
             </ul>

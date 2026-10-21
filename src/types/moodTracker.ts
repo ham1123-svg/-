@@ -119,6 +119,8 @@ export interface TrendDataPoint {
   dayLabel: string;
   shortDate: string;
   score: number;
+  intensity?: number;
+  isRecorded?: boolean;
   moodId: MoodId;
   emoji: string;
   shortLabel: string;

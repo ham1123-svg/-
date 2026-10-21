@@ -16,6 +16,11 @@ export default function Guide() {
   const [processViewMode, setProcessViewMode] = useState<'infographic' | 'timeline'>('infographic');
 
   useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (params.get('service') || params.get('step') || params.get('program')) {
+      setProcessViewMode('infographic');
+    }
+
     if (location.hash) {
       const element = document.querySelector(location.hash);
       if (element) {

@@ -50,6 +50,21 @@ export default function Home() {
     }
   }, []);
 
+  // Listen to global reset-home-view event from Navbar or elsewhere
+  useEffect(() => {
+    const handleReset = () => {
+      setSearchTerm("");
+      if (window.location.hash) {
+        window.history.pushState(null, '', '/');
+      }
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    window.addEventListener('reset-home-view', handleReset);
+    return () => window.removeEventListener('reset-home-view', handleReset);
+  }, []);
+
+
   const scrollToTestimonials = (e?: React.MouseEvent) => {
     if (e) {
       e.preventDefault();
@@ -148,6 +163,7 @@ export default function Home() {
                   className="w-full h-full object-cover"
                   referrerPolicy="no-referrer"
                 />
+
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent flex items-end p-6 sm:p-8">
                   <div className="text-white">
                     <p className="text-xs uppercase tracking-widest text-white/80 font-medium mb-1">Peace of Mind</p>
@@ -301,7 +317,7 @@ export default function Home() {
       {/* Virtual Office Tour: High-Quality Interior Carousel for Client Comfort */}
       <VirtualOfficeTour />
 
-      {/* Counseling Process: 5-Step Interactive Visual Flow Chart (Application -> Initial Interview -> Testing -> Counseling -> Follow-up) */}
+      {/* Counseling Process Infographic: Step-by-Step Visual Journey (예약 -> 초기상담 -> 진행 -> 종결) */}
       <CounselingProcessInfographic />
 
       {/* Counseling Insights (Expert Clinical Column & Blog Posts) */}

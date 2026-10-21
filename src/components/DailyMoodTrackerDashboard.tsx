@@ -23,8 +23,24 @@ import {
   ChevronLeft,
   ChevronRight,
   Sliders,
-  Award
+  Award,
+  Layers,
+  Check,
+  Info
 } from 'lucide-react';
+import {
+  ResponsiveContainer,
+  ComposedChart,
+  Area,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip as RechartsTooltip,
+  ReferenceLine,
+  ReferenceArea,
+  Legend
+} from 'recharts';
 import {
   MoodId,
   MoodLogEntry,
@@ -70,6 +86,11 @@ export default function DailyMoodTrackerDashboard({
   const [modalTags, setModalTags] = useState<string[]>(['수면/휴식', '자기돌봄']);
   const [modalNote, setModalNote] = useState<string>('');
   const [copiedNotification, setCopiedNotification] = useState<string | null>(null);
+
+  // Recharts interactive display options
+  const [chartMetric, setChartMetric] = useState<'score' | 'both'>('score');
+  const [showZones, setShowZones] = useState<boolean>(true);
+  const [showAverageLine, setShowAverageLine] = useState<boolean>(true);
 
   // Load logs on mount
   useEffect(() => {
@@ -160,60 +181,201 @@ export default function DailyMoodTrackerDashboard({
     setTimeout(() => setCopiedNotification(null), 3000);
   };
 
-  // SVG Chart Dimensions & Calculations
-  const chartHeight = 220;
-  const chartPaddingX = 35;
-  const chartPaddingY = 30;
+  // Prepared data for Recharts Line/Area Chart
+  const chartData = useMemo(() => {
+    return analytics.trendPoints.map((pt) => ({
+      ...pt,
+      scoreValue: pt.score,
+      intensityValue: pt.intensity ?? pt.score,
+    }));
+  }, [analytics.trendPoints]);
 
-  // Generate SVG coordinates for trend line
-  const { points, linePath, areaPath } = useMemo(() => {
-    const count = analytics.trendPoints.length;
-    if (count === 0) return { points: [], linePath: '', areaPath: '' };
+  // Derived Trend Highlights (Peak Day, Valley Day, High Stability Ratio)
+  const { peakDay, valleyDay, highMoodRatio } = useMemo(() => {
+    const recorded = analytics.trendPoints.filter((p) => p.isRecorded);
+    if (recorded.length === 0) {
+      return { peakDay: null, valleyDay: null, highMoodRatio: 0 };
+    }
 
-    const svgWidth = 800; // virtual width
-    const usableWidth = svgWidth - chartPaddingX * 2;
-    const usableHeight = chartHeight - chartPaddingY * 2;
+    let peak = recorded[0];
+    let valley = recorded[0];
+    let highCount = 0;
 
-    const coords = analytics.trendPoints.map((pt, idx) => {
-      const x = chartPaddingX + (idx / Math.max(1, count - 1)) * usableWidth;
-      // score 1 to 10 mapped to y (10 is top, 1 is bottom)
-      const normalizedScore = (pt.score - 1) / 9; // 0 to 1
-      const y = chartHeight - chartPaddingY - normalizedScore * usableHeight;
-      return { x, y, data: pt };
+    recorded.forEach((p) => {
+      if (p.score > peak.score) peak = p;
+      if (p.score < valley.score) valley = p;
+      if (p.score >= 7) highCount++;
     });
 
-    if (coords.length === 1) {
-      const p = coords[0];
-      return {
-        points: coords,
-        linePath: `M ${p.x - 20} ${p.y} L ${p.x + 20} ${p.y}`,
-        areaPath: `M ${p.x - 20} ${p.y} L ${p.x + 20} ${p.y} L ${p.x + 20} ${chartHeight - chartPaddingY} L ${p.x - 20} ${chartHeight - chartPaddingY} Z`,
-      };
-    }
-
-    // Build smooth cubic Bezier curve
-    let line = `M ${coords[0].x} ${coords[0].y}`;
-    for (let i = 0; i < coords.length - 1; i++) {
-      const p0 = coords[i === 0 ? 0 : i - 1];
-      const p1 = coords[i];
-      const p2 = coords[i + 1];
-      const p3 = coords[i + 2 < coords.length ? i + 2 : i + 1];
-
-      const cp1x = p1.x + (p2.x - p0.x) / 6;
-      const cp1y = p1.y + (p2.y - p0.y) / 6;
-      const cp2x = p2.x - (p3.x - p1.x) / 6;
-      const cp2y = p2.y - (p3.y - p1.y) / 6;
-
-      line += ` C ${cp1x.toFixed(1)} ${cp1y.toFixed(1)}, ${cp2x.toFixed(1)} ${cp2y.toFixed(1)}, ${p2.x.toFixed(1)} ${p2.y.toFixed(1)}`;
-    }
-
-    const first = coords[0];
-    const last = coords[coords.length - 1];
-    const baselineY = chartHeight - chartPaddingY;
-    const area = `${line} L ${last.x} ${baselineY} L ${first.x} ${baselineY} Z`;
-
-    return { points: coords, linePath: line, areaPath: area };
+    const highRatio = Math.round((highCount / recorded.length) * 100);
+    return { peakDay: peak, valleyDay: valley, highMoodRatio: highRatio };
   }, [analytics.trendPoints]);
+
+  // Recharts Custom Tooltip Component
+  const CustomRechartsTooltip = ({ active, payload }: { active?: boolean; payload?: any[] }) => {
+    if (active && payload && payload.length) {
+      const data: TrendDataPoint = payload[0].payload;
+      if (!data) return null;
+      const moodConfig = MOOD_DEFINITIONS[data.moodId] || MOOD_DEFINITIONS.peaceful;
+      const isRecorded = data.isRecorded;
+
+      return (
+        <div className="bg-white/95 backdrop-blur-md p-4 rounded-2xl shadow-xl border border-brand-green/30 text-xs font-serif min-w-[220px] max-w-xs space-y-2.5 z-50">
+          <div className="flex items-center justify-between gap-2 border-b border-brand-green/20 pb-2">
+            <div className="flex items-center gap-1.5">
+              <span className="text-xl">{data.emoji}</span>
+              <div>
+                <span className="font-bold text-brand-brown text-sm">
+                  {data.date}
+                </span>
+                <span className="text-brand-brown/60 ml-1 text-[11px]">
+                  ({formatDayOfWeek(data.date)})
+                </span>
+              </div>
+            </div>
+            <span
+              className={cn(
+                "px-2 py-0.5 rounded-full text-[10px] font-bold",
+                isRecorded
+                  ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                  : "bg-gray-100 text-gray-500 border border-gray-200"
+              )}
+            >
+              {isRecorded ? '기록 완료' : '미기록'}
+            </span>
+          </div>
+
+          <div className="space-y-1.5 pt-0.5">
+            <div className="flex items-center justify-between">
+              <span className="text-brand-brown/70">감정 상태:</span>
+              <span className="font-bold text-brand-brown flex items-center gap-1">
+                <span
+                  className="w-2.5 h-2.5 rounded-full inline-block shadow-2xs"
+                  style={{ backgroundColor: isRecorded ? moodConfig.color : '#9CA3AF' }}
+                />
+                {data.shortLabel}
+              </span>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <span className="text-brand-brown/70">기분 점수:</span>
+              <span className="font-bold text-brand-sage font-mono text-sm">
+                {data.score} / 10점
+              </span>
+            </div>
+
+            {chartMetric === 'both' && (
+              <div className="flex items-center justify-between">
+                <span className="text-brand-brown/70">감정 강도:</span>
+                <span className="font-bold text-orange-600 font-mono text-sm">
+                  {data.intensity ?? data.score} / 10점
+                </span>
+              </div>
+            )}
+
+            {data.tags && data.tags.length > 0 && (
+              <div className="pt-1 flex flex-wrap gap-1">
+                {data.tags.map((tag) => (
+                  <span
+                    key={tag}
+                    className="px-1.5 py-0.5 rounded-md bg-brand-beige text-[10px] text-brand-brown/80 border border-brand-green/30"
+                  >
+                    #{tag}
+                  </span>
+                ))}
+              </div>
+            )}
+
+            {data.note && (
+              <div className="p-2 rounded-lg bg-brand-green/10 text-brand-brown/90 italic text-[11px] leading-relaxed border border-brand-green/20">
+                "{data.note}"
+              </div>
+            )}
+          </div>
+
+          <div className="pt-2 border-t border-brand-green/15 flex items-center justify-between text-[11px] text-brand-sage font-bold">
+            <span>클릭하여 기록 수정</span>
+            <ArrowRight className="w-3 h-3" />
+          </div>
+        </div>
+      );
+    }
+    return null;
+  };
+
+  // Recharts Custom Dot for Line Chart
+  const renderCustomDot = (dotProps: any) => {
+    const { cx, cy, payload } = dotProps;
+    if (cx === undefined || cy === undefined || !payload) return null;
+    const isSelected = activeTooltip?.date === payload.date;
+    const moodConfig = MOOD_DEFINITIONS[payload.moodId as MoodId] || MOOD_DEFINITIONS.peaceful;
+    const isRecorded = payload.isRecorded;
+    const hasNote = Boolean(payload.note);
+
+    return (
+      <g
+        key={`dot-${payload.date}`}
+        className="cursor-pointer group"
+        onClick={() => {
+          setActiveTooltip(payload);
+          handleOpenAddModal(payload.date);
+        }}
+      >
+        {isSelected && (
+          <circle
+            cx={cx}
+            cy={cy}
+            r={14}
+            fill={moodConfig.color}
+            fillOpacity={0.25}
+            className="animate-ping"
+          />
+        )}
+
+        <circle
+          cx={cx}
+          cy={cy}
+          r={isSelected ? 7 : isRecorded ? 5.5 : 4}
+          fill={isRecorded ? '#FFFFFF' : '#F3F4F6'}
+          stroke={isRecorded ? moodConfig.color : '#9CA3AF'}
+          strokeWidth={isSelected ? 3 : 2}
+          strokeDasharray={isRecorded ? 'none' : '2 2'}
+        />
+
+        {isRecorded && (
+          <circle
+            cx={cx}
+            cy={cy}
+            r={2.5}
+            fill={moodConfig.color}
+          />
+        )}
+
+        {hasNote && (
+          <circle
+            cx={cx + 4.5}
+            cy={cy - 4.5}
+            r={2.5}
+            fill="#E65100"
+            stroke="#FFFFFF"
+            strokeWidth={1}
+          />
+        )}
+
+        {period === 'weekly' && isRecorded && (
+          <text
+            x={cx}
+            y={cy - 12}
+            textAnchor="middle"
+            fontSize="12"
+            className="select-none pointer-events-none"
+          >
+            {payload.emoji}
+          </text>
+        )}
+      </g>
+    );
+  };
 
   return (
     <div
@@ -377,216 +539,259 @@ export default function DailyMoodTrackerDashboard({
           </div>
         </div>
 
-        {/* 3. Main Chart: Smooth Trajectory & Area Chart */}
+        {/* 3. Main Chart: Recharts Trend Line Graph Report */}
         <div className="p-5 sm:p-7 rounded-3xl bg-white border border-brand-green/30 shadow-sm space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
             <div>
-              <h3 className="text-base sm:text-lg font-serif font-bold text-brand-brown flex items-center gap-2">
-                <TrendingUp className="w-4 h-4 text-brand-sage" />
-                <span>감정 밸런스 궤적 꺾은선 차트</span>
-                <span className="text-xs font-normal text-brand-brown/50">
-                  ({period === 'weekly' ? '최근 7일간' : '최근 30일간'} 일별 지수 변화)
+              <div className="flex items-center gap-2 mb-1">
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-brand-sage/10 text-brand-sage text-[11px] font-bold font-serif border border-brand-sage/20">
+                  <TrendingUp className="w-3 h-3" />
+                  Recharts 정서 분석 엔진
                 </span>
+                <span className="text-xs font-serif font-bold text-brand-brown/50">
+                  {period === 'weekly' ? '주간 7일간 리포트' : '월간 30일간 리포트'}
+                </span>
+              </div>
+              <h3 className="text-lg sm:text-xl font-serif font-bold text-brand-brown flex items-center gap-2">
+                <span>감정 밸런스 궤적 선 그래프 리포트</span>
               </h3>
-              <p className="text-xs text-brand-brown/60 font-serif mt-0.5">
-                데이터 노트를 마우스로 가리키거나 터치하면 해당 일자의 상세 감정과 메모를 확인하실 수 있습니다.
+              <p className="text-xs text-brand-brown/65 font-serif mt-0.5">
+                일자별 감정 지수(1~10점) 및 강도의 변화 추이를 선 그래프로 한눈에 확인하고, 포인트 클릭 시 상세 내용을 수정할 수 있습니다.
               </p>
             </div>
 
-            {/* Reference Zones Legend */}
-            <div className="flex items-center gap-3 text-[11px] font-serif text-brand-brown/70">
-              <span className="inline-flex items-center gap-1">
-                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
-                <span>안정권(7~10)</span>
-              </span>
-              <span className="inline-flex items-center gap-1">
-                <span className="w-2.5 h-2.5 rounded-full bg-amber-400" />
-                <span>보통(4~6)</span>
-              </span>
-              <span className="inline-flex items-center gap-1">
-                <span className="w-2.5 h-2.5 rounded-full bg-blue-500" />
-                <span>케어필요(1~3)</span>
-              </span>
+            {/* Interactive Chart Options: Metric, Zones, Average */}
+            <div className="flex flex-wrap items-center gap-2 text-xs font-serif">
+              {/* Metric Selector */}
+              <div className="inline-flex p-1 rounded-xl bg-brand-beige/80 border border-brand-green/40">
+                <button
+                  type="button"
+                  onClick={() => setChartMetric('score')}
+                  className={cn(
+                    "px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer",
+                    chartMetric === 'score'
+                      ? "bg-brand-sage text-white shadow-2xs"
+                      : "text-brand-brown/70 hover:text-brand-brown"
+                  )}
+                >
+                  기분 지수
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setChartMetric('both')}
+                  className={cn(
+                    "px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer",
+                    chartMetric === 'both'
+                      ? "bg-brand-sage text-white shadow-2xs"
+                      : "text-brand-brown/70 hover:text-brand-brown"
+                  )}
+                >
+                  지수 + 강도(듀얼)
+                </button>
+              </div>
+
+              {/* Zone Guide Toggle */}
+              <button
+                type="button"
+                onClick={() => setShowZones((prev) => !prev)}
+                className={cn(
+                  "px-2.5 py-1.5 rounded-xl border transition-all flex items-center gap-1.5 cursor-pointer font-bold",
+                  showZones
+                    ? "bg-brand-green/20 border-brand-green/50 text-brand-sage"
+                    : "bg-white border-brand-green/20 text-brand-brown/50 hover:bg-brand-beige/30"
+                )}
+                title="안정권/주의권 배경 색상 가이드 표시 토글"
+              >
+                <Layers className="w-3.5 h-3.5" />
+                <span>안정권 가이드</span>
+              </button>
+
+              {/* Average Line Toggle */}
+              <button
+                type="button"
+                onClick={() => setShowAverageLine((prev) => !prev)}
+                className={cn(
+                  "px-2.5 py-1.5 rounded-xl border transition-all flex items-center gap-1.5 cursor-pointer font-bold",
+                  showAverageLine
+                    ? "bg-brand-sage/10 border-brand-sage/40 text-brand-sage"
+                    : "bg-white border-brand-green/20 text-brand-brown/50 hover:bg-brand-beige/30"
+                )}
+                title="기간 평균 점수 기준선 토글"
+              >
+                <Sliders className="w-3.5 h-3.5" />
+                <span>평균선 ({analytics.averageScore}점)</span>
+              </button>
             </div>
           </div>
 
-          {/* SVG Canvas Area */}
-          <div className="relative w-full overflow-x-auto pt-2 pb-1">
-            <div className="min-w-[620px] w-full">
-              <svg
-                viewBox={`0 0 800 ${chartHeight}`}
-                className="w-full h-52 sm:h-60 overflow-visible select-none"
+          {/* Reference Zones Legend */}
+          <div className="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-brand-green/15 text-[11px] font-serif text-brand-brown/70">
+            <div className="flex flex-wrap items-center gap-3">
+              <span className="inline-flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-2xs" />
+                <span className="font-semibold text-emerald-800">안정·평온권 (7~10점)</span>
+              </span>
+              <span className="inline-flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-full bg-amber-400 shadow-2xs" />
+                <span className="font-semibold text-amber-800">일상·보통권 (4~6점)</span>
+              </span>
+              <span className="inline-flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-full bg-blue-500 shadow-2xs" />
+                <span className="font-semibold text-blue-800">심리 케어권 (1~3점)</span>
+              </span>
+              {chartMetric === 'both' && (
+                <span className="inline-flex items-center gap-1.5 text-orange-600 font-semibold">
+                  <span className="w-3 h-0.5 bg-orange-500 inline-block border-b border-dashed" />
+                  <span>감정 강도</span>
+                </span>
+              )}
+            </div>
+
+            <div className="text-[11px] text-brand-brown/50 flex items-center gap-1">
+              <Info className="w-3.5 h-3.5 text-brand-sage" />
+              <span>그래프의 포인트를 클릭하면 해당 일자의 감정을 즉시 수정할 수 있습니다.</span>
+            </div>
+          </div>
+
+          {/* Recharts Canvas Container */}
+          <div className="w-full h-72 sm:h-80 pt-2 pb-1 relative">
+            <ResponsiveContainer width="100%" height="100%">
+              <ComposedChart
+                data={chartData}
+                margin={{ top: 20, right: 18, left: -14, bottom: 5 }}
+                onClick={(e: any) => {
+                  if (e && e.activePayload && e.activePayload.length) {
+                    const item = e.activePayload[0].payload as TrendDataPoint;
+                    setActiveTooltip(item);
+                  }
+                }}
               >
                 <defs>
-                  {/* Gradient for area fill */}
-                  <linearGradient id="moodAreaGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#2A8B7B" stopOpacity="0.35" />
-                    <stop offset="50%" stopColor="#2A8B7B" stopOpacity="0.12" />
-                    <stop offset="100%" stopColor="#2A8B7B" stopOpacity="0.0" />
-                  </linearGradient>
-
-                  {/* Horizontal grid lines */}
-                  <linearGradient id="gridLine" x1="0" y1="0" x2="1" y2="0">
-                    <stop offset="0%" stopColor="#E8F3E8" stopOpacity="0.2" />
-                    <stop offset="50%" stopColor="#2A8B7B" stopOpacity="0.15" />
-                    <stop offset="100%" stopColor="#E8F3E8" stopOpacity="0.2" />
+                  <linearGradient id="rechartsMoodGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#2A8B7B" stopOpacity={0.32} />
+                    <stop offset="60%" stopColor="#2A8B7B" stopOpacity={0.08} />
+                    <stop offset="100%" stopColor="#2A8B7B" stopOpacity={0.0} />
                   </linearGradient>
                 </defs>
 
-                {/* Background Score Gridlines */}
-                {[10, 7, 4, 1].map((val) => {
-                  const usableHeight = chartHeight - chartPaddingY * 2;
-                  const normalizedScore = (val - 1) / 9;
-                  const y = chartHeight - chartPaddingY - normalizedScore * usableHeight;
-                  return (
-                    <g key={val}>
-                      <line
-                        x1={chartPaddingX}
-                        y1={y}
-                        x2={800 - chartPaddingX}
-                        y2={y}
-                        stroke="#2A8B7B"
-                        strokeOpacity="0.12"
-                        strokeDasharray={val === 7 ? "none" : "3 3"}
-                        strokeWidth="1"
-                      />
-                      <text
-                        x={chartPaddingX - 8}
-                        y={y + 3.5}
-                        textAnchor="end"
-                        fontSize="9"
-                        fill="#3C271C"
-                        fillOpacity="0.45"
-                        fontFamily="sans-serif"
-                      >
-                        {val}점
-                      </text>
-                    </g>
-                  );
-                })}
+                <CartesianGrid stroke="#2A8B7B" strokeOpacity={0.12} strokeDasharray="3 3" vertical={false} />
 
-                {/* Soft Area Under Curve */}
-                {areaPath && (
-                  <path d={areaPath} fill="url(#moodAreaGradient)" />
+                {/* Optional Reference Areas for Emotional Health Zones */}
+                {showZones && (
+                  <>
+                    <ReferenceArea
+                      y1={7}
+                      y2={10}
+                      fill="#10B981"
+                      fillOpacity={0.05}
+                      strokeOpacity={0}
+                    />
+                    <ReferenceArea
+                      y1={4}
+                      y2={7}
+                      fill="#F59E0B"
+                      fillOpacity={0.04}
+                      strokeOpacity={0}
+                    />
+                    <ReferenceArea
+                      y1={1}
+                      y2={4}
+                      fill="#3B82F6"
+                      fillOpacity={0.04}
+                      strokeOpacity={0}
+                    />
+                  </>
                 )}
 
-                {/* Main Curved Trajectory Line */}
-                {linePath && (
-                  <path
-                    d={linePath}
-                    fill="none"
+                {/* Average Score Reference Line */}
+                {showAverageLine && (
+                  <ReferenceLine
+                    y={analytics.averageScore}
                     stroke="#2A8B7B"
-                    strokeWidth="3.2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    className="drop-shadow-xs"
+                    strokeDasharray="4 4"
+                    strokeWidth={1.6}
+                    label={{
+                      value: `평균 ${analytics.averageScore}점`,
+                      position: 'insideTopRight',
+                      fill: '#2A8B7B',
+                      fontSize: 11,
+                      fontFamily: 'serif',
+                      fontWeight: 'bold',
+                    }}
                   />
                 )}
 
-                {/* Interactive Data Points */}
-                {points.map((p, idx) => {
-                  const isHovered = activeTooltip?.date === p.data.date;
-                  const moodConfig = MOOD_DEFINITIONS[p.data.moodId];
-                  const hasNote = Boolean(p.data.note);
+                <XAxis
+                  dataKey={period === 'weekly' ? 'dayLabel' : 'shortDate'}
+                  stroke="#3C271C"
+                  strokeOpacity={0.4}
+                  tick={{ fontSize: period === 'weekly' ? 11 : 9.5, fill: '#3C271C', fontFamily: 'serif' }}
+                  tickLine={{ stroke: '#2A8B7B', strokeOpacity: 0.2 }}
+                  interval={period === 'weekly' ? 0 : 2}
+                />
 
-                  return (
-                    <g
-                      key={p.data.date}
-                      className="cursor-pointer group"
-                      onMouseEnter={() => setActiveTooltip(p.data)}
-                      onClick={() => handleOpenAddModal(p.data.date)}
-                    >
-                      {/* Vertical indicator line on hover */}
-                      {isHovered && (
-                        <line
-                          x1={p.x}
-                          y1={chartPaddingY - 10}
-                          x2={p.x}
-                          y2={chartHeight - chartPaddingY}
-                          stroke="#2A8B7B"
-                          strokeOpacity="0.35"
-                          strokeDasharray="2 2"
-                        />
-                      )}
+                <YAxis
+                  domain={[1, 10]}
+                  ticks={[1, 4, 7, 10]}
+                  stroke="#3C271C"
+                  strokeOpacity={0.4}
+                  tick={{ fontSize: 10, fill: '#3C271C', fontFamily: 'sans-serif' }}
+                  tickLine={{ stroke: '#2A8B7B', strokeOpacity: 0.2 }}
+                  tickFormatter={(val) => `${val}점`}
+                />
 
-                      {/* Pulse circle when hovered */}
-                      {isHovered && (
-                        <circle
-                          cx={p.x}
-                          cy={p.y}
-                          r="14"
-                          fill={moodConfig.color}
-                          fillOpacity="0.2"
-                          className="animate-ping"
-                        />
-                      )}
+                <RechartsTooltip content={<CustomRechartsTooltip />} />
 
-                      {/* Outer Ring */}
-                      <circle
-                        cx={p.x}
-                        cy={p.y}
-                        r={isHovered ? 8 : 6}
-                        fill="#FFFFFF"
-                        stroke={moodConfig.color}
-                        strokeWidth={isHovered ? 3.5 : 2.5}
-                        className="transition-all duration-150"
-                      />
+                {/* Smooth Area Under Curve */}
+                <Area
+                  type="monotone"
+                  dataKey="scoreValue"
+                  stroke="none"
+                  fill="url(#rechartsMoodGradient)"
+                  isAnimationActive={true}
+                />
 
-                      {/* Small center dot */}
-                      <circle
-                        cx={p.x}
-                        cy={p.y}
-                        r="2.5"
-                        fill={moodConfig.color}
-                      />
+                {/* Mood Score Primary Trend Line */}
+                <Line
+                  type="monotone"
+                  dataKey="scoreValue"
+                  name="기분 밸런스 지수"
+                  stroke="#2A8B7B"
+                  strokeWidth={3}
+                  dot={renderCustomDot}
+                  activeDot={{
+                    r: 7,
+                    stroke: '#2A8B7B',
+                    strokeWidth: 3,
+                    fill: '#FFFFFF',
+                    className: 'animate-pulse',
+                  }}
+                  isAnimationActive={true}
+                />
 
-                      {/* Note indicator dot above marker */}
-                      {hasNote && (
-                        <circle
-                          cx={p.x + 5}
-                          cy={p.y - 5}
-                          r="2.5"
-                          fill="#E65100"
-                        />
-                      )}
-
-                      {/* Bottom X-axis Day Label */}
-                      <text
-                        x={p.x}
-                        y={chartHeight - 10}
-                        textAnchor="middle"
-                        fontSize={period === 'weekly' ? '11' : '9.5'}
-                        fontWeight={isHovered ? 'bold' : 'normal'}
-                        fill={isHovered ? '#2A8B7B' : '#3C271C'}
-                        fillOpacity={isHovered ? 1 : 0.65}
-                        fontFamily="serif"
-                      >
-                        {period === 'weekly' ? p.data.dayLabel : p.data.shortDate}
-                      </text>
-
-                      {/* Emoji label on top of point for weekly view */}
-                      {period === 'weekly' && (
-                        <text
-                          x={p.x}
-                          y={p.y - 12}
-                          textAnchor="middle"
-                          fontSize="13"
-                        >
-                          {p.data.emoji}
-                        </text>
-                      )}
-                    </g>
-                  );
-                })}
-              </svg>
-            </div>
+                {/* Optional Intensity Line */}
+                {chartMetric === 'both' && (
+                  <Line
+                    type="monotone"
+                    dataKey="intensityValue"
+                    name="감정 강도"
+                    stroke="#F97316"
+                    strokeWidth={2}
+                    strokeDasharray="4 4"
+                    dot={{ r: 3, fill: '#F97316', stroke: '#FFFFFF', strokeWidth: 1 }}
+                    activeDot={{ r: 5, fill: '#F97316' }}
+                    isAnimationActive={true}
+                  />
+                )}
+              </ComposedChart>
+            </ResponsiveContainer>
           </div>
 
-          {/* Interactive Dynamic Hover / Selected Info Tooltip Banner */}
-          <div className="p-3.5 rounded-2xl bg-brand-green/15 border border-brand-green/30 min-h-[56px] flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs font-serif">
+          {/* Dynamic Hover / Selected Info Tooltip Banner */}
+          <div className="p-3.5 rounded-2xl bg-brand-green/15 border border-brand-green/30 min-h-[58px] flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs font-serif">
             {activeTooltip ? (
               <div className="flex flex-wrap items-center gap-2.5">
-                <span className="text-xl">{activeTooltip.emoji}</span>
+                <span className="text-2xl">{activeTooltip.emoji}</span>
                 <div>
                   <span className="font-bold text-brand-brown">
                     {activeTooltip.date} ({formatDayOfWeek(activeTooltip.date)}요일):
@@ -594,11 +799,11 @@ export default function DailyMoodTrackerDashboard({
                   <span className="text-brand-sage font-extrabold">
                     {activeTooltip.shortLabel}
                   </span>{' '}
-                  <span className="text-brand-brown/60">
+                  <span className="text-brand-brown/70 font-mono font-bold">
                     (지수 {activeTooltip.score}점)
                   </span>
                   {activeTooltip.note && (
-                    <span className="ml-2 italic text-brand-brown/80 bg-white/80 px-2 py-0.5 rounded-md border border-brand-green/20">
+                    <span className="ml-2 italic text-brand-brown/85 bg-white/90 px-2 py-0.5 rounded-md border border-brand-green/20">
                       "{activeTooltip.note}"
                     </span>
                   )}
@@ -608,7 +813,7 @@ export default function DailyMoodTrackerDashboard({
                     {activeTooltip.tags.map((tag) => (
                       <span
                         key={tag}
-                        className="px-1.5 py-0.2 rounded-md bg-white text-[10px] text-brand-sage border border-brand-green/30 font-sans"
+                        className="px-1.5 py-0.5 rounded-md bg-white text-[10px] text-brand-sage border border-brand-green/30 font-sans"
                       >
                         #{tag}
                       </span>
@@ -617,20 +822,61 @@ export default function DailyMoodTrackerDashboard({
                 )}
               </div>
             ) : (
-              <div className="text-brand-brown/60 flex items-center gap-1.5">
-                <HelpCircle className="w-3.5 h-3.5 text-brand-sage" />
-                <span>차트 상의 점을 클릭하거나 마우스를 올리면 해당 일자의 상세 감정 기록과 메모를 보실 수 있습니다.</span>
+              <div className="text-brand-brown/65 flex items-center gap-1.5">
+                <HelpCircle className="w-4 h-4 text-brand-sage" />
+                <span>선 그래프의 데이터 포인트를 클릭하거나 마우스를 올리면 해당 일자의 상세 기록을 확인할 수 있습니다.</span>
               </div>
             )}
 
-            <button
-              type="button"
-              onClick={() => handleOpenAddModal(activeTooltip?.date)}
-              className="text-brand-sage font-bold hover:underline inline-flex items-center gap-1 shrink-0 self-end sm:self-center cursor-pointer"
-            >
-              <span>{activeTooltip ? '해당 일자 기록 수정' : '오늘 감정 추가'}</span>
-              <ArrowRight className="w-3 h-3" />
-            </button>
+            <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
+              <button
+                type="button"
+                onClick={() => handleOpenAddModal(activeTooltip?.date)}
+                className="text-brand-sage font-bold hover:underline inline-flex items-center gap-1 cursor-pointer"
+              >
+                <span>{activeTooltip ? '해당 일자 기록 수정' : '오늘 감정 추가'}</span>
+                <ArrowRight className="w-3 h-3" />
+              </button>
+            </div>
+          </div>
+
+          {/* Trend Report Highlights: Peak Day, Lowest Day, Stable Zone Ratio */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
+            <div className="p-3 rounded-2xl bg-brand-beige/40 border border-brand-green/20 flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-emerald-100 flex items-center justify-center text-lg shrink-0">
+                {peakDay ? peakDay.emoji : '🌿'}
+              </div>
+              <div className="min-w-0">
+                <span className="text-[10px] text-brand-brown/60 block font-serif">가장 편안했던 날 (Peak Day)</span>
+                <p className="text-xs font-bold text-brand-brown truncate font-serif">
+                  {peakDay ? `${peakDay.shortDate} (${peakDay.score}점, ${peakDay.shortLabel})` : '기록 필요'}
+                </p>
+              </div>
+            </div>
+
+            <div className="p-3 rounded-2xl bg-brand-beige/40 border border-brand-green/20 flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-blue-100 flex items-center justify-center text-lg shrink-0">
+                {valleyDay ? valleyDay.emoji : '🌧️'}
+              </div>
+              <div className="min-w-0">
+                <span className="text-[10px] text-brand-brown/60 block font-serif">가장 주의 깊었던 날 (Valley Day)</span>
+                <p className="text-xs font-bold text-brand-brown truncate font-serif">
+                  {valleyDay ? `${valleyDay.shortDate} (${valleyDay.score}점, ${valleyDay.shortLabel})` : '기록 필요'}
+                </p>
+              </div>
+            </div>
+
+            <div className="p-3 rounded-2xl bg-brand-beige/40 border border-brand-green/20 flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-amber-100 flex items-center justify-center text-amber-700 shrink-0 font-bold font-mono text-xs">
+                {highMoodRatio}%
+              </div>
+              <div className="min-w-0">
+                <span className="text-[10px] text-brand-brown/60 block font-serif">안정권(7점 이상) 유지 비율</span>
+                <p className="text-xs font-bold text-brand-sage font-serif">
+                  {highMoodRatio >= 60 ? '안정적인 심리적 회복세' : '휴식과 재충전 추천'}
+                </p>
+              </div>
+            </div>
           </div>
         </div>
 

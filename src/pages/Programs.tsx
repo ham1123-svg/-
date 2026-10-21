@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Heart, User, Users, BookOpen, CheckCircle2, X, Clock, ShieldCheck, Calendar, ArrowRight, Sparkles, Building2 } from 'lucide-react';
+import { Heart, User, Users, BookOpen, CheckCircle2, X, Clock, ShieldCheck, Calendar, ArrowRight, Sparkles, Building2, Compass } from 'lucide-react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { Program } from '../types';
 import { cn } from '../lib/utils';
@@ -604,6 +604,17 @@ export default function Programs() {
                     <Clock className="w-4 h-4" />
                     주간 시간표 확인
                   </a>
+                  <Link
+                    to={`/guide?service=${
+                      selectedProgram.category === '심리검사' ? 'assessment' :
+                      selectedProgram.category === '부부상담' ? 'couples' :
+                      selectedProgram.category === '기업상담' ? 'corporate' : 'individual'
+                    }#process`}
+                    className="px-4 py-2.5 rounded-xl border border-brand-green/40 bg-white text-brand-brown hover:text-brand-sage hover:border-brand-sage transition-all text-sm font-semibold flex items-center gap-1.5 shadow-2xs"
+                  >
+                    <Compass className="w-4 h-4 text-brand-sage" />
+                    <span>단계별 절차 확인</span>
+                  </Link>
                   {selectedProgram.category === '기업상담' || selectedProgram.title.includes('EAP') ? (
                     <Link
                       to="/eap"
