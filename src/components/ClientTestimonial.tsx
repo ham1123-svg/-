@@ -402,6 +402,8 @@ export default function ClientTestimonial({ className }: { className?: string })
         <div 
           onMouseEnter={() => setIsHovering(true)}
           onMouseLeave={() => setIsHovering(false)}
+          onTouchStart={() => setIsHovering(true)}
+          onTouchEnd={() => setIsHovering(false)}
           className="relative mb-8"
         >
           {/* Floating Left Arrow (Desktop) */}

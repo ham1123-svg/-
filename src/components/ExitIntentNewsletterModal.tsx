@@ -42,7 +42,7 @@ export default function ExitIntentNewsletterModal({
 }: ExitIntentNewsletterModalProps) {
   const { isHighContrast } = useHighContrast();
   const [isOpen, setIsOpen] = useState(false);
-  const [readingTime, setReadingTime] = useState(0);
+  const readingTimeRef = useRef(0);
   const [isReadingSection, setIsReadingSection] = useState(false);
   const [email, setEmail] = useState('');
   const [name, setName] = useState('');
@@ -77,7 +77,6 @@ export default function ExitIntentNewsletterModal({
 
     const sectionEl = document.getElementById(targetSectionId);
     if (!sectionEl) {
-      // If target section is not found yet, default to monitoring page viewing time
       setIsReadingSection(true);
       return;
     }
@@ -94,13 +93,13 @@ export default function ExitIntentNewsletterModal({
     return () => observer.disconnect();
   }, [targetSectionId, isSuppressed]);
 
-  // Accumulate reading time when section is in view
+  // Accumulate reading time when section is in view silently via ref without 60fps re-renders
   useEffect(() => {
     if (isSuppressed() || hasTriggeredRef.current) return;
 
     if (isReadingSection) {
       readingTimerRef.current = window.setInterval(() => {
-        setReadingTime((prev) => prev + 1);
+        readingTimeRef.current += 1;
       }, 1000);
     } else {
       if (readingTimerRef.current) clearInterval(readingTimerRef.current);
@@ -118,7 +117,7 @@ export default function ExitIntentNewsletterModal({
       if (hasTriggeredRef.current || isSuppressed() || isOpen) return;
 
       // Condition: User has read for at least minReadingSeconds
-      if (readingTime < minReadingSeconds) return;
+      if (readingTimeRef.current < minReadingSeconds) return;
 
       // Desktop exit intent: mouse leaves through top edge (towards address bar / close tab)
       if (e.clientY <= 25) {
@@ -126,7 +125,7 @@ export default function ExitIntentNewsletterModal({
         setIsOpen(true);
       }
     },
-    [isSuppressed, isOpen, readingTime, minReadingSeconds]
+    [isSuppressed, isOpen, minReadingSeconds]
   );
 
   useEffect(() => {

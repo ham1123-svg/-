@@ -26,6 +26,7 @@ import {
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { Testimonial } from '../types';
+import { TESTIMONIALS_DATA } from '../data/testimonialsData';
 import { testimonialService } from '../services/testimonialService';
 import ClientReviewWriteModal from './ClientReviewWriteModal';
 import PostCommentSection from './PostCommentSection';
@@ -89,9 +90,21 @@ export default function AnonymousReviewBoard({
   initialCategory = "all",
   initialSearchTerm = ""
 }: AnonymousReviewBoardProps) {
-  // Data state
-  const [reviews, setReviews] = useState<Testimonial[]>([]);
-  const [loading, setLoading] = useState(true);
+  // Data state: Synchronously initialized from local cache or TESTIMONIALS_DATA for instant 0ms paint
+  const [reviews, setReviews] = useState<Testimonial[]>(() => {
+    try {
+      const stored = localStorage.getItem('hbbr_client_testimonials_v2');
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed;
+        }
+      }
+    } catch {}
+    return TESTIMONIALS_DATA;
+  });
+  // loading is false by default so there is NO skeleton pop-in and NO layout shift
+  const [loading, setLoading] = useState(false);
 
   // Filters & Controls (Keyword Search Only)
   const defaultSearch = initialSearchTerm || (initialCategory && initialCategory !== 'all' ? initialCategory : '');
@@ -121,27 +134,24 @@ export default function AnonymousReviewBoard({
     }, 3000);
   }, []);
 
-  // Fetch reviews (only show full skeleton loading on cold start)
-  const loadReviews = useCallback(async (isInitial = false) => {
-    if (isInitial) {
-      setLoading(true);
-    }
+  // Fetch reviews silently in background without triggering CLS or screen jitter
+  const loadReviews = useCallback(async () => {
     try {
       const data = await testimonialService.getTestimonials(false);
-      setReviews(prev => {
-        if (
-          prev.length === data.length &&
-          prev[0]?.id === data[0]?.id &&
-          prev[0]?.recommendCount === data[0]?.recommendCount
-        ) {
-          return prev;
-        }
-        return data;
-      });
+      if (data && data.length > 0) {
+        setReviews(prev => {
+          if (
+            prev.length === data.length &&
+            prev[0]?.id === data[0]?.id &&
+            prev[0]?.recommendCount === data[0]?.recommendCount
+          ) {
+            return prev;
+          }
+          return data;
+        });
+      }
     } catch (err) {
       console.error("Failed to load reviews:", err);
-    } finally {
-      setLoading(false);
     }
   }, []);
 
@@ -154,9 +164,9 @@ export default function AnonymousReviewBoard({
   }, [initialSearchTerm]);
 
   useEffect(() => {
-    loadReviews(true);
+    loadReviews();
     const unsubscribe = testimonialService.subscribe(() => {
-      loadReviews(false);
+      loadReviews();
     });
     return unsubscribe;
   }, [loadReviews]);
@@ -515,12 +525,9 @@ export default function AnonymousReviewBoard({
               const isRecoveryMatched = searchTokens.length > 0 && !!review.afterState && searchTokens.some(t => review.afterState.toLowerCase().includes(t));
 
               return (
-                <motion.article
+                <article
                   key={review.id}
-                  initial={{ opacity: 0, y: 15 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3 }}
-                  className="bg-white rounded-3xl p-6 border border-brand-green/20 shadow-sm hover:shadow-md transition-all flex flex-col justify-between group relative overflow-hidden"
+                  className="bg-white rounded-3xl p-6 border border-brand-green/20 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between group relative overflow-hidden"
                 >
                   {/* Top Bar: Anonymous Client Profile & Category */}
                   <div>
@@ -676,7 +683,7 @@ export default function AnonymousReviewBoard({
                       <ChevronRight className="w-3.5 h-3.5 transition-transform group-hover/btn:translate-x-0.5" />
                     </button>
                   </div>
-                </motion.article>
+                </article>
               );
             })}
           </div>

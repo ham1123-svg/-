@@ -94,10 +94,9 @@ export default function FloatingButtons() {
           aria-label="성함과 연락처로 간편 전화상담 예약 신청하기"
           title="성함과 연락처만으로 빠른 전화상담 요청"
         >
-          {/* Subtle animated notification ping */}
-          <span className="relative flex h-2.5 w-2.5">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-white"></span>
+          {/* Subtle notification dot */}
+          <span className="relative flex h-2 w-2">
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
           </span>
 
           <PhoneCall className="w-4 h-4" />
