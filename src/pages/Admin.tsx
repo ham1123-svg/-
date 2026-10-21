@@ -18,6 +18,7 @@ import AdminReservationTrendChart from '../components/AdminReservationTrendChart
 import AdminReviewManager from '../components/AdminReviewManager';
 import VirtualPushFeedbackHub from '../components/VirtualPushFeedbackHub';
 import { commentPushService } from '../services/commentPushService';
+import { getKakaoChatUrl, setKakaoChatUrl } from '../lib/kakaoConfig';
 
 const TIME_SLOTS = [...RESERVATION_TIME_SLOTS];
 
@@ -95,6 +96,8 @@ export default function Admin() {
   const [isSavingAdminPhone, setIsSavingAdminPhone] = useState(false);
   const [isTestingAdminAlimtalk, setIsTestingAdminAlimtalk] = useState(false);
   const [previewLogModal, setPreviewLogModal] = useState<NotificationLog | null>(null);
+  const [kakaoChatUrlInput, setKakaoChatUrlInput] = useState<string>(() => getKakaoChatUrl());
+  const [kakaoSaveSuccess, setKakaoSaveSuccess] = useState(false);
 
   // Reservations state
   const [reservations, setReservations] = useState<Reservation[]>([]);
@@ -2074,6 +2077,102 @@ export default function Admin() {
                       <div className="text-amber-800/70 mb-0.5">템플릿 코드</div>
                       <div className="font-bold text-amber-950 text-sm font-mono">{notificationConfig?.templateId || 'RESERVATION_CONFIRM_V1'}</div>
                       <div className="text-[10px] text-amber-700/60 mt-0.5">카카오 승인 완료 규격</div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Kakao 1:1 Inquiry & Counselor Link Management Panel */}
+                <div className="bg-[#FEE500]/15 rounded-2xl p-5 border border-[#eed700]/70">
+                  <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-full bg-[#FEE500] text-[#3C1E1E] flex items-center justify-center font-bold text-base shadow-xs">
+                        카톡
+                      </div>
+                      <div>
+                        <h4 className="font-bold text-amber-950 text-sm">카톡 1:1 문의 버튼 상담사 연결 설정</h4>
+                        <p className="text-xs text-amber-800/80">홈페이지 우측 하단 플로팅 버튼 및 예약 완료 화면의 카카오톡 문의 링크</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <a
+                        href={kakaoChatUrlInput || 'https://pf.kakao.com'}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#FEE500] hover:bg-[#fedd00] text-[#3C1E1E] text-xs font-bold rounded-xl transition-all shadow-xs"
+                      >
+                        <ArrowUpRight className="w-3.5 h-3.5" />
+                        <span>링크 테스트 열기</span>
+                      </a>
+                    </div>
+                  </div>
+
+                  {/* URL Input and Save */}
+                  <div className="space-y-3 bg-white/90 p-4 rounded-xl border border-amber-200">
+                    <div>
+                      <label className="block text-xs font-bold text-amber-950 mb-1">
+                        연결할 카카오톡 URL (채널 1:1 채팅 또는 오픈채팅 주소)
+                      </label>
+                      <div className="flex flex-col sm:flex-row gap-2">
+                        <input
+                          type="url"
+                          value={kakaoChatUrlInput}
+                          onChange={(e) => {
+                            setKakaoChatUrlInput(e.target.value);
+                            setKakaoSaveSuccess(false);
+                          }}
+                          placeholder="예: https://pf.kakao.com/_xxxxX/chat 또는 https://open.kakao.com/o/xxxxxx"
+                          className="flex-1 px-3 py-2 bg-amber-50/40 border border-amber-300 rounded-xl text-xs text-amber-950 focus:outline-none focus:ring-2 focus:ring-amber-500 font-mono"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setKakaoChatUrl(kakaoChatUrlInput);
+                            setKakaoSaveSuccess(true);
+                            setTimeout(() => setKakaoSaveSuccess(false), 3000);
+                          }}
+                          className="px-4 py-2 bg-amber-900 hover:bg-amber-950 text-white text-xs font-bold rounded-xl transition-colors shrink-0 flex items-center justify-center gap-1.5 cursor-pointer"
+                        >
+                          {kakaoSaveSuccess ? (
+                            <>
+                              <Check className="w-4 h-4 text-emerald-400" />
+                              <span>저장 완료!</span>
+                            </>
+                          ) : (
+                            <span>저장 및 즉시 반영</span>
+                          )}
+                        </button>
+                      </div>
+                      <p className="text-[11px] text-amber-800/70 mt-1">
+                        * 저장 시 홈페이지의 '카톡 1:1 문의' 플로팅 버튼과 예약 확인증의 문의 버튼에 즉시 적용됩니다.
+                      </p>
+                    </div>
+
+                    {/* How-to Guide Callout */}
+                    <div className="mt-3 p-3 bg-amber-50 rounded-lg border border-amber-200/60 text-xs text-amber-950 space-y-2">
+                      <div className="font-bold flex items-center gap-1.5 text-amber-900">
+                        <Info className="w-3.5 h-3.5 text-amber-700" />
+                        <span>상담사 카톡 연결 방법 (2가지 중 택1)</span>
+                      </div>
+                      <div className="grid sm:grid-cols-2 gap-3 text-[11px] leading-relaxed pt-1">
+                        <div className="p-2.5 bg-white rounded-md border border-amber-100">
+                          <strong className="text-amber-900 block mb-1">방법 A. 카카오톡 채널 (공식 추천)</strong>
+                          <ol className="list-decimal list-inside space-y-0.5 text-amber-800/90">
+                            <li>카카오톡 채널 관리자센터(center-pf.kakao.com)에서 채널 생성</li>
+                            <li>[1:1 채팅] 활성화 및 상담사 계정을 '관리자'로 초대</li>
+                            <li>스마트폰에 '카카오톡 채널 관리자' 앱 설치 후 로그인</li>
+                            <li>관리자센터 [관리 &gt; 상세설정]에서 1:1 채팅 URL 복사 후 위 입력창에 등록</li>
+                          </ol>
+                        </div>
+                        <div className="p-2.5 bg-white rounded-md border border-amber-100">
+                          <strong className="text-amber-900 block mb-1">방법 B. 상담사 1:1 오픈채팅 (1분 초간단)</strong>
+                          <ol className="list-decimal list-inside space-y-0.5 text-amber-800/90">
+                            <li>상담사 카톡 앱 실행 &gt; 하단 [오픈채팅] 탭</li>
+                            <li>우측 상단 `+` 버튼 &gt; [1:1 채팅방] 생성</li>
+                            <li>방 이름 설정(예: 행복바람 1:1 비밀상담) 후 개설</li>
+                            <li>[링크 공유] &gt; [링크 복사]하여 위 입력창에 붙여넣고 저장</li>
+                          </ol>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>

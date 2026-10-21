@@ -24,6 +24,7 @@ import {
   Search,
   CheckCircle
 } from 'lucide-react';
+import { getKakaoChatUrl } from '../lib/kakaoConfig';
 import { Program, NotificationResult } from '../types';
 import { cn } from '../lib/utils';
 
@@ -594,7 +595,7 @@ export default function ReservationConfirmationCard({
             </a>
 
             <a
-              href="https://pf.kakao.com"
+              href={getKakaoChatUrl()}
               target="_blank"
               rel="noopener noreferrer"
               className="py-2.5 px-3 bg-white hover:bg-amber-50 text-amber-950 font-bold text-xs rounded-xl border border-amber-300 flex items-center justify-center gap-1.5 transition-all shadow-xs"

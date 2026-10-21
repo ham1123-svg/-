@@ -340,7 +340,7 @@ export default function Home() {
       <AnonymousReviewBoard />
 
       {/* Counseling Center Location & Directions Map */}
-      <section className="py-20 bg-brand-beige/25 border-t border-brand-green/20">
+      <section id="location-section" className="py-20 bg-brand-beige/25 border-t border-brand-green/20">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
           <CounselingCenterMap 
             title="상담소 위치 &amp; 찾아오시는 길"

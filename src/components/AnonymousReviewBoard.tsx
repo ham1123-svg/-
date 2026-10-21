@@ -124,7 +124,7 @@ export default function AnonymousReviewBoard({
   // Fetch reviews (only show full skeleton loading on cold start)
   const loadReviews = useCallback(async (isInitial = false) => {
     if (isInitial) {
-      setLoading(prev => (reviews.length === 0 ? true : prev));
+      setLoading(true);
     }
     try {
       const data = await testimonialService.getTestimonials(false);
@@ -143,7 +143,7 @@ export default function AnonymousReviewBoard({
     } finally {
       setLoading(false);
     }
-  }, [reviews.length]);
+  }, []);
 
   // Sync initialSearchTerm when changed from parent
   useEffect(() => {

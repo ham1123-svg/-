@@ -4,11 +4,19 @@ import { motion, AnimatePresence } from 'motion/react';
 import QuickReservationModal from './QuickReservationModal';
 import { useHighContrast } from '../context/HighContrastContext';
 import { cn } from '../lib/utils';
+import { getKakaoChatUrl } from '../lib/kakaoConfig';
 
 export default function FloatingButtons() {
   const { isHighContrast } = useHighContrast();
   const [showTop, setShowTop] = useState(false);
   const [isQuickModalOpen, setIsQuickModalOpen] = useState(false);
+  const [kakaoUrl, setKakaoUrl] = useState<string>(getKakaoChatUrl);
+
+  useEffect(() => {
+    const handleUrlUpdate = () => setKakaoUrl(getKakaoChatUrl());
+    window.addEventListener('kakao-url-updated', handleUrlUpdate);
+    return () => window.removeEventListener('kakao-url-updated', handleUrlUpdate);
+  }, []);
 
   useEffect(() => {
     let ticking = false;
@@ -40,11 +48,6 @@ export default function FloatingButtons() {
     <>
       <div 
         className="fixed bottom-[calc(1.5rem+env(safe-area-inset-bottom,0px))] right-[calc(1.5rem+env(safe-area-inset-right,0px))] z-40 flex flex-col items-end gap-2.5 pointer-events-none"
-        style={{
-          transform: 'translate3d(0, 0, 0)',
-          WebkitTransform: 'translate3d(0, 0, 0)',
-          willChange: 'transform',
-        }}
         role="region"
         aria-label="빠른 실행 및 플로팅 상담 메뉴"
       >
@@ -106,7 +109,7 @@ export default function FloatingButtons() {
 
         {/* Kakao 1:1 Inquiry */}
         <motion.a
-          href="https://pf.kakao.com" // Placeholder
+          href={kakaoUrl}
           target="_blank"
           rel="noopener noreferrer"
           whileHover={{ scale: 1.05 }}

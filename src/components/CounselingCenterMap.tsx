@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   MapPin, Navigation, Car, Bus, Train, Phone, Copy, Check, 
-  ExternalLink, Compass, ArrowRight, CheckCircle2
+  ExternalLink, Compass, ArrowRight, CheckCircle2, Lock, Unlock, Sparkles, Layers
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { cn } from '../lib/utils';
@@ -49,6 +49,7 @@ export default function CounselingCenterMap({
   const [activeView, setActiveView] = useState<MapProviderType>(initialProvider);
   const [copied, setCopied] = useState(false);
   const [isMapInteractive, setIsMapInteractive] = useState(false);
+  const [isIframeLoading, setIsIframeLoading] = useState(true);
   const mapContainerRef = useRef<HTMLDivElement>(null);
 
   const address = "울산광역시 울주군 삼남읍 도호1길 23 상가 408호";
@@ -92,9 +93,7 @@ export default function CounselingCenterMap({
   const handleSelectProvider = (provider: MapProviderType) => {
     setActiveView(provider);
     setIsMapInteractive(false);
-    if (mapContainerRef.current) {
-      mapContainerRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    }
+    setIsIframeLoading(true);
   };
 
   return (
@@ -271,251 +270,263 @@ export default function CounselingCenterMap({
         {/* Visual Map Area */}
         <div className="relative w-full h-[380px] sm:h-[430px] bg-brand-beige/20 overflow-hidden">
           
-          {/* PROVIDER 1: NAVER MAP VIEW */}
-          {activeView === 'naver' && (
+          {/* PROVIDERS 1-3: NAVER / KAKAO / GOOGLE MAP VIEW */}
+          {activeView !== 'schematic' && (
             <div className="w-full h-full relative flex flex-col">
-              {/* Interactive map background with coordinates */}
-              <iframe
-                title="행복바람 심리상담연구소 네이버 지도 연동 위치"
-                src="https://maps.google.com/maps?q=울산광역시%20울주군%20삼남읍%20도호1길%2023&t=&z=16&ie=UTF8&iwloc=&output=embed"
-                className={cn("w-full h-full border-0 filter contrast-[1.03]", !isMapInteractive && "pointer-events-none md:pointer-events-auto")}
-                loading="lazy"
-                aria-hidden="false"
-              />
+              {!isMapInteractive ? (
+                /* 1. Fast Lightweight Map Preview Mode (Zero-lag, 60fps mobile scroll, instant load) */
+                <div className="w-full h-full relative flex flex-col justify-between overflow-hidden bg-gradient-to-br from-[#fbfdfc] via-[#f4f8f5] to-[#ebf3ee] select-none">
+                  {/* Stylized vector map background canvas/SVG with roads and greens */}
+                  <svg 
+                    className="absolute inset-0 w-full h-full opacity-40 pointer-events-none" 
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <defs>
+                      <pattern id="map-preview-grid" width="40" height="40" patternUnits="userSpaceOnUse">
+                        <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#d5e4dc" strokeWidth="1" />
+                      </pattern>
+                    </defs>
+                    <rect width="100%" height="100%" fill="url(#map-preview-grid)" />
+                    {/* Samnam-ro Main Road */}
+                    <path d="M -20,180 Q 250,210 550,185 T 1200,200" fill="none" stroke="#c8ddd3" strokeWidth="26" strokeLinecap="round" />
+                    <path d="M -20,180 Q 250,210 550,185 T 1200,200" fill="none" stroke="#ffffff" strokeWidth="18" strokeLinecap="round" />
+                    {/* Doho 1-gil Access Road */}
+                    <path d="M 420,-20 L 440,480" fill="none" stroke="#c8ddd3" strokeWidth="22" strokeLinecap="round" />
+                    <path d="M 420,-20 L 440,480" fill="none" stroke="#ffffff" strokeWidth="14" strokeLinecap="round" />
+                    {/* Station Connecting Road */}
+                    <path d="M 100,340 L 750,300" fill="none" stroke="#d9e9e1" strokeWidth="14" strokeDasharray="6,6" strokeLinecap="round" />
+                    {/* Green Parks */}
+                    <rect x="50" y="30" width="180" height="100" rx="20" fill="#e2f0e8" opacity="0.9" />
+                    <rect x="540" y="60" width="240" height="110" rx="24" fill="#e2f0e8" opacity="0.9" />
+                  </svg>
 
-              {/* Mobile Touch Interception Shield to prevent scroll jitter */}
-              {!isMapInteractive && (
-                <button
-                  type="button"
-                  onClick={() => setIsMapInteractive(true)}
-                  className="md:hidden absolute inset-0 z-15 flex items-center justify-center bg-black/5 hover:bg-black/10 transition-colors cursor-pointer"
-                  aria-label="지도 터치하여 조작 활성화"
-                >
-                  <span className="px-3.5 py-1.5 rounded-full bg-white/95 text-brand-brown text-xs font-bold shadow-md border border-emerald-300 flex items-center gap-1.5">
-                    <Navigation className="w-3.5 h-3.5 text-[#03C75A]" />
-                    <span>터치하여 지도 이동/확대</span>
-                  </span>
-                </button>
-              )}
+                  {/* Provider Header Overlay */}
+                  <div className="relative z-10 p-3 sm:p-4 flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2 bg-white/95 backdrop-blur-xs p-2 px-3 rounded-2xl shadow-sm border border-brand-green/20 max-w-[calc(100%-40px)] sm:max-w-none">
+                      <div className={cn(
+                        "w-6 h-6 rounded-lg text-white flex items-center justify-center shrink-0 shadow-2xs",
+                        activeView === 'naver' && "bg-[#03C75A]",
+                        activeView === 'kakao' && "bg-[#FEE500] text-[#191919]",
+                        activeView === 'google' && "bg-[#4285F4]"
+                      )}>
+                        {activeView === 'naver' && <NaverIcon className="w-3.5 h-3.5" />}
+                        {activeView === 'kakao' && <KakaoIcon className="w-3.5 h-3.5" />}
+                        {activeView === 'google' && <GoogleMapsIcon className="w-3.5 h-3.5" />}
+                      </div>
+                      <div className="text-left min-w-0">
+                        <div className="flex items-center gap-1.5">
+                          <span className={cn(
+                            "font-extrabold text-[11px] tracking-wide",
+                            activeView === 'naver' && "text-[#03C75A]",
+                            activeView === 'kakao' && "text-amber-900",
+                            activeView === 'google' && "text-[#4285F4]"
+                          )}>
+                            {activeView === 'naver' ? 'NAVER 지도' : activeView === 'kakao' ? 'kakaomap' : 'Google 지도'}
+                          </span>
+                          <span className="text-[10px] text-brand-brown/40">•</span>
+                          <span className="font-bold text-brand-brown text-xs truncate">행복바람 심리상담연구소</span>
+                        </div>
+                        <p className="text-[11px] text-brand-brown/70 font-serif truncate">
+                          울산 울주군 삼남읍 도호1길 23 (상가 408호)
+                        </p>
+                      </div>
+                    </div>
 
-              {/* Naver Map Branded Header Bar Overlay */}
-              <div className="absolute top-3 left-3 right-3 sm:right-auto z-10 flex items-center gap-2 bg-white/95 backdrop-blur-md p-2.5 px-3.5 rounded-2xl shadow-lg border border-emerald-300">
-                <div className="w-6 h-6 rounded-lg bg-[#03C75A] text-white flex items-center justify-center shrink-0 shadow-xs">
-                  <NaverIcon className="w-3.5 h-3.5" />
-                </div>
-                <div className="text-left">
-                  <div className="flex items-center gap-1.5">
-                    <span className="font-extrabold text-[#03C75A] text-[11px] tracking-wide">NAVER 지도</span>
-                    <span className="text-[10px] text-brand-brown/50">•</span>
-                    <span className="font-bold text-brand-brown text-xs">행복바람 심리상담연구소</span>
+                    {/* Performance Badge */}
+                    <div className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/90 text-brand-sage font-bold text-xs border border-brand-green/20 shadow-2xs">
+                      <Sparkles className="w-3.5 h-3.5 text-brand-sage" />
+                      <span>모바일 고속 스크롤 최적화</span>
+                    </div>
                   </div>
-                  <p className="text-[11px] text-brand-brown/75 font-serif line-clamp-1">
-                    울산 울주군 삼남읍 도호1길 23 (상가 408호)
-                  </p>
-                </div>
-              </div>
 
-              {/* Naver Map Floating Location Badge Pin */}
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10 pointer-events-none flex flex-col items-center">
-                <div className="px-3.5 py-1.5 rounded-2xl bg-white/95 backdrop-blur-md shadow-xl border-2 border-[#03C75A] text-xs font-bold text-brand-brown flex items-center gap-2 mb-1.5 animate-bounce">
-                  <div className="w-2.5 h-2.5 rounded-full bg-[#03C75A] animate-ping" />
-                  <span>행복바람 심리상담연구소</span>
-                  <span className="text-[10px] bg-emerald-50 text-[#03C75A] px-1.5 py-0.5 rounded font-mono">408호</span>
-                </div>
-                <div className="w-8 h-8 rounded-full bg-[#03C75A] text-white flex items-center justify-center shadow-lg border-2 border-white">
-                  <NaverIcon className="w-4 h-4" />
-                </div>
-              </div>
+                  {/* Center Location Pin & Interactive Activation CTA */}
+                  <div className="relative z-10 flex flex-col items-center justify-center text-center px-4 my-auto space-y-3">
+                    {/* Pin Marker */}
+                    <div className="flex flex-col items-center">
+                      <div className="px-4 py-2 rounded-2xl bg-white shadow-xl border-2 border-brand-sage text-xs font-bold text-brand-brown flex items-center gap-2 mb-2">
+                        <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+                        <span className="font-serif font-extrabold text-sm text-brand-brown">행복바람 심리상담연구소</span>
+                        <span className="text-[11px] bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full font-mono font-bold">408호</span>
+                      </div>
+                      <div className="w-10 h-10 rounded-full bg-brand-sage text-white flex items-center justify-center shadow-lg border-2 border-white">
+                        <MapPin className="w-5 h-5 text-white" />
+                      </div>
+                    </div>
 
-              {/* Naver Map Quick Floating Action Buttons (Bottom Overlay) */}
-              <div className="absolute bottom-3 left-3 right-3 z-20 flex flex-wrap items-center justify-between gap-2 pointer-events-auto">
-                <div className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-white/90 backdrop-blur-md rounded-xl text-xs text-brand-brown/80 border border-emerald-200">
-                  <span className="font-bold text-emerald-700">네이버 지도 연동:</span>
-                  <span>KTX 울산역 차량 5분(1.8km) • 삼남읍사무소 도보 3분</span>
-                </div>
+                    {/* Transit Badges */}
+                    <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/90 rounded-full text-[11px] font-semibold text-brand-brown/80 border border-brand-green/20 shadow-2xs flex-wrap justify-center">
+                      <span>🚄 KTX 울산역 차량 5분</span>
+                      <span className="text-brand-brown/30 hidden sm:inline">•</span>
+                      <span>🏢 삼남읍사무소 도보 3분</span>
+                      <span className="text-brand-brown/30 hidden sm:inline">•</span>
+                      <span>🅿️ 무료 주차 완비</span>
+                    </div>
 
-                <div className="flex items-center gap-2 ml-auto">
-                  <a
-                    href={naverDirectionsUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="px-3.5 py-2 rounded-xl bg-white hover:bg-emerald-50 text-emerald-800 text-xs font-bold border border-emerald-300 shadow-md backdrop-blur-xs flex items-center gap-1.5 transition-all hover:scale-102"
-                    title="네이버 빠른 길찾기"
-                  >
-                    <Navigation className="w-3.5 h-3.5 text-[#03C75A]" />
-                    <span>네이버 길찾기</span>
-                  </a>
-                  <a
-                    href={naverMapUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="px-4 py-2 rounded-xl bg-[#03C75A] hover:bg-[#02b350] text-white text-xs font-bold shadow-md flex items-center gap-1.5 transition-all hover:scale-102"
-                    title="네이버 지도 크게보기"
-                  >
-                    <NaverIcon className="w-3.5 h-3.5" />
-                    <span>네이버 지도 열기</span>
-                    <ExternalLink className="w-3 h-3" />
-                  </a>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* PROVIDER 2: KAKAO MAP VIEW */}
-          {activeView === 'kakao' && (
-            <div className="w-full h-full relative flex flex-col">
-              {/* Interactive map background with coordinates */}
-              <iframe
-                title="행복바람 심리상담연구소 카카오지도 연동 위치"
-                src="https://maps.google.com/maps?q=울산광역시%20울주군%20삼남읍%20도호1길%2023&t=&z=16&ie=UTF8&iwloc=&output=embed"
-                className={cn("w-full h-full border-0 filter contrast-[1.03]", !isMapInteractive && "pointer-events-none md:pointer-events-auto")}
-                loading="lazy"
-                aria-hidden="false"
-              />
-
-              {/* Mobile Touch Interception Shield to prevent scroll jitter */}
-              {!isMapInteractive && (
-                <button
-                  type="button"
-                  onClick={() => setIsMapInteractive(true)}
-                  className="md:hidden absolute inset-0 z-15 flex items-center justify-center bg-black/5 hover:bg-black/10 transition-colors cursor-pointer"
-                  aria-label="지도 터치하여 조작 활성화"
-                >
-                  <span className="px-3.5 py-1.5 rounded-full bg-white/95 text-brand-brown text-xs font-bold shadow-md border border-amber-300 flex items-center gap-1.5">
-                    <Navigation className="w-3.5 h-3.5 text-amber-700" />
-                    <span>터치하여 지도 이동/확대</span>
-                  </span>
-                </button>
-              )}
-
-              {/* Kakao Map Branded Header Bar Overlay */}
-              <div className="absolute top-3 left-3 right-3 sm:right-auto z-10 flex items-center gap-2 bg-white/95 backdrop-blur-md p-2.5 px-3.5 rounded-2xl shadow-lg border border-amber-300">
-                <div className="w-6 h-6 rounded-lg bg-[#FEE500] text-[#191919] flex items-center justify-center shrink-0 shadow-xs">
-                  <KakaoIcon className="w-3.5 h-3.5" />
-                </div>
-                <div className="text-left">
-                  <div className="flex items-center gap-1.5">
-                    <span className="font-extrabold text-[#191919] text-[11px] tracking-wide">kakaomap</span>
-                    <span className="text-[10px] text-brand-brown/50">•</span>
-                    <span className="font-bold text-brand-brown text-xs">행복바람 심리상담연구소</span>
+                    {/* Interactive Activation Button */}
+                    <div className="pt-1">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsMapInteractive(true);
+                          setIsIframeLoading(true);
+                        }}
+                        className="px-5 py-2.5 rounded-2xl bg-white hover:bg-brand-sage hover:text-white text-brand-brown font-bold text-xs sm:text-sm border-2 border-brand-sage/40 hover:border-brand-sage shadow-md hover:shadow-lg transition-all duration-200 flex items-center gap-2 cursor-pointer group"
+                      >
+                        <Compass className="w-4 h-4 text-brand-sage group-hover:text-white transition-colors" />
+                        <span>웹에서 실시간 지도 확대/이동하기</span>
+                        <ArrowRight className="w-3.5 h-3.5 text-brand-sage group-hover:text-white group-hover:translate-x-0.5 transition-all" />
+                      </button>
+                    </div>
                   </div>
-                  <p className="text-[11px] text-brand-brown/75 font-serif line-clamp-1">
-                    울산 울주군 삼남읍 도호1길 23 4층 408호
-                  </p>
-                </div>
-              </div>
 
-              {/* Kakao Map Floating Location Badge Pin */}
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10 pointer-events-none flex flex-col items-center">
-                <div className="px-3.5 py-1.5 rounded-2xl bg-white/95 backdrop-blur-md shadow-xl border-2 border-[#FEDC00] text-xs font-bold text-brand-brown flex items-center gap-2 mb-1.5 animate-bounce">
-                  <div className="w-2.5 h-2.5 rounded-full bg-amber-500 animate-ping" />
-                  <span>행복바람 심리상담연구소</span>
-                  <span className="text-[10px] bg-amber-100 text-amber-900 px-1.5 py-0.5 rounded font-mono">408호</span>
-                </div>
-                <div className="w-8 h-8 rounded-full bg-[#FEE500] text-[#191919] flex items-center justify-center shadow-lg border-2 border-white">
-                  <KakaoIcon className="w-4 h-4" />
-                </div>
-              </div>
+                  {/* Bottom Quick Action Direct Links */}
+                  <div className="relative z-10 p-3 sm:p-4 bg-white/95 backdrop-blur-xs border-t border-brand-green/20 flex flex-wrap items-center justify-between gap-2">
+                    <div className="text-xs text-brand-brown/80 font-medium hidden md:flex items-center gap-2">
+                      <span className="font-bold text-brand-sage">원클릭 길찾기:</span>
+                      <span>스마트폰 내비게이션 및 지도 앱으로 바로 연결됩니다.</span>
+                    </div>
 
-              {/* Kakao Map Quick Floating Action Buttons (Bottom Overlay) */}
-              <div className="absolute bottom-3 left-3 right-3 z-20 flex flex-wrap items-center justify-between gap-2 pointer-events-auto">
-                <div className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-white/90 backdrop-blur-md rounded-xl text-xs text-brand-brown/80 border border-amber-200">
-                  <span className="font-bold text-amber-900">카카오맵 &amp; 카카오내비:</span>
-                  <span>상가 건물 무료 주차 • 1일 5회 사전 예약제 운영</span>
-                </div>
+                    <div className="flex items-center gap-2 w-full sm:w-auto justify-end flex-wrap">
+                      {activeView === 'naver' && (
+                        <>
+                          <a
+                            href={naverDirectionsUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="px-3.5 py-2 rounded-xl bg-white hover:bg-emerald-50 text-emerald-800 text-xs font-bold border border-emerald-300 shadow-2xs flex items-center gap-1.5 transition-all hover:scale-102"
+                            title="네이버 빠른 길찾기"
+                          >
+                            <Navigation className="w-3.5 h-3.5 text-[#03C75A]" />
+                            <span>네이버 길찾기</span>
+                          </a>
+                          <a
+                            href={naverMapUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="px-4 py-2 rounded-xl bg-[#03C75A] hover:bg-[#02b350] text-white text-xs font-bold shadow-2xs flex items-center gap-1.5 transition-all hover:scale-102"
+                            title="네이버 지도 크게보기"
+                          >
+                            <NaverIcon className="w-3.5 h-3.5" />
+                            <span>네이버 지도 열기</span>
+                            <ExternalLink className="w-3 h-3" />
+                          </a>
+                        </>
+                      )}
 
-                <div className="flex items-center gap-2 ml-auto">
-                  <a
-                    href={kakaoDirectionsUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="px-3.5 py-2 rounded-xl bg-white hover:bg-amber-50 text-amber-950 text-xs font-bold border border-amber-300 shadow-md backdrop-blur-xs flex items-center gap-1.5 transition-all hover:scale-102"
-                    title="카카오맵 실시간 길찾기"
-                  >
-                    <Navigation className="w-3.5 h-3.5 text-amber-700" />
-                    <span>카카오 길찾기</span>
-                  </a>
-                  <a
-                    href={kakaoMapUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="px-4 py-2 rounded-xl bg-[#FEE500] hover:bg-[#FEDC00] text-[#191919] text-xs font-extrabold shadow-md flex items-center gap-1.5 transition-all hover:scale-102"
-                    title="카카오맵 크게보기"
-                  >
-                    <KakaoIcon className="w-3.5 h-3.5" />
-                    <span>카카오맵 열기</span>
-                    <ExternalLink className="w-3 h-3" />
-                  </a>
-                </div>
-              </div>
-            </div>
-          )}
+                      {activeView === 'kakao' && (
+                        <>
+                          <a
+                            href={kakaoDirectionsUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="px-3.5 py-2 rounded-xl bg-white hover:bg-amber-50 text-amber-950 text-xs font-bold border border-amber-300 shadow-2xs flex items-center gap-1.5 transition-all hover:scale-102"
+                            title="카카오맵 실시간 길찾기"
+                          >
+                            <Navigation className="w-3.5 h-3.5 text-amber-700" />
+                            <span>카카오 길찾기</span>
+                          </a>
+                          <a
+                            href={kakaoMapUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="px-4 py-2 rounded-xl bg-[#FEE500] hover:bg-[#FEDC00] text-[#191919] text-xs font-extrabold shadow-2xs flex items-center gap-1.5 transition-all hover:scale-102"
+                            title="카카오맵 크게보기"
+                          >
+                            <KakaoIcon className="w-3.5 h-3.5" />
+                            <span>카카오맵 열기</span>
+                            <ExternalLink className="w-3 h-3" />
+                          </a>
+                        </>
+                      )}
 
-          {/* PROVIDER 3: GOOGLE MAPS VIEW */}
-          {activeView === 'google' && (
-            <div className="w-full h-full relative flex flex-col">
-              <iframe
-                title="행복바람 심리상담연구소 Google 지도 위치"
-                src="https://maps.google.com/maps?q=울산광역시%20울주군%20삼남읍%20도호1길%2023&t=&z=16&ie=UTF8&iwloc=&output=embed"
-                className={cn("w-full h-full border-0 filter contrast-[1.02]", !isMapInteractive && "pointer-events-none md:pointer-events-auto")}
-                loading="lazy"
-                aria-hidden="false"
-              />
-
-              {/* Mobile Touch Interception Shield to prevent scroll jitter */}
-              {!isMapInteractive && (
-                <button
-                  type="button"
-                  onClick={() => setIsMapInteractive(true)}
-                  className="md:hidden absolute inset-0 z-15 flex items-center justify-center bg-black/5 hover:bg-black/10 transition-colors cursor-pointer"
-                  aria-label="지도 터치하여 조작 활성화"
-                >
-                  <span className="px-3.5 py-1.5 rounded-full bg-white/95 text-brand-brown text-xs font-bold shadow-md border border-blue-300 flex items-center gap-1.5">
-                    <Navigation className="w-3.5 h-3.5 text-blue-600" />
-                    <span>터치하여 지도 이동/확대</span>
-                  </span>
-                </button>
-              )}
-
-              {/* Google Maps Floating Card on top-left */}
-              <div className="absolute top-3 left-3 z-10 flex items-center gap-2 bg-white/95 backdrop-blur-md p-2.5 px-3.5 rounded-2xl shadow-lg border border-blue-200 text-xs">
-                <div className="w-6 h-6 rounded-lg bg-[#4285F4] text-white flex items-center justify-center shrink-0">
-                  <GoogleMapsIcon className="w-3.5 h-3.5" />
-                </div>
-                <div>
-                  <div className="flex items-center gap-1.5">
-                    <span className="font-bold text-[#4285F4] text-[11px]">Google 지도</span>
-                    <span className="text-[10px] text-brand-brown/50">•</span>
-                    <span className="font-bold text-brand-brown">행복바람 심리상담연구소</span>
+                      {activeView === 'google' && (
+                        <>
+                          <a
+                            href={googleDirectionsUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="px-3.5 py-2 rounded-xl bg-white hover:bg-blue-50 text-blue-800 text-xs font-bold border border-blue-300 shadow-2xs flex items-center gap-1.5 transition-all hover:scale-102"
+                            title="Google 지도 길찾기"
+                          >
+                            <Navigation className="w-3.5 h-3.5 text-blue-600" />
+                            <span>Google 길찾기</span>
+                          </a>
+                          <a
+                            href={googleMapUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="px-4 py-2 rounded-xl bg-[#4285F4] hover:bg-blue-600 text-white text-xs font-bold shadow-2xs flex items-center gap-1.5 transition-all hover:scale-102"
+                            title="Google 지도 열기"
+                          >
+                            <GoogleMapsIcon className="w-3.5 h-3.5" />
+                            <span>Google 지도 열기</span>
+                            <ExternalLink className="w-3 h-3" />
+                          </a>
+                        </>
+                      )}
+                    </div>
                   </div>
-                  <p className="text-[11px] text-brand-brown/70 font-serif">울산 울주군 삼남읍 도호1길 23 (408호)</p>
                 </div>
-              </div>
+              ) : (
+                /* 2. Interactive Map View (Mounted On-Demand with Loading Feedback) */
+                <div className="w-full h-full relative flex flex-col">
+                  {isIframeLoading && (
+                    <div className="absolute inset-0 bg-brand-beige/50 backdrop-blur-2xs flex flex-col items-center justify-center gap-3 z-10">
+                      <div className="w-8 h-8 border-3 border-brand-sage border-t-transparent rounded-full animate-spin" />
+                      <span className="text-xs font-semibold text-brand-brown">지도를 불러오는 중입니다...</span>
+                    </div>
+                  )}
 
-              {/* Google Map Bottom Action Overlay */}
-              <div className="absolute bottom-3 right-3 z-20 flex items-center gap-2">
-                <a
-                  href={googleDirectionsUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="px-3.5 py-2 rounded-xl bg-white hover:bg-blue-50 text-blue-800 text-xs font-bold border border-blue-300 shadow-md backdrop-blur-xs flex items-center gap-1.5 transition-all hover:scale-102"
-                  title="Google 지도 길찾기"
-                >
-                  <Navigation className="w-3.5 h-3.5 text-blue-600" />
-                  <span>Google 길찾기</span>
-                </a>
-                <a
-                  href={googleMapUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="px-4 py-2 rounded-xl bg-[#4285F4] hover:bg-blue-600 text-white text-xs font-bold shadow-md flex items-center gap-1.5 transition-all hover:scale-102"
-                  title="Google 지도에서 크게보기"
-                >
-                  <GoogleMapsIcon className="w-3.5 h-3.5" />
-                  <span>Google 지도 열기</span>
-                  <ExternalLink className="w-3 h-3" />
-                </a>
-              </div>
+                  <iframe
+                    title="행복바람 심리상담연구소 위치 안내 지도"
+                    src="https://maps.google.com/maps?q=울산광역시%20울주군%20삼남읍%20도호1길%2023&t=&z=16&ie=UTF8&iwloc=&output=embed"
+                    className="w-full h-full border-0"
+                    onLoad={() => setIsIframeLoading(false)}
+                  />
+
+                  {/* Top Control Bar: Map Lock (Return to Scroll Mode) */}
+                  <div className="absolute top-3 right-3 z-30">
+                    <button
+                      type="button"
+                      onClick={() => setIsMapInteractive(false)}
+                      className="px-3.5 py-2 rounded-xl bg-stone-900/90 hover:bg-stone-900 text-white text-xs font-bold shadow-lg transition-all flex items-center gap-1.5 border border-stone-700 cursor-pointer"
+                      title="지도 조작을 종료하고 부드러운 스크롤 모드로 복귀"
+                    >
+                      <Lock className="w-3.5 h-3.5 text-emerald-400" />
+                      <span>지도 잠금 (스크롤 모드 복귀)</span>
+                    </button>
+                  </div>
+
+                  {/* Bottom Bar in Interactive Mode */}
+                  <div className="absolute bottom-3 left-3 right-3 z-20 flex items-center justify-between gap-2 pointer-events-auto">
+                    <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-white/95 rounded-xl text-xs text-brand-brown/80 border border-brand-green/20 shadow-xs">
+                      <span className="font-bold text-brand-sage">조작 안내:</span>
+                      <span>두 손가락으로 지도를 이동하거나 확대/축소할 수 있습니다.</span>
+                    </div>
+
+                    <div className="flex items-center gap-2 ml-auto">
+                      <a
+                        href={activeView === 'naver' ? naverDirectionsUrl : activeView === 'kakao' ? kakaoDirectionsUrl : googleDirectionsUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="px-3.5 py-2 rounded-xl bg-white hover:bg-brand-beige/50 text-brand-brown text-xs font-bold border border-brand-green/30 shadow-sm flex items-center gap-1.5 transition-all"
+                      >
+                        <Navigation className="w-3.5 h-3.5 text-brand-sage" />
+                        <span>빠른 길찾기</span>
+                      </a>
+                      <a
+                        href={activeView === 'naver' ? naverMapUrl : activeView === 'kakao' ? kakaoMapUrl : googleMapUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="px-4 py-2 rounded-xl bg-brand-sage hover:bg-brand-sage/90 text-white text-xs font-bold shadow-sm flex items-center gap-1.5 transition-all"
+                      >
+                        <span>지도 전체보기</span>
+                        <ExternalLink className="w-3 h-3" />
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
@@ -536,7 +547,7 @@ export default function CounselingCenterMap({
               {/* Schematic Landmarks Overlay */}
               <div className="relative z-10 flex items-start justify-between">
                 {/* Landmark 1: KTX Ulsan Station */}
-                <div className="p-3 bg-white/90 backdrop-blur-xs rounded-2xl border border-blue-200 shadow-xs flex items-center gap-2.5 max-w-[200px]">
+                <div className="p-3 bg-white rounded-2xl border border-blue-200 shadow-xs flex items-center gap-2.5 max-w-[200px]">
                   <div className="w-8 h-8 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center shrink-0">
                     <Train className="w-4 h-4" />
                   </div>
@@ -547,13 +558,13 @@ export default function CounselingCenterMap({
                 </div>
 
                 {/* Compass & North Indicator */}
-                <div className="flex items-center gap-1 text-[11px] font-bold text-brand-brown/60 bg-white/80 px-2.5 py-1 rounded-full border border-brand-green/30">
-                  <Compass className="w-3.5 h-3.5 text-brand-sage animate-spin-slow" />
+                <div className="flex items-center gap-1 text-[11px] font-bold text-brand-brown/60 bg-white px-2.5 py-1 rounded-full border border-brand-green/30 shadow-xs">
+                  <Compass className="w-3.5 h-3.5 text-brand-sage" />
                   <span>북쪽 (North)</span>
                 </div>
 
                 {/* Landmark 2: Samnam Administrative Center */}
-                <div className="p-3 bg-white/90 backdrop-blur-xs rounded-2xl border border-amber-200 shadow-xs flex items-center gap-2.5 max-w-[200px]">
+                <div className="p-3 bg-white rounded-2xl border border-amber-200 shadow-xs flex items-center gap-2.5 max-w-[200px]">
                   <div className="w-8 h-8 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center shrink-0">
                     <Bus className="w-4 h-4" />
                   </div>
@@ -566,10 +577,7 @@ export default function CounselingCenterMap({
 
               {/* Central Destination Pin Landmark */}
               <div className="relative z-10 my-auto flex justify-center">
-                <motion.div 
-                  initial={{ scale: 0.95 }}
-                  animate={{ scale: [0.98, 1.02, 0.98] }}
-                  transition={{ repeat: Infinity, duration: 3 }}
+                <div 
                   className="bg-white p-4 sm:p-5 rounded-3xl shadow-xl border-2 border-brand-sage flex items-center gap-3 sm:gap-4 max-w-md"
                 >
                   <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-brand-sage text-white flex items-center justify-center shrink-0 shadow-md">
@@ -589,12 +597,12 @@ export default function CounselingCenterMap({
                       도호1길 23 상가 408호 (무료 주차 가능)
                     </p>
                   </div>
-                </motion.div>
+                </div>
               </div>
 
               {/* Bottom Road Label & Parking Indicator */}
               <div className="relative z-10 flex items-end justify-between text-xs text-brand-brown/75">
-                <div className="p-2.5 px-3 bg-white/90 rounded-xl border border-brand-green/30 flex items-center gap-2">
+                <div className="p-2.5 px-3 bg-white rounded-xl border border-brand-green/30 flex items-center gap-2 shadow-xs">
                   <Car className="w-4 h-4 text-brand-sage" />
                   <span className="font-semibold text-[11px]">건물 지하(B1, B2) 무료 주차 가능</span>
                 </div>
