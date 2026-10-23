@@ -5,7 +5,7 @@ import {
   MapPin, Phone, Mail, Clock, Send, CheckCircle, 
   CalendarCheck2, PhoneCall, HeartHandshake, Sparkles, ChevronRight, ShieldCheck,
   MessageSquareText, CheckCircle2, RotateCcw, Home as HomeIcon, BellRing, ExternalLink,
-  CalendarDays, Check, HelpCircle, Search, Copy
+  CalendarDays, Check, HelpCircle, Search, Copy, Award
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { 
@@ -42,7 +42,7 @@ export default function Reservation() {
     name: '',
     phone: '',
     program_id: '',
-    preferred_counselor: searchParams.get('counselor') || '',
+    preferred_counselor: '박미경 소장 (대표 원장)',
     preferred_date: searchParams.get('date') || '',
     preferred_time: searchParams.get('time') || '',
   });
@@ -118,7 +118,7 @@ export default function Reservation() {
         const programQuery = searchParams.get('program');
         if (programQuery && data && data.length > 0) {
           const matched = data.find(p => 
-            p.title.includes(programQuery) || programQuery.includes(p.title)
+            Boolean(p?.title && (p.title.includes(programQuery) || programQuery.includes(p.title)))
           );
           if (matched) {
             setFormData(prev => ({ ...prev, program_id: matched.id.toString() }));
@@ -625,7 +625,7 @@ export default function Reservation() {
                 </span>
               </div>
               <h2 className="text-xl sm:text-2xl font-serif font-bold text-brand-brown">
-                상담사별 대화형 예약 일정표 (희망 상담사 및 일시 선택)
+                실시간 상담 예약 일정표 (원하시는 날짜 및 시간 선택)
               </h2>
             </div>
 
@@ -642,7 +642,7 @@ export default function Reservation() {
                 )}
               >
                 <CalendarDays className="w-3.5 h-3.5" />
-                <span>상담사별 대화형 달력 (가능 일시 확인)</span>
+                <span>대화형 달력 (일자별 가능 시간 확인)</span>
               </button>
 
               <button
@@ -766,7 +766,7 @@ export default function Reservation() {
                     name: '',
                     phone: '',
                     program_id: '',
-                    preferred_counselor: '',
+                    preferred_counselor: '박미경 소장 (대표 원장)',
                     preferred_date: '',
                     preferred_time: '',
                   });
@@ -868,43 +868,24 @@ export default function Reservation() {
                     </div>
                   </div>
                   
-                  {/* Preferred Counselor Selection */}
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <label htmlFor="res-counselor" className="text-sm font-bold text-brand-brown/70 ml-1">
-                        희망 상담사 선택
-                      </label>
-                      <div className="flex items-center gap-2">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            document.getElementById('interactive-calendar-section')?.scrollIntoView({ behavior: 'smooth' });
-                          }}
-                          className="text-[11px] font-semibold text-brand-sage hover:text-brand-brown hover:underline flex items-center gap-1 cursor-pointer"
-                          title="상단 대화형 캘린더에서 상담사별 일정 확인"
-                        >
-                          <CalendarDays className="w-3 h-3" />
-                          <span>상담사 일정 확인</span>
-                        </button>
-                        {formData.preferred_counselor && (
-                          <span className="text-[11px] font-semibold text-brand-sage bg-brand-sage/10 px-2 py-0.5 rounded-md flex items-center gap-1">
-                            <Check className="w-3 h-3 stroke-[2.5]" />
-                            선택됨
-                          </span>
-                        )}
+                  {/* Dedicated 1:1 Counselor Assurance Notice */}
+                  <div className="p-3.5 rounded-xl bg-brand-beige/35 border border-brand-green/30 flex items-center justify-between text-xs text-brand-brown font-serif">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-8 h-8 rounded-lg bg-brand-sage text-white flex items-center justify-center shrink-0">
+                        <Award className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <div className="font-bold text-brand-brown">
+                          담당 상담사: 박미경 대표 원장 (교육학 박사)
+                        </div>
+                        <div className="text-[11px] text-brand-brown/70">
+                          30,000시간 임상 경력 · 전 회기 1:1 직접 전담
+                        </div>
                       </div>
                     </div>
-                    <select
-                      id="res-counselor"
-                      className="w-full px-4 py-3 rounded-xl border border-brand-green/30 focus:border-brand-sage outline-none bg-brand-beige/10 appearance-none text-sm cursor-pointer"
-                      value={formData.preferred_counselor}
-                      onChange={e => setFormData({ ...formData, preferred_counselor: e.target.value })}
-                    >
-                      <option value="">지정 안 함 (상담 고민 분야에 따른 최적 전문의 배정)</option>
-                      <option value="박미경 소장 (대표 원장)">박미경 대표 원장 (교육학 박사 · 1급 수련감독자 / 성인·부부·기업EAP)</option>
-                      <option value="김지현 수석 상담사">김지현 수석 상담사 (상담심리사 1급 · 부부상담전문가 / 부부·가족 갈등)</option>
-                      <option value="이진우 전문 상담사">이진우 전문 상담사 (정신건강임상심리사 2급 · 청소년상담사 1급 / CBT·ADHD)</option>
-                    </select>
+                    <span className="text-[11px] font-bold text-brand-sage bg-brand-sage/10 px-2.5 py-1 rounded-md border border-brand-sage/20 shrink-0">
+                      직접 전담
+                    </span>
                   </div>
                   
                   <div className="space-y-2">

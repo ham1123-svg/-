@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Heart, User, Users, BookOpen, CheckCircle2, X, Clock, ShieldCheck, Calendar, ArrowRight, Sparkles, Building2, Compass } from 'lucide-react';
+import { 
+  Heart, User, Users, BookOpen, CheckCircle2, X, Clock, 
+  ShieldCheck, Calendar, ArrowRight, Sparkles, Building2, 
+  Compass, CreditCard, Wallet, Receipt, BadgeCheck, AlertCircle, Phone 
+} from 'lucide-react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { Program } from '../types';
 import { cn } from '../lib/utils';
@@ -8,6 +12,12 @@ import WeeklyScheduleCalendar from '../components/WeeklyScheduleCalendar';
 
 interface ProgramDetail {
   overview: string;
+  feeInfo: {
+    cost: string;
+    duration: string;
+    badge: string;
+    note: string;
+  };
   targets: {
     group: string;
     items: string[];
@@ -27,6 +37,12 @@ interface ProgramDetail {
 const PROGRAM_DETAILS: Record<string, ProgramDetail> = {
   "청소년 및 성인 상담": {
     overview: "학업, 진로, 대인관계, 정서적 혼란 등 생애주기별로 마주하는 다양한 심리적 갈등을 전문적으로 다룹니다. 안전하고 비밀이 보장되는 공간에서 자신의 내면을 깊이 탐색하고, 건강한 자아 존중감과 심리적 탄력성을 회복하도록 돕습니다.",
+    feeInfo: {
+      cost: "100,000원",
+      duration: "1회 50분",
+      badge: "정찰제 준수",
+      note: "울산페이(지역화폐) · 신용카드 100% · 소득공제 현금영수증 실시간 발급"
+    },
     targets: [
       {
         group: "청소년 (만 13세 ~ 18세)",
@@ -61,6 +77,12 @@ const PROGRAM_DETAILS: Record<string, ProgramDetail> = {
   },
   "부부 및 가족 관계 개선": {
     overview: "부부 및 가족 구성원 간의 의사소통 단절, 성격 차이, 갈등을 심층적으로 다루어 서로에 대한 이해와 신뢰를 회복하고 건강한 가족 역동을 구축하도록 돕습니다.",
+    feeInfo: {
+      cost: "180,000원",
+      duration: "1회 80분",
+      badge: "2인 동반 심층",
+      note: "양측 충분한 발언권 보장 및 관계 회복 심층 솔루션"
+    },
     targets: [
       {
         group: "부부 및 커플",
@@ -92,8 +114,53 @@ const PROGRAM_DETAILS: Record<string, ProgramDetail> = {
       confidentiality: "상담 내 모든 발언과 정보는 철저한 비밀 유지를 준수합니다."
     }
   },
+  "아동 놀이치료 및 발달·정서 코칭": {
+    overview: "놀이를 매개로 아동의 억압된 정서와 발달적 어려움을 표현하도록 돕고, 안정적인 애착 형성과 자조 역량을 키워줍니다. 양육자에게는 아동의 기질에 맞는 실질적인 훈육 코칭을 함께 제공합니다.",
+    feeInfo: {
+      cost: "100,000원",
+      duration: "1회 50분",
+      badge: "양육 코칭 포함",
+      note: "아동 심층 놀이상담 40분 + 양육자 브리핑 및 피드백 10분 포함"
+    },
+    targets: [
+      {
+        group: "유아 및 초등학생 (만 4세 ~ 12세)",
+        items: [
+          "분리불안, 등교 거부 및 낯가림이 심한 아동",
+          "틱 장애, 야뇨증, 수면 불안 등 신체화 증상",
+          "공격성, 떼쓰기, 감정 조절이 어려운 아동",
+          "주의력 결핍(ADHD 성향), 산만함 및 또래 관계 어려움"
+        ]
+      },
+      {
+        group: "양육자 (부모)",
+        items: [
+          "자녀의 기질과 발달 수준에 맞는 훈육법 습득",
+          "양육 스트레스 및 부모 효능감 회복",
+          "부모-자녀 간 긍정적 애착 증진"
+        ]
+      }
+    ],
+    steps: [
+      { step: "01", name: "초기 부모 면담", desc: "발달사 점검 및 주 호소 문제 파악" },
+      { step: "02", name: "아동 놀이 평가", desc: "놀이 관찰을 통한 인지·정서 상태 정밀 분석" },
+      { step: "03", name: "치료적 놀이 개입", desc: "정서 표현, 자기 조절력 향상 및 자신감 회복" },
+      { step: "04", name: "부모 상담 병행", desc: "매 회기 10분 가정 내 연계 훈육 가이드 제공" }
+    ],
+    guidelines: {
+      format: "아동 1:1 놀이상담(40분) + 양육자 브리핑 및 피드백(10분)",
+      duration: "총 50분 진행 (주 1회 정기 권장)",
+      confidentiality: "아동 및 가정 내 모든 상담 내용은 100% 비의료 비밀보장됩니다."
+    }
+  },
   "종합 심리검사 및 해석": {
     overview: "표준화된 전문 심리검사 도구를 통해 현재의 인지적, 정서적, 성격적 특성을 객관적이고 다각도로 파악하여 자기 이해와 맞춤형 성장을 안내합니다.",
+    feeInfo: {
+      cost: "별도 문의 (패키지 기준)",
+      duration: "검사 60~90분 + 해석 50분",
+      badge: "정밀 보고서 발급",
+      note: "풀배터리(Full Battery) 또는 단일 검사 패키지 구성에 따라 산정"
+    },
     targets: [
       {
         group: "검사 대상",
@@ -119,6 +186,12 @@ const PROGRAM_DETAILS: Record<string, ProgramDetail> = {
   },
   "EAP (근로자 지원 프로그램)": {
     overview: "기업 및 기관 임직원의 직무 스트레스, 조직 내 대인관계 갈등, 번아웃, 일과 삶의 균형(워라밸)을 지원하여 업무 몰입도와 마음 건강을 함께 지킵니다.",
+    feeInfo: {
+      cost: "기업 협약 및 바우처 실비 정산",
+      duration: "1회 50분 (기업 협약 회기)",
+      badge: "기업 맞춤형",
+      note: "감정노동자 보호(산안법 제41조) 지원 · 세금계산서 정산 발행"
+    },
     targets: [
       {
         group: "임직원 및 관리자",
@@ -144,6 +217,12 @@ const PROGRAM_DETAILS: Record<string, ProgramDetail> = {
   },
   "집단상담 및 심리교육": {
     overview: "유사한 고민을 가진 사람들과의 안전한 상호작용을 통해 고립감을 해소하고, 공감과 연대의 경험을 통해 함께 성장하는 소그룹 프로그램입니다.",
+    feeInfo: {
+      cost: "회기별 별도 공지",
+      duration: "회기당 90~120분",
+      badge: "소그룹 4~8인",
+      note: "프로그램 주제 및 진행 회기 수에 따라 개별 산정"
+    },
     targets: [
       {
         group: "소그룹 및 단체",
@@ -173,10 +252,30 @@ const categories = [
   { id: 'all', name: '전체', icon: null },
   { id: '개인상담', name: '개인상담', icon: <User className="w-5 h-5" /> },
   { id: '부부상담', name: '부부상담', icon: <Users className="w-5 h-5" /> },
+  { id: '아동상담', name: '아동상담', icon: <Sparkles className="w-5 h-5" /> },
   { id: '심리검사', name: '심리검사', icon: <BookOpen className="w-5 h-5" /> },
   { id: '기업상담', name: '기업상담', icon: <Heart className="w-5 h-5" /> },
   { id: '집단/교육', name: '집단/교육', icon: <Users className="w-5 h-5" /> },
 ];
+
+export const getProgramFeeBadge = (title: string) => {
+  if (title.includes("청소년") || title.includes("성인") || title.includes("개인")) {
+    return { fee: "100,000원", time: "50분", highlight: true, note: "정찰제" };
+  }
+  if (title.includes("부부") || title.includes("가족")) {
+    return { fee: "180,000원", time: "80분", highlight: true, note: "2인 동반" };
+  }
+  if (title.includes("아동") || title.includes("놀이")) {
+    return { fee: "100,000원", time: "50분", highlight: true, note: "양육 피드백 포함" };
+  }
+  if (title.includes("검사") || title.includes("평가")) {
+    return { fee: "별도 안내", time: "검사+해석 50분", highlight: false, note: "패키지 기준" };
+  }
+  if (title.includes("EAP") || title.includes("기업")) {
+    return { fee: "협약 실비", time: "50분", highlight: false, note: "기업 바우처" };
+  }
+  return { fee: "별도 공지", time: "90~120분", highlight: false, note: "소그룹 코스" };
+};
 
 export default function Programs() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -206,14 +305,18 @@ export default function Programs() {
       setActiveCategory('개인상담');
     } else if (hash === 'family') {
       setActiveCategory('부부상담');
+    } else if (hash === 'child') {
+      setActiveCategory('아동상담');
     } else if (hash === 'group') {
       setActiveCategory('집단/교육');
     } else if (hash === 'assessment') {
       setActiveCategory('심리검사');
+    } else if (hash === 'counseling-fees' || hash === 'fees' || hash === 'pricing' || hash === 'weekly-schedule') {
+      // Keep existing category or default to 'all'
     } else {
       setActiveCategory('all');
     }
-  }, [categoryFromUrl, location.hash]);
+  }, [categoryFromUrl]);
 
   // Sync selectedProgram with URL parameter on load or URL change
   useEffect(() => {
@@ -295,8 +398,15 @@ export default function Programs() {
                 상세 안내 및 진행과정 보기 <ArrowRight className="w-4 h-4" />
               </button>
               <a
-                href="#weekly-schedule"
+                href="#counseling-fees"
                 className="bg-brand-green/30 text-brand-sage border border-brand-sage/30 px-6 py-3.5 rounded-xl font-bold hover:bg-brand-green/50 transition-all flex items-center gap-2 cursor-pointer"
+              >
+                <Receipt className="w-4 h-4" />
+                상담 요금표 안내
+              </a>
+              <a
+                href="#weekly-schedule"
+                className="bg-white text-brand-brown border border-brand-brown/20 px-6 py-3.5 rounded-xl font-bold hover:bg-brand-beige/40 transition-all flex items-center gap-2 cursor-pointer"
               >
                 <Clock className="w-4 h-4" />
                 주간 일정표 확인
@@ -341,48 +451,339 @@ export default function Programs() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {filteredPrograms.map((program) => (
-              <motion.div
-                key={program.id}
-                layout
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="bg-white rounded-3xl p-8 border border-brand-green/30 shadow-sm hover:shadow-xl transition-all flex flex-col justify-between group"
-              >
-                <div>
-                  <div className="flex justify-between items-start mb-6">
-                    <span className="px-3.5 py-1 bg-brand-green/30 text-brand-sage text-xs font-bold rounded-full border border-brand-green/40">
-                      {program.category}
-                    </span>
-                  </div>
-                  <h3 className="text-2xl font-bold text-brand-brown mb-3 group-hover:text-brand-sage transition-colors">
-                    {program.title}
-                  </h3>
-                  <p className="text-brand-brown/70 mb-6 line-clamp-3 text-sm leading-relaxed">
-                    {program.description}
-                  </p>
-                </div>
-                
-                <div>
-                  <div className="flex flex-wrap gap-2 mb-6">
-                    {program.tags.split(/\s+/).filter(Boolean).map((tag, tIdx) => (
-                      <span key={`${program.id}-tag-${tIdx}-${tag}`} className="text-xs text-brand-brown/60 bg-brand-beige px-2.5 py-1 rounded-md">
-                        {tag}
+            {filteredPrograms.map((program) => {
+              const feeBadge = getProgramFeeBadge(program.title);
+              return (
+                <motion.div
+                  key={program.id}
+                  layout
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="bg-white rounded-3xl p-8 border border-brand-green/30 shadow-sm hover:shadow-xl transition-all flex flex-col justify-between group"
+                >
+                  <div>
+                    <div className="flex justify-between items-center mb-6">
+                      <span className="px-3.5 py-1 bg-brand-green/30 text-brand-sage text-xs font-bold rounded-full border border-brand-green/40">
+                        {program.category}
                       </span>
-                    ))}
+                      <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-brand-beige text-brand-brown/80 border border-brand-brown/10">
+                        {feeBadge.time}
+                      </span>
+                    </div>
+                    <h3 className="text-2xl font-bold text-brand-brown mb-3 group-hover:text-brand-sage transition-colors">
+                      {program.title}
+                    </h3>
+                    <p className="text-brand-brown/70 mb-4 line-clamp-3 text-sm leading-relaxed">
+                      {program.description}
+                    </p>
                   </div>
                   
-                  <button 
-                    onClick={() => handleSelectProgram(program)}
-                    className="w-full py-3.5 bg-brand-beige/50 text-brand-sage font-bold rounded-xl border border-brand-sage/40 hover:bg-brand-sage hover:text-white transition-all flex items-center justify-center gap-2 shadow-sm text-sm cursor-pointer"
-                  >
-                    상세보기 <CheckCircle2 className="w-4 h-4" />
-                  </button>
-                </div>
-              </motion.div>
-            ))}
+                  <div>
+                    <div className="flex flex-wrap gap-2 mb-4">
+                      {program.tags.split(/\s+/).filter(Boolean).map((tag, tIdx) => (
+                        <span key={`${program.id}-tag-${tIdx}-${tag}`} className="text-xs text-brand-brown/60 bg-brand-beige px-2.5 py-1 rounded-md">
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+
+                    {/* Counseling Fee pill inside card */}
+                    <div className="mb-4 p-3 rounded-xl bg-brand-green/15 border border-brand-green/30 flex items-center justify-between text-xs">
+                      <div className="flex items-center gap-1.5 text-brand-brown font-medium">
+                        <CreditCard className="w-3.5 h-3.5 text-brand-sage" />
+                        <span>{feeBadge.note}</span>
+                      </div>
+                      <span className="font-bold text-brand-brown font-serif text-sm">
+                        {feeBadge.fee}
+                      </span>
+                    </div>
+                    
+                    <button 
+                      onClick={() => handleSelectProgram(program)}
+                      className="w-full py-3.5 bg-brand-beige/50 text-brand-sage font-bold rounded-xl border border-brand-sage/40 hover:bg-brand-sage hover:text-white transition-all flex items-center justify-center gap-2 shadow-sm text-sm cursor-pointer"
+                    >
+                      상세보기 & 요금확인 <CheckCircle2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </motion.div>
+              );
+            })}
           </div>
         )}
+
+        {/* Dedicated Counseling Fees & Pricing Section */}
+        <section id="counseling-fees" className="mt-20 pt-12 border-t border-brand-green/20">
+          <div className="text-center mb-12">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-brand-sage/10 text-brand-sage text-xs font-bold mb-3">
+              <Receipt className="w-3.5 h-3.5" />
+              <span>투명한 정찰제 요금 정책</span>
+            </div>
+            <h2 className="text-3xl md:text-4xl font-serif font-bold text-brand-brown mb-4">
+              공식 상담 프로그램 요금표 및 결제 안내
+            </h2>
+            <p className="text-brand-brown/70 max-w-2xl mx-auto text-sm sm:text-base leading-relaxed">
+              마음치유 심리상담연구소는 모호한 추가 과금 없는 <strong>투명한 정찰제</strong>를 준수합니다.<br className="hidden sm:inline" />
+              모든 상담은 <strong>교육학 박사 대표 원장</strong>이 1:1로 직접 전담하여 전문적이고 심층적인 치유를 제공합니다.
+            </p>
+          </div>
+
+          {/* Pricing Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+            {/* Card 1: 개인상담 */}
+            <div className="bg-white rounded-3xl p-6 sm:p-7 border-2 border-brand-sage/30 shadow-sm hover:shadow-lg transition-all flex flex-col justify-between relative overflow-hidden">
+              <div className="absolute top-0 right-0 bg-brand-sage text-white text-[11px] font-bold px-3 py-1 rounded-bl-xl">
+                가장 추천
+              </div>
+              <div>
+                <span className="text-xs font-bold text-brand-sage bg-brand-sage/10 px-2.5 py-1 rounded-full inline-block mb-3">
+                  개인상담 (성인·청소년)
+                </span>
+                <h3 className="text-xl font-serif font-bold text-brand-brown mb-2">
+                  1:1 개인 심리상담
+                </h3>
+                <div className="my-4 pb-4 border-b border-brand-green/20">
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-3xl font-extrabold font-serif text-brand-brown">100,000</span>
+                    <span className="text-sm font-bold text-brand-brown/70">원 / 1회기</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 text-xs text-brand-brown/60 mt-1">
+                    <Clock className="w-3.5 h-3.5 text-brand-sage" />
+                    <span>회기당 50분 집중 진행</span>
+                  </div>
+                </div>
+                <ul className="space-y-2 text-xs sm:text-sm text-brand-brown/80">
+                  <li className="flex items-start gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-brand-sage shrink-0 mt-0.5" />
+                    <span>교육학 박사 대표 원장 1:1 직접 전담</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-brand-sage shrink-0 mt-0.5" />
+                    <span>우울, 불안, 대인관계, 진로 스트레스</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-brand-sage shrink-0 mt-0.5" />
+                    <span>100% 비의료 민간 상담 (진료 기록 무)</span>
+                  </li>
+                </ul>
+              </div>
+              <div className="mt-6 pt-4 border-t border-brand-green/20">
+                <Link
+                  to="/reservation?program=청소년%20및%20성인%20상담"
+                  className="w-full py-2.5 rounded-xl bg-brand-sage text-white font-bold text-xs sm:text-sm hover:bg-brand-sage/90 transition-all flex items-center justify-center gap-1.5 shadow-2xs"
+                >
+                  <Calendar className="w-3.5 h-3.5" />
+                  개인상담 예약 신청
+                </Link>
+              </div>
+            </div>
+
+            {/* Card 2: 부부 및 가족상담 */}
+            <div className="bg-white rounded-3xl p-6 sm:p-7 border border-brand-green/40 shadow-sm hover:shadow-lg transition-all flex flex-col justify-between">
+              <div>
+                <span className="text-xs font-bold text-brand-brown/80 bg-brand-beige px-2.5 py-1 rounded-full inline-block mb-3">
+                  부부 및 가족상담
+                </span>
+                <h3 className="text-xl font-serif font-bold text-brand-brown mb-2">
+                  부부 · 가족 심층상담
+                </h3>
+                <div className="my-4 pb-4 border-b border-brand-green/20">
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-3xl font-extrabold font-serif text-brand-brown">180,000</span>
+                    <span className="text-sm font-bold text-brand-brown/70">원 / 1회기</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 text-xs text-brand-brown/60 mt-1">
+                    <Clock className="w-3.5 h-3.5 text-brand-sage" />
+                    <span>회기당 80분 심층 중재</span>
+                  </div>
+                </div>
+                <ul className="space-y-2 text-xs sm:text-sm text-brand-brown/80">
+                  <li className="flex items-start gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-brand-sage shrink-0 mt-0.5" />
+                    <span>부부/가족 2인 동반 심층 회기</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-brand-sage shrink-0 mt-0.5" />
+                    <span>부부 갈등, 대화 단절, 성격 차이 중재</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-brand-sage shrink-0 mt-0.5" />
+                    <span>비폭력 대화법 및 관계 회복 솔루션</span>
+                  </li>
+                </ul>
+              </div>
+              <div className="mt-6 pt-4 border-t border-brand-green/20">
+                <Link
+                  to="/reservation?program=부부%20및%20가족%20상담"
+                  className="w-full py-2.5 rounded-xl bg-brand-beige text-brand-brown border border-brand-brown/20 font-bold text-xs sm:text-sm hover:bg-brand-sage hover:text-white hover:border-brand-sage transition-all flex items-center justify-center gap-1.5 shadow-2xs"
+                >
+                  <Calendar className="w-3.5 h-3.5" />
+                  부부상담 예약 신청
+                </Link>
+              </div>
+            </div>
+
+            {/* Card 3: 아동 놀이치료 */}
+            <div className="bg-white rounded-3xl p-6 sm:p-7 border border-brand-green/40 shadow-sm hover:shadow-lg transition-all flex flex-col justify-between">
+              <div>
+                <span className="text-xs font-bold text-brand-brown/80 bg-brand-green/30 px-2.5 py-1 rounded-full inline-block mb-3">
+                  아동 발달 및 놀이치료
+                </span>
+                <h3 className="text-xl font-serif font-bold text-brand-brown mb-2">
+                  아동 놀이 & 정서 코칭
+                </h3>
+                <div className="my-4 pb-4 border-b border-brand-green/20">
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-3xl font-extrabold font-serif text-brand-brown">100,000</span>
+                    <span className="text-sm font-bold text-brand-brown/70">원 / 1회기</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 text-xs text-brand-brown/60 mt-1">
+                    <Clock className="w-3.5 h-3.5 text-brand-sage" />
+                    <span>아동 40분 + 양육자 피드백 10분</span>
+                  </div>
+                </div>
+                <ul className="space-y-2 text-xs sm:text-sm text-brand-brown/80">
+                  <li className="flex items-start gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-brand-sage shrink-0 mt-0.5" />
+                    <span>놀이·모래·미술 매개 심리 표현</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-brand-sage shrink-0 mt-0.5" />
+                    <span>매 회기 양육자 심층 피드백 및 코칭</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-brand-sage shrink-0 mt-0.5" />
+                    <span>분리불안, 또래관계, 정서 발달 지원</span>
+                  </li>
+                </ul>
+              </div>
+              <div className="mt-6 pt-4 border-t border-brand-green/20">
+                <Link
+                  to="/reservation?program=아동%20놀이치료%20및%20발달·정서%20코칭"
+                  className="w-full py-2.5 rounded-xl bg-brand-beige text-brand-brown border border-brand-brown/20 font-bold text-xs sm:text-sm hover:bg-brand-sage hover:text-white hover:border-brand-sage transition-all flex items-center justify-center gap-1.5 shadow-2xs"
+                >
+                  <Calendar className="w-3.5 h-3.5" />
+                  아동상담 예약 신청
+                </Link>
+              </div>
+            </div>
+
+            {/* Card 4: 심리검사 & 평가 */}
+            <div className="bg-white rounded-3xl p-6 sm:p-7 border border-brand-green/40 shadow-sm hover:shadow-lg transition-all flex flex-col justify-between">
+              <div>
+                <span className="text-xs font-bold text-brand-brown/80 bg-brand-beige px-2.5 py-1 rounded-full inline-block mb-3">
+                  공인 종합 심리검사
+                </span>
+                <h3 className="text-xl font-serif font-bold text-brand-brown mb-2">
+                  종합심리평가 & 검사
+                </h3>
+                <div className="my-4 pb-4 border-b border-brand-green/20">
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-2xl font-extrabold font-serif text-brand-brown">검사별 상이</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 text-xs text-brand-brown/60 mt-1">
+                    <Clock className="w-3.5 h-3.5 text-brand-sage" />
+                    <span>검사 실시 + 1:1 해석상담 50분</span>
+                  </div>
+                </div>
+                <ul className="space-y-2 text-xs sm:text-sm text-brand-brown/80">
+                  <li className="flex items-start gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-brand-sage shrink-0 mt-0.5" />
+                    <span>종합심리검사(Full Battery), 정서검사</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-brand-sage shrink-0 mt-0.5" />
+                    <span>MMPI-2, TCI, 지능검사(K-WAIS/WISC)</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-brand-sage shrink-0 mt-0.5" />
+                    <span>전문 결과 보고서 및 상세 해석 세션</span>
+                  </li>
+                </ul>
+              </div>
+              <div className="mt-6 pt-4 border-t border-brand-green/20">
+                <Link
+                  to="/reservation?program=종합심리평가%20및%20검사"
+                  className="w-full py-2.5 rounded-xl bg-brand-beige text-brand-brown border border-brand-brown/20 font-bold text-xs sm:text-sm hover:bg-brand-sage hover:text-white hover:border-brand-sage transition-all flex items-center justify-center gap-1.5 shadow-2xs"
+                >
+                  <Calendar className="w-3.5 h-3.5" />
+                  심리검사 예약 신청
+                </Link>
+              </div>
+            </div>
+          </div>
+
+          {/* 3 Trust & Payment Assurance Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+            <div className="bg-white rounded-2xl p-6 border border-brand-green/30 shadow-2xs">
+              <div className="w-10 h-10 rounded-xl bg-brand-sage/10 text-brand-sage flex items-center justify-center mb-4">
+                <ShieldCheck className="w-5 h-5" />
+              </div>
+              <h4 className="font-bold text-brand-brown text-base mb-2">
+                100% 비의료 민간 상담 (진료기록 F코드 무)
+              </h4>
+              <p className="text-xs sm:text-sm text-brand-brown/75 leading-relaxed">
+                국민건강보험공단 전산에 어떠한 진료 기록(F코드)도 남지 않습니다. 취업, 공직 임용, 보험 가입 등에 전혀 불이익이나 열람 이력이 남지 않아 안심하고 상담받으실 수 있습니다.
+              </p>
+            </div>
+
+            <div className="bg-white rounded-2xl p-6 border border-brand-green/30 shadow-2xs">
+              <div className="w-10 h-10 rounded-xl bg-brand-sage/10 text-brand-sage flex items-center justify-center mb-4">
+                <Wallet className="w-5 h-5" />
+              </div>
+              <h4 className="font-bold text-brand-brown text-base mb-2">
+                울산페이(지역화폐) & 신용카드 지원
+              </h4>
+              <p className="text-xs sm:text-sm text-brand-brown/75 leading-relaxed">
+                울산페이 결제 시 지역화폐 혜택을 온전히 받으실 수 있으며, 모든 신용카드 및 소득공제용 현금영수증(지출증빙)이 실시간으로 100% 발행됩니다.
+              </p>
+            </div>
+
+            <div className="bg-white rounded-2xl p-6 border border-brand-green/30 shadow-2xs">
+              <div className="w-10 h-10 rounded-xl bg-brand-sage/10 text-brand-sage flex items-center justify-center mb-4">
+                <Receipt className="w-5 h-5" />
+              </div>
+              <h4 className="font-bold text-brand-brown text-base mb-2">
+                24시간 전 사전 취소 시 100% 전액 환불
+              </h4>
+              <p className="text-xs sm:text-sm text-brand-brown/75 leading-relaxed">
+                상담 예약 시간 24시간 전까지 연락 주시면 위약금 없이 일정 변경 또는 100% 전액 환불해 드립니다. (원활한 일정 배분을 위해 당일 취소는 자제 부탁드립니다.)
+              </p>
+            </div>
+          </div>
+
+          {/* Quick Consultation Call Box */}
+          <div className="bg-brand-beige/50 border border-brand-green/40 rounded-3xl p-6 sm:p-8 flex flex-col sm:flex-row items-center justify-between gap-6">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-brand-sage text-white flex items-center justify-center shrink-0">
+                <Phone className="w-6 h-6" />
+              </div>
+              <div>
+                <h4 className="font-serif font-bold text-brand-brown text-lg">
+                  요금 및 검사 패키지 유선 문의가 필요하신가요?
+                </h4>
+                <p className="text-xs sm:text-sm text-brand-brown/70 mt-0.5">
+                  내담자의 증상과 상황에 맞는 가장 효과적인 회기 구성과 검사 항목을 친절히 안내해 드립니다.
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3 shrink-0">
+              <a
+                href="tel:052-254-0230"
+                className="px-5 py-3 rounded-xl bg-white border border-brand-brown/20 font-bold text-brand-brown hover:bg-brand-beige text-sm flex items-center gap-2 shadow-2xs"
+              >
+                <Phone className="w-4 h-4 text-brand-sage" />
+                052-254-0230
+              </a>
+              <Link
+                to="/reservation"
+                className="px-5 py-3 rounded-xl bg-brand-sage text-white font-bold hover:bg-brand-sage/90 transition-all text-sm flex items-center gap-2 shadow-sm"
+              >
+                <Calendar className="w-4 h-4" />
+                온라인 예약 신청
+              </Link>
+            </div>
+          </div>
+        </section>
 
         {/* EAP Institutional Banner in Programs */}
         <div className="mt-14 p-8 sm:p-10 rounded-3xl bg-gradient-to-r from-brand-sage/10 via-brand-green/20 to-brand-beige border border-brand-sage/30 flex flex-col md:flex-row items-center justify-between gap-6 shadow-xs">
@@ -543,6 +944,62 @@ export default function Programs() {
                     </div>
                   </div>
                 )}
+
+                {/* 상담 요금 및 결제 안내 */}
+                <div>
+                  <h3 className="text-lg font-bold text-brand-sage mb-4 flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-brand-sage"></span>
+                    상담 요금 및 결제 안내
+                  </h3>
+                  <div className="p-6 rounded-2xl bg-white border-2 border-brand-sage/30 shadow-sm">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 mb-4 border-b border-brand-green/20 gap-3">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs px-2.5 py-0.5 rounded-full bg-brand-sage text-white font-bold">
+                            {currentDetail?.feeInfo.badge || '정찰제 준수'}
+                          </span>
+                          <span className="text-xs text-brand-brown/70 font-medium">
+                            {currentDetail?.feeInfo.duration || '회기당 50분'}
+                          </span>
+                        </div>
+                        <h4 className="text-xl font-bold font-serif text-brand-brown mt-1.5">
+                          {selectedProgram.title} 공식 요금
+                        </h4>
+                      </div>
+                      <div className="text-left sm:text-right">
+                        <div className="text-2xl sm:text-3xl font-extrabold font-serif text-brand-sage">
+                          {currentDetail?.feeInfo.cost || '100,000원'}
+                        </div>
+                        <p className="text-xs text-brand-brown/60">
+                          {currentDetail?.feeInfo.duration || '1회기 기준'}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="grid sm:grid-cols-2 gap-3 text-xs sm:text-sm text-brand-brown/85">
+                      <div className="flex items-center gap-2 p-2.5 rounded-xl bg-brand-beige/40">
+                        <CheckCircle2 className="w-4 h-4 text-brand-sage shrink-0" />
+                        <span>울산페이(지역화폐) 결제 100% 지원</span>
+                      </div>
+                      <div className="flex items-center gap-2 p-2.5 rounded-xl bg-brand-beige/40">
+                        <CheckCircle2 className="w-4 h-4 text-brand-sage shrink-0" />
+                        <span>신용카드 결제 및 소득공제 현금영수증</span>
+                      </div>
+                      <div className="flex items-center gap-2 p-2.5 rounded-xl bg-brand-beige/40">
+                        <CheckCircle2 className="w-4 h-4 text-brand-sage shrink-0" />
+                        <span>100% 비의료 민간 상담 (건보공단 F코드 미등록)</span>
+                      </div>
+                      <div className="flex items-center gap-2 p-2.5 rounded-xl bg-brand-beige/40">
+                        <CheckCircle2 className="w-4 h-4 text-brand-sage shrink-0" />
+                        <span>예약 24시간 전 사전 취소 시 100% 전액 환불</span>
+                      </div>
+                    </div>
+                    {currentDetail?.feeInfo.note && (
+                      <p className="mt-3 text-xs text-brand-brown/65 leading-relaxed">
+                        ※ {currentDetail.feeInfo.note}
+                      </p>
+                    )}
+                  </div>
+                </div>
 
                 {/* 4. 상담 안내 및 유의사항 */}
                 {currentDetail?.guidelines && (
